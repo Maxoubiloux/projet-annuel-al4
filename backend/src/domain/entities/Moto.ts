@@ -13,6 +13,15 @@ export enum MotoCategory {
   MAXI_SCOOTER = 'MAXI_SCOOTER',
 }
 
+export interface CreateMotoParams {
+  brand: string
+  model: string
+  registration: string
+  category: MotoCategory
+  currentKm: number
+  pricePerDay: number
+}
+
 export class Moto {
   constructor(
     readonly id: string,
@@ -26,4 +35,17 @@ export class Moto {
     readonly createdAt: Date
   ) { }
 
+  static create(id: string, params: CreateMotoParams): Moto {
+    return new Moto(
+      id,
+      params.brand,
+      params.model,
+      params.registration,
+      params.category,
+      MotoStatus.PUBLISHED,
+      params.currentKm,
+      params.pricePerDay,
+      new Date()
+    )
+  }
 }

@@ -297,17 +297,24 @@ Voici une représentation simplifiée de l’architecture du système :
 ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
 │   Database   │  │     IAM      │  │   Message    │
 │ PostgreSQL   │  │ JWT/Auth     │  │ Broker       │
-│ (Supabase)   │  │ (EXTERNE)    │  │ RabbitMQ     │
+│ (Supabase)   │  │ (interne)    │  │ RabbitMQ     │
 └──────────────┘  └──────────────┘  └──────┬───────┘
                                            │
-                         ┌─────────────────┼─────────────────┐
-                         ▼                 ▼                 ▼
-                 ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-                 │ Email Worker │  │ PDF Worker   │  │ Payment      │
-                 │ Nodemailer   │  │ PDFKit /     │  │ Worker       │
-                 │ / Mailtrap   │  │ Puppeteer    │  │ Stripe       │
-                 └──────────────┘  └──────────────┘  └──────────────┘
+                         ┌─────────────────┼────────────────────────────┐
+                         ▼                 ▼                ▼            ▼
+                 ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+                 │ Email Worker │  │ PDF Worker   │  │ Payment      │  │ Image Storage│
+                 │ Nodemailer   │  │ PDFKit /     │  │ Worker       │  │ Worker       │
+                 │ / Mailtrap   │  │ Puppeteer    │  │ Stripe       │  │ (S3/Cloud)   │
+                 └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘
 
+                                   │
+                                   ▼
+                         ┌──────────────────────┐
+                         │ Stockage fichiers    │
+                         │ (AWS S3 / Cloudinary│
+                         │ ou stockage local)  │
+                         └──────────────────────┘
 ```
 
 ### Explication du flux
@@ -324,6 +331,16 @@ Voici une représentation simplifiée de l’architecture du système :
    * envoi d’emails
    * génération de PDF
    * gestion des paiements Stripe
+   * stockage et récupération des images des motos
+
+### Image Storage Worker
+
+Ce worker est responsable de :
+
+* upload des images des motos
+* compression / optimisation
+* stockage dans un service externe (S3, Cloudinary)
+* génération d’URL accessibles depuis le frontend
 
 ---
 

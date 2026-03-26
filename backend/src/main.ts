@@ -5,6 +5,9 @@ import { Logger } from '@shared/logging/Logger'
 import { authMiddleware } from '@presentation/middleware/AuthMiddleware'
 import v1Routes from '@presentation/routes/v1'
 import v2Routes from '@presentation/routes/v2'
+import { PrismaMotoRepository } from '@infrastructure/db/prisma-moto.repository'
+
+const motoRepository = new PrismaMotoRepository()
 
 const app = fastify({
   logger: new Logger().getPino() as any,
@@ -20,7 +23,7 @@ app.get('/health', async () => ({ status: 'ok' }))
 
 app.addHook('preHandler', authMiddleware)
 
-app.register(v1Routes, { prefix: '/api/v1' })
+app.register(v1Routes, { prefix: '/api/v1', motoRepository })
 app.register(v2Routes, { prefix: '/api/v2' })
 
 app.setErrorHandler((error, request, reply) => {
