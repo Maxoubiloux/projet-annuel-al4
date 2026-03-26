@@ -1,0 +1,32 @@
+[package]
+name = "moto-rental-worker"
+version = "1.0.0"
+edition = "2021"
+description = "Worker asynchrone pour traitement de tâches (Rust)"
+
+[dependencies]
+tokio = { version = "1.35", features = ["full"] }
+lapin = "2.4"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+uuid = { version = "1.6", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+anyhow = "1.0"
+thiserror = "1.0"
+async-trait = "0.1"
+futures = "0.3"
+reqwest = { version = "0.11", features = ["json"] }
+dotenv = "0.15"
+printpdf = "0.7"
+image = "0.24"
+pdfkit = "0.1"
+
+[dev-dependencies]
+mockall = "0.12"
+tokio-test = "0.4"
+
+[[bin]]
+name = "worker"
+path = "src/main.rs"
