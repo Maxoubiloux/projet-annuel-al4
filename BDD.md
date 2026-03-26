@@ -2,7 +2,7 @@
     Moto
     {
     "id": "moto_001",
-    "brand": "Yamaha",
+    "brand": "brand_001",
     "model": "MT-07",
     "serialNumber": "123456789",
     "registration": "AB-123-CD",
