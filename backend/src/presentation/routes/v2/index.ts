@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify'
 
-export default async function (fastify: FastifyInstance) {
+export default async function (_fastify: FastifyInstance) {
 
 }

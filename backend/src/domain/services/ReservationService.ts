@@ -1,5 +1,3 @@
-import { Moto } from '../entities/Moto'
-
 export class ReservationService {
-
+  // TODO: implement reservation logic
 }

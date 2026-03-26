@@ -1,5 +1,5 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 
-export const authMiddleware = async (request: FastifyRequest, reply: FastifyReply) => {
+export const authMiddleware = async (_request: FastifyRequest, _reply: FastifyReply) => {
 
 }
