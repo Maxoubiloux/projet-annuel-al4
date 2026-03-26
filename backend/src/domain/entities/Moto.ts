@@ -25,13 +25,15 @@ export interface CreateMotoParams {
 export class Moto {
   constructor(
     readonly id: string,
-    readonly brand: string,
+    readonly brandId: string,
     readonly model: string,
+    readonly serialNumber: string,
     readonly registration: string,
-    readonly category: MotoCategory,
-    readonly status: MotoStatus,
+    readonly categoryId: string,
+    readonly statusId: string,
     readonly currentKm: number,
     readonly pricePerDay: number,
+    readonly description: string,
     readonly createdAt: Date
   ) { }
 
