@@ -1,11 +1,13 @@
 import Joi from 'joi'
-import { MotoCategory } from '@domain/entities/Moto'
 
 export const createMotoSchema = Joi.object({
-  brand: Joi.string().trim().min(1).max(100).required(),
+  brandId: Joi.string().uuid().required(),
   model: Joi.string().trim().min(1).max(100).required(),
+  serialNumber: Joi.string().trim().min(1).max(50).required(),
   registration: Joi.string().trim().min(1).max(20).required(),
-  category: Joi.string().valid(...Object.values(MotoCategory)).required(),
+  categoryId: Joi.string().uuid().required(),
+  statusId: Joi.string().uuid().required(),
   currentKm: Joi.number().integer().min(0).required(),
   pricePerDay: Joi.number().positive().required(),
+  description: Joi.string().trim().allow('').required(),
 })

@@ -1,6 +1,6 @@
 import { CreateMotoUseCase } from './create-moto.usecase'
 import { IMotoRepository } from '../repositories/IMotoRepository'
-import { Moto, MotoCategory } from '../entities/Moto'
+import { Moto } from '../entities/Moto'
 
 const makeMockRepository = (): IMotoRepository => ({
   save: jest.fn(async (moto: Moto) => moto),
@@ -8,15 +8,18 @@ const makeMockRepository = (): IMotoRepository => ({
 
 describe('CreateMotoUseCase', () => {
   const validParams = {
-    brand: 'Yamaha',
+    brandId: '550e8400-e29b-41d4-a716-446655440001',
     model: 'MT-07',
+    serialNumber: 'VIN123456789',
     registration: 'AB-123-CD',
-    category: MotoCategory.A2,
+    categoryId: '550e8400-e29b-41d4-a716-446655440002',
+    statusId: '550e8400-e29b-41d4-a716-446655440003',
     currentKm: 15000,
     pricePerDay: 89,
+    description: 'Belle moto en bon état',
   }
 
-  it('should create a moto with PUBLISHED status', async () => {
+  it('should create a moto successfully', async () => {
     const repository = makeMockRepository()
     const useCase = new CreateMotoUseCase(repository)
 
@@ -24,9 +27,9 @@ describe('CreateMotoUseCase', () => {
 
     expect(result.isOk).toBe(true)
     if (result.isOk) {
-      expect(result.value.brand).toBe('Yamaha')
+      expect(result.value.brandId).toBe(validParams.brandId)
       expect(result.value.model).toBe('MT-07')
-      expect(result.value.status).toBe('PUBLISHED')
+      expect(result.value.serialNumber).toBe('VIN123456789')
       expect(result.value.id).toBeDefined()
     }
     expect(repository.save).toHaveBeenCalledTimes(1)

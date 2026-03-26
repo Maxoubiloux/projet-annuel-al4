@@ -51,7 +51,14 @@ export const AnyNull = runtime.AnyNull
 
 
 export const ModelName = {
-  Moto: 'Moto'
+  Brand: 'Brand',
+  Category: 'Category',
+  Status: 'Status',
+  User: 'User',
+  Shop: 'Shop',
+  Moto: 'Moto',
+  Image: 'Image',
+  Booking: 'Booking'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -70,19 +77,97 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
+export const BrandScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  createdAt: 'createdAt'
+} as const
+
+export type BrandScalarFieldEnum = (typeof BrandScalarFieldEnum)[keyof typeof BrandScalarFieldEnum]
+
+
+export const CategoryScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  createdAt: 'createdAt'
+} as const
+
+export type CategoryScalarFieldEnum = (typeof CategoryScalarFieldEnum)[keyof typeof CategoryScalarFieldEnum]
+
+
+export const StatusScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  createdAt: 'createdAt'
+} as const
+
+export type StatusScalarFieldEnum = (typeof StatusScalarFieldEnum)[keyof typeof StatusScalarFieldEnum]
+
+
+export const UserScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  email: 'email',
+  password: 'password',
+  createdAt: 'createdAt'
+} as const
+
+export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const ShopScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  address: 'address',
+  city: 'city',
+  zipCode: 'zipCode',
+  country: 'country',
+  phone: 'phone',
+  email: 'email',
+  createdAt: 'createdAt'
+} as const
+
+export type ShopScalarFieldEnum = (typeof ShopScalarFieldEnum)[keyof typeof ShopScalarFieldEnum]
+
+
 export const MotoScalarFieldEnum = {
   id: 'id',
-  brand: 'brand',
+  brandId: 'brandId',
   model: 'model',
+  serialNumber: 'serialNumber',
   registration: 'registration',
-  category: 'category',
-  status: 'status',
+  categoryId: 'categoryId',
+  statusId: 'statusId',
   currentKm: 'currentKm',
   pricePerDay: 'pricePerDay',
+  description: 'description',
   createdAt: 'createdAt'
 } as const
 
 export type MotoScalarFieldEnum = (typeof MotoScalarFieldEnum)[keyof typeof MotoScalarFieldEnum]
+
+
+export const ImageScalarFieldEnum = {
+  id: 'id',
+  motoId: 'motoId',
+  url: 'url',
+  createdAt: 'createdAt'
+} as const
+
+export type ImageScalarFieldEnum = (typeof ImageScalarFieldEnum)[keyof typeof ImageScalarFieldEnum]
+
+
+export const BookingScalarFieldEnum = {
+  id: 'id',
+  motoId: 'motoId',
+  userId: 'userId',
+  shopId: 'shopId',
+  startDate: 'startDate',
+  endDate: 'endDate',
+  createdAt: 'createdAt'
+} as const
+
+export type BookingScalarFieldEnum = (typeof BookingScalarFieldEnum)[keyof typeof BookingScalarFieldEnum]
 
 
 export const SortOrder = {

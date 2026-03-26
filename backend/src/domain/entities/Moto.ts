@@ -1,25 +1,25 @@
-export enum MotoStatus {
-  PUBLISHED = 'PUBLISHED',
-  RESERVED = 'RESERVED',
-  RENTED = 'RENTED',
-  MAINTENANCE = 'MAINTENANCE',
-  DAMAGED = 'DAMAGED',
-}
-
-export enum MotoCategory {
-  A1 = 'A1',
-  A2 = 'A2',
-  A = 'A',
-  MAXI_SCOOTER = 'MAXI_SCOOTER',
-}
-
 export interface CreateMotoParams {
-  brand: string
+  brandId: string
   model: string
+  serialNumber: string
   registration: string
-  category: MotoCategory
+  categoryId: string
+  statusId: string
   currentKm: number
   pricePerDay: number
+  description: string
+}
+
+export interface UpdateMotoParams {
+  brandId?: string
+  model?: string
+  serialNumber?: string
+  registration?: string
+  categoryId?: string
+  statusId?: string
+  currentKm?: number
+  pricePerDay?: number
+  description?: string
 }
 
 export class Moto {
@@ -40,13 +40,15 @@ export class Moto {
   static create(id: string, params: CreateMotoParams): Moto {
     return new Moto(
       id,
-      params.brand,
+      params.brandId,
       params.model,
+      params.serialNumber,
       params.registration,
-      params.category,
-      MotoStatus.PUBLISHED,
+      params.categoryId,
+      params.statusId,
       params.currentKm,
       params.pricePerDay,
+      params.description,
       new Date()
     )
   }

@@ -38,37 +38,43 @@ export type MotoSumAggregateOutputType = {
 
 export type MotoMinAggregateOutputType = {
   id: string | null
-  brand: string | null
+  brandId: string | null
   model: string | null
+  serialNumber: string | null
   registration: string | null
-  category: $Enums.MotoCategory | null
-  status: $Enums.MotoStatus | null
+  categoryId: string | null
+  statusId: string | null
   currentKm: number | null
   pricePerDay: number | null
+  description: string | null
   createdAt: Date | null
 }
 
 export type MotoMaxAggregateOutputType = {
   id: string | null
-  brand: string | null
+  brandId: string | null
   model: string | null
+  serialNumber: string | null
   registration: string | null
-  category: $Enums.MotoCategory | null
-  status: $Enums.MotoStatus | null
+  categoryId: string | null
+  statusId: string | null
   currentKm: number | null
   pricePerDay: number | null
+  description: string | null
   createdAt: Date | null
 }
 
 export type MotoCountAggregateOutputType = {
   id: number
-  brand: number
+  brandId: number
   model: number
+  serialNumber: number
   registration: number
-  category: number
-  status: number
+  categoryId: number
+  statusId: number
   currentKm: number
   pricePerDay: number
+  description: number
   createdAt: number
   _all: number
 }
@@ -86,37 +92,43 @@ export type MotoSumAggregateInputType = {
 
 export type MotoMinAggregateInputType = {
   id?: true
-  brand?: true
+  brandId?: true
   model?: true
+  serialNumber?: true
   registration?: true
-  category?: true
-  status?: true
+  categoryId?: true
+  statusId?: true
   currentKm?: true
   pricePerDay?: true
+  description?: true
   createdAt?: true
 }
 
 export type MotoMaxAggregateInputType = {
   id?: true
-  brand?: true
+  brandId?: true
   model?: true
+  serialNumber?: true
   registration?: true
-  category?: true
-  status?: true
+  categoryId?: true
+  statusId?: true
   currentKm?: true
   pricePerDay?: true
+  description?: true
   createdAt?: true
 }
 
 export type MotoCountAggregateInputType = {
   id?: true
-  brand?: true
+  brandId?: true
   model?: true
+  serialNumber?: true
   registration?: true
-  category?: true
-  status?: true
+  categoryId?: true
+  statusId?: true
   currentKm?: true
   pricePerDay?: true
+  description?: true
   createdAt?: true
   _all?: true
 }
@@ -209,13 +221,15 @@ export type MotoGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
 
 export type MotoGroupByOutputType = {
   id: string
-  brand: string
+  brandId: string
   model: string
+  serialNumber: string
   registration: string
-  category: $Enums.MotoCategory
-  status: $Enums.MotoStatus
+  categoryId: string
+  statusId: string
   currentKm: number
   pricePerDay: number
+  description: string
   createdAt: Date
   _count: MotoCountAggregateOutputType | null
   _avg: MotoAvgAggregateOutputType | null
@@ -244,52 +258,75 @@ export type MotoWhereInput = {
   OR?: Prisma.MotoWhereInput[]
   NOT?: Prisma.MotoWhereInput | Prisma.MotoWhereInput[]
   id?: Prisma.UuidFilter<"Moto"> | string
-  brand?: Prisma.StringFilter<"Moto"> | string
+  brandId?: Prisma.UuidFilter<"Moto"> | string
   model?: Prisma.StringFilter<"Moto"> | string
+  serialNumber?: Prisma.StringFilter<"Moto"> | string
   registration?: Prisma.StringFilter<"Moto"> | string
-  category?: Prisma.EnumMotoCategoryFilter<"Moto"> | $Enums.MotoCategory
-  status?: Prisma.EnumMotoStatusFilter<"Moto"> | $Enums.MotoStatus
+  categoryId?: Prisma.UuidFilter<"Moto"> | string
+  statusId?: Prisma.UuidFilter<"Moto"> | string
   currentKm?: Prisma.IntFilter<"Moto"> | number
   pricePerDay?: Prisma.FloatFilter<"Moto"> | number
+  description?: Prisma.StringFilter<"Moto"> | string
   createdAt?: Prisma.DateTimeFilter<"Moto"> | Date | string
+  brand?: Prisma.XOR<Prisma.BrandScalarRelationFilter, Prisma.BrandWhereInput>
+  category?: Prisma.XOR<Prisma.CategoryScalarRelationFilter, Prisma.CategoryWhereInput>
+  status?: Prisma.XOR<Prisma.StatusScalarRelationFilter, Prisma.StatusWhereInput>
+  images?: Prisma.ImageListRelationFilter
+  bookings?: Prisma.BookingListRelationFilter
 }
 
 export type MotoOrderByWithRelationInput = {
   id?: Prisma.SortOrder
-  brand?: Prisma.SortOrder
+  brandId?: Prisma.SortOrder
   model?: Prisma.SortOrder
+  serialNumber?: Prisma.SortOrder
   registration?: Prisma.SortOrder
-  category?: Prisma.SortOrder
-  status?: Prisma.SortOrder
+  categoryId?: Prisma.SortOrder
+  statusId?: Prisma.SortOrder
   currentKm?: Prisma.SortOrder
   pricePerDay?: Prisma.SortOrder
+  description?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  brand?: Prisma.BrandOrderByWithRelationInput
+  category?: Prisma.CategoryOrderByWithRelationInput
+  status?: Prisma.StatusOrderByWithRelationInput
+  images?: Prisma.ImageOrderByRelationAggregateInput
+  bookings?: Prisma.BookingOrderByRelationAggregateInput
 }
 
 export type MotoWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  serialNumber?: string
   registration?: string
   AND?: Prisma.MotoWhereInput | Prisma.MotoWhereInput[]
   OR?: Prisma.MotoWhereInput[]
   NOT?: Prisma.MotoWhereInput | Prisma.MotoWhereInput[]
-  brand?: Prisma.StringFilter<"Moto"> | string
+  brandId?: Prisma.UuidFilter<"Moto"> | string
   model?: Prisma.StringFilter<"Moto"> | string
-  category?: Prisma.EnumMotoCategoryFilter<"Moto"> | $Enums.MotoCategory
-  status?: Prisma.EnumMotoStatusFilter<"Moto"> | $Enums.MotoStatus
+  categoryId?: Prisma.UuidFilter<"Moto"> | string
+  statusId?: Prisma.UuidFilter<"Moto"> | string
   currentKm?: Prisma.IntFilter<"Moto"> | number
   pricePerDay?: Prisma.FloatFilter<"Moto"> | number
+  description?: Prisma.StringFilter<"Moto"> | string
   createdAt?: Prisma.DateTimeFilter<"Moto"> | Date | string
-}, "id" | "registration">
+  brand?: Prisma.XOR<Prisma.BrandScalarRelationFilter, Prisma.BrandWhereInput>
+  category?: Prisma.XOR<Prisma.CategoryScalarRelationFilter, Prisma.CategoryWhereInput>
+  status?: Prisma.XOR<Prisma.StatusScalarRelationFilter, Prisma.StatusWhereInput>
+  images?: Prisma.ImageListRelationFilter
+  bookings?: Prisma.BookingListRelationFilter
+}, "id" | "serialNumber" | "registration">
 
 export type MotoOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
-  brand?: Prisma.SortOrder
+  brandId?: Prisma.SortOrder
   model?: Prisma.SortOrder
+  serialNumber?: Prisma.SortOrder
   registration?: Prisma.SortOrder
-  category?: Prisma.SortOrder
-  status?: Prisma.SortOrder
+  categoryId?: Prisma.SortOrder
+  statusId?: Prisma.SortOrder
   currentKm?: Prisma.SortOrder
   pricePerDay?: Prisma.SortOrder
+  description?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.MotoCountOrderByAggregateInput
   _avg?: Prisma.MotoAvgOrderByAggregateInput
@@ -303,109 +340,142 @@ export type MotoScalarWhereWithAggregatesInput = {
   OR?: Prisma.MotoScalarWhereWithAggregatesInput[]
   NOT?: Prisma.MotoScalarWhereWithAggregatesInput | Prisma.MotoScalarWhereWithAggregatesInput[]
   id?: Prisma.UuidWithAggregatesFilter<"Moto"> | string
-  brand?: Prisma.StringWithAggregatesFilter<"Moto"> | string
+  brandId?: Prisma.UuidWithAggregatesFilter<"Moto"> | string
   model?: Prisma.StringWithAggregatesFilter<"Moto"> | string
+  serialNumber?: Prisma.StringWithAggregatesFilter<"Moto"> | string
   registration?: Prisma.StringWithAggregatesFilter<"Moto"> | string
-  category?: Prisma.EnumMotoCategoryWithAggregatesFilter<"Moto"> | $Enums.MotoCategory
-  status?: Prisma.EnumMotoStatusWithAggregatesFilter<"Moto"> | $Enums.MotoStatus
+  categoryId?: Prisma.UuidWithAggregatesFilter<"Moto"> | string
+  statusId?: Prisma.UuidWithAggregatesFilter<"Moto"> | string
   currentKm?: Prisma.IntWithAggregatesFilter<"Moto"> | number
   pricePerDay?: Prisma.FloatWithAggregatesFilter<"Moto"> | number
+  description?: Prisma.StringWithAggregatesFilter<"Moto"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Moto"> | Date | string
 }
 
 export type MotoCreateInput = {
   id?: string
-  brand: string
   model: string
+  serialNumber: string
   registration: string
-  category: $Enums.MotoCategory
-  status?: $Enums.MotoStatus
   currentKm: number
   pricePerDay: number
+  description: string
   createdAt?: Date | string
+  brand: Prisma.BrandCreateNestedOneWithoutMotosInput
+  category: Prisma.CategoryCreateNestedOneWithoutMotosInput
+  status: Prisma.StatusCreateNestedOneWithoutMotosInput
+  images?: Prisma.ImageCreateNestedManyWithoutMotoInput
+  bookings?: Prisma.BookingCreateNestedManyWithoutMotoInput
 }
 
 export type MotoUncheckedCreateInput = {
   id?: string
-  brand: string
+  brandId: string
   model: string
+  serialNumber: string
   registration: string
-  category: $Enums.MotoCategory
-  status?: $Enums.MotoStatus
+  categoryId: string
+  statusId: string
   currentKm: number
   pricePerDay: number
+  description: string
   createdAt?: Date | string
+  images?: Prisma.ImageUncheckedCreateNestedManyWithoutMotoInput
+  bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutMotoInput
 }
 
 export type MotoUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  brand?: Prisma.StringFieldUpdateOperationsInput | string
   model?: Prisma.StringFieldUpdateOperationsInput | string
+  serialNumber?: Prisma.StringFieldUpdateOperationsInput | string
   registration?: Prisma.StringFieldUpdateOperationsInput | string
-  category?: Prisma.EnumMotoCategoryFieldUpdateOperationsInput | $Enums.MotoCategory
-  status?: Prisma.EnumMotoStatusFieldUpdateOperationsInput | $Enums.MotoStatus
   currentKm?: Prisma.IntFieldUpdateOperationsInput | number
   pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
+  description?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  brand?: Prisma.BrandUpdateOneRequiredWithoutMotosNestedInput
+  category?: Prisma.CategoryUpdateOneRequiredWithoutMotosNestedInput
+  status?: Prisma.StatusUpdateOneRequiredWithoutMotosNestedInput
+  images?: Prisma.ImageUpdateManyWithoutMotoNestedInput
+  bookings?: Prisma.BookingUpdateManyWithoutMotoNestedInput
 }
 
 export type MotoUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  brand?: Prisma.StringFieldUpdateOperationsInput | string
+  brandId?: Prisma.StringFieldUpdateOperationsInput | string
   model?: Prisma.StringFieldUpdateOperationsInput | string
+  serialNumber?: Prisma.StringFieldUpdateOperationsInput | string
   registration?: Prisma.StringFieldUpdateOperationsInput | string
-  category?: Prisma.EnumMotoCategoryFieldUpdateOperationsInput | $Enums.MotoCategory
-  status?: Prisma.EnumMotoStatusFieldUpdateOperationsInput | $Enums.MotoStatus
+  categoryId?: Prisma.StringFieldUpdateOperationsInput | string
+  statusId?: Prisma.StringFieldUpdateOperationsInput | string
   currentKm?: Prisma.IntFieldUpdateOperationsInput | number
   pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
+  description?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  images?: Prisma.ImageUncheckedUpdateManyWithoutMotoNestedInput
+  bookings?: Prisma.BookingUncheckedUpdateManyWithoutMotoNestedInput
 }
 
 export type MotoCreateManyInput = {
   id?: string
-  brand: string
+  brandId: string
   model: string
+  serialNumber: string
   registration: string
-  category: $Enums.MotoCategory
-  status?: $Enums.MotoStatus
+  categoryId: string
+  statusId: string
   currentKm: number
   pricePerDay: number
+  description: string
   createdAt?: Date | string
 }
 
 export type MotoUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  brand?: Prisma.StringFieldUpdateOperationsInput | string
   model?: Prisma.StringFieldUpdateOperationsInput | string
+  serialNumber?: Prisma.StringFieldUpdateOperationsInput | string
   registration?: Prisma.StringFieldUpdateOperationsInput | string
-  category?: Prisma.EnumMotoCategoryFieldUpdateOperationsInput | $Enums.MotoCategory
-  status?: Prisma.EnumMotoStatusFieldUpdateOperationsInput | $Enums.MotoStatus
   currentKm?: Prisma.IntFieldUpdateOperationsInput | number
   pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
+  description?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type MotoUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  brand?: Prisma.StringFieldUpdateOperationsInput | string
+  brandId?: Prisma.StringFieldUpdateOperationsInput | string
   model?: Prisma.StringFieldUpdateOperationsInput | string
+  serialNumber?: Prisma.StringFieldUpdateOperationsInput | string
   registration?: Prisma.StringFieldUpdateOperationsInput | string
-  category?: Prisma.EnumMotoCategoryFieldUpdateOperationsInput | $Enums.MotoCategory
-  status?: Prisma.EnumMotoStatusFieldUpdateOperationsInput | $Enums.MotoStatus
+  categoryId?: Prisma.StringFieldUpdateOperationsInput | string
+  statusId?: Prisma.StringFieldUpdateOperationsInput | string
   currentKm?: Prisma.IntFieldUpdateOperationsInput | number
   pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
+  description?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type MotoListRelationFilter = {
+  every?: Prisma.MotoWhereInput
+  some?: Prisma.MotoWhereInput
+  none?: Prisma.MotoWhereInput
+}
+
+export type MotoOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
 }
 
 export type MotoCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  brand?: Prisma.SortOrder
+  brandId?: Prisma.SortOrder
   model?: Prisma.SortOrder
+  serialNumber?: Prisma.SortOrder
   registration?: Prisma.SortOrder
-  category?: Prisma.SortOrder
-  status?: Prisma.SortOrder
+  categoryId?: Prisma.SortOrder
+  statusId?: Prisma.SortOrder
   currentKm?: Prisma.SortOrder
   pricePerDay?: Prisma.SortOrder
+  description?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -416,25 +486,29 @@ export type MotoAvgOrderByAggregateInput = {
 
 export type MotoMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  brand?: Prisma.SortOrder
+  brandId?: Prisma.SortOrder
   model?: Prisma.SortOrder
+  serialNumber?: Prisma.SortOrder
   registration?: Prisma.SortOrder
-  category?: Prisma.SortOrder
-  status?: Prisma.SortOrder
+  categoryId?: Prisma.SortOrder
+  statusId?: Prisma.SortOrder
   currentKm?: Prisma.SortOrder
   pricePerDay?: Prisma.SortOrder
+  description?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
 export type MotoMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  brand?: Prisma.SortOrder
+  brandId?: Prisma.SortOrder
   model?: Prisma.SortOrder
+  serialNumber?: Prisma.SortOrder
   registration?: Prisma.SortOrder
-  category?: Prisma.SortOrder
-  status?: Prisma.SortOrder
+  categoryId?: Prisma.SortOrder
+  statusId?: Prisma.SortOrder
   currentKm?: Prisma.SortOrder
   pricePerDay?: Prisma.SortOrder
+  description?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -443,16 +517,135 @@ export type MotoSumOrderByAggregateInput = {
   pricePerDay?: Prisma.SortOrder
 }
 
-export type StringFieldUpdateOperationsInput = {
-  set?: string
+export type MotoScalarRelationFilter = {
+  is?: Prisma.MotoWhereInput
+  isNot?: Prisma.MotoWhereInput
 }
 
-export type EnumMotoCategoryFieldUpdateOperationsInput = {
-  set?: $Enums.MotoCategory
+export type MotoCreateNestedManyWithoutBrandInput = {
+  create?: Prisma.XOR<Prisma.MotoCreateWithoutBrandInput, Prisma.MotoUncheckedCreateWithoutBrandInput> | Prisma.MotoCreateWithoutBrandInput[] | Prisma.MotoUncheckedCreateWithoutBrandInput[]
+  connectOrCreate?: Prisma.MotoCreateOrConnectWithoutBrandInput | Prisma.MotoCreateOrConnectWithoutBrandInput[]
+  createMany?: Prisma.MotoCreateManyBrandInputEnvelope
+  connect?: Prisma.MotoWhereUniqueInput | Prisma.MotoWhereUniqueInput[]
 }
 
-export type EnumMotoStatusFieldUpdateOperationsInput = {
-  set?: $Enums.MotoStatus
+export type MotoUncheckedCreateNestedManyWithoutBrandInput = {
+  create?: Prisma.XOR<Prisma.MotoCreateWithoutBrandInput, Prisma.MotoUncheckedCreateWithoutBrandInput> | Prisma.MotoCreateWithoutBrandInput[] | Prisma.MotoUncheckedCreateWithoutBrandInput[]
+  connectOrCreate?: Prisma.MotoCreateOrConnectWithoutBrandInput | Prisma.MotoCreateOrConnectWithoutBrandInput[]
+  createMany?: Prisma.MotoCreateManyBrandInputEnvelope
+  connect?: Prisma.MotoWhereUniqueInput | Prisma.MotoWhereUniqueInput[]
+}
+
+export type MotoUpdateManyWithoutBrandNestedInput = {
+  create?: Prisma.XOR<Prisma.MotoCreateWithoutBrandInput, Prisma.MotoUncheckedCreateWithoutBrandInput> | Prisma.MotoCreateWithoutBrandInput[] | Prisma.MotoUncheckedCreateWithoutBrandInput[]
+  connectOrCreate?: Prisma.MotoCreateOrConnectWithoutBrandInput | Prisma.MotoCreateOrConnectWithoutBrandInput[]
+  upsert?: Prisma.MotoUpsertWithWhereUniqueWithoutBrandInput | Prisma.MotoUpsertWithWhereUniqueWithoutBrandInput[]
+  createMany?: Prisma.MotoCreateManyBrandInputEnvelope
+  set?: Prisma.MotoWhereUniqueInput | Prisma.MotoWhereUniqueInput[]
+  disconnect?: Prisma.MotoWhereUniqueInput | Prisma.MotoWhereUniqueInput[]
+  delete?: Prisma.MotoWhereUniqueInput | Prisma.MotoWhereUniqueInput[]
+  connect?: Prisma.MotoWhereUniqueInput | Prisma.MotoWhereUniqueInput[]
+  update?: Prisma.MotoUpdateWithWhereUniqueWithoutBrandInput | Prisma.MotoUpdateWithWhereUniqueWithoutBrandInput[]
+  updateMany?: Prisma.MotoUpdateManyWithWhereWithoutBrandInput | Prisma.MotoUpdateManyWithWhereWithoutBrandInput[]
+  deleteMany?: Prisma.MotoScalarWhereInput | Prisma.MotoScalarWhereInput[]
+}
+
+export type MotoUncheckedUpdateManyWithoutBrandNestedInput = {
+  create?: Prisma.XOR<Prisma.MotoCreateWithoutBrandInput, Prisma.MotoUncheckedCreateWithoutBrandInput> | Prisma.MotoCreateWithoutBrandInput[] | Prisma.MotoUncheckedCreateWithoutBrandInput[]
+  connectOrCreate?: Prisma.MotoCreateOrConnectWithoutBrandInput | Prisma.MotoCreateOrConnectWithoutBrandInput[]
+  upsert?: Prisma.MotoUpsertWithWhereUniqueWithoutBrandInput | Prisma.MotoUpsertWithWhereUniqueWithoutBrandInput[]
+  createMany?: Prisma.MotoCreateManyBrandInputEnvelope
+  set?: Prisma.MotoWhereUniqueInput | Prisma.MotoWhereUniqueInput[]
+  disconnect?: Prisma.MotoWhereUniqueInput | Prisma.MotoWhereUniqueInput[]
+  delete?: Prisma.MotoWhereUniqueInput | Prisma.MotoWhereUniqueInput[]
+  connect?: Prisma.MotoWhereUniqueInput | Prisma.MotoWhereUniqueInput[]
+  update?: Prisma.MotoUpdateWithWhereUniqueWithoutBrandInput | Prisma.MotoUpdateWithWhereUniqueWithoutBrandInput[]
+  updateMany?: Prisma.MotoUpdateManyWithWhereWithoutBrandInput | Prisma.MotoUpdateManyWithWhereWithoutBrandInput[]
+  deleteMany?: Prisma.MotoScalarWhereInput | Prisma.MotoScalarWhereInput[]
+}
+
+export type MotoCreateNestedManyWithoutCategoryInput = {
+  create?: Prisma.XOR<Prisma.MotoCreateWithoutCategoryInput, Prisma.MotoUncheckedCreateWithoutCategoryInput> | Prisma.MotoCreateWithoutCategoryInput[] | Prisma.MotoUncheckedCreateWithoutCategoryInput[]
+  connectOrCreate?: Prisma.MotoCreateOrConnectWithoutCategoryInput | Prisma.MotoCreateOrConnectWithoutCategoryInput[]
+  createMany?: Prisma.MotoCreateManyCategoryInputEnvelope
+  connect?: Prisma.MotoWhereUniqueInput | Prisma.MotoWhereUniqueInput[]
+}
+
+export type MotoUncheckedCreateNestedManyWithoutCategoryInput = {
+  create?: Prisma.XOR<Prisma.MotoCreateWithoutCategoryInput, Prisma.MotoUncheckedCreateWithoutCategoryInput> | Prisma.MotoCreateWithoutCategoryInput[] | Prisma.MotoUncheckedCreateWithoutCategoryInput[]
+  connectOrCreate?: Prisma.MotoCreateOrConnectWithoutCategoryInput | Prisma.MotoCreateOrConnectWithoutCategoryInput[]
+  createMany?: Prisma.MotoCreateManyCategoryInputEnvelope
+  connect?: Prisma.MotoWhereUniqueInput | Prisma.MotoWhereUniqueInput[]
+}
+
+export type MotoUpdateManyWithoutCategoryNestedInput = {
+  create?: Prisma.XOR<Prisma.MotoCreateWithoutCategoryInput, Prisma.MotoUncheckedCreateWithoutCategoryInput> | Prisma.MotoCreateWithoutCategoryInput[] | Prisma.MotoUncheckedCreateWithoutCategoryInput[]
+  connectOrCreate?: Prisma.MotoCreateOrConnectWithoutCategoryInput | Prisma.MotoCreateOrConnectWithoutCategoryInput[]
+  upsert?: Prisma.MotoUpsertWithWhereUniqueWithoutCategoryInput | Prisma.MotoUpsertWithWhereUniqueWithoutCategoryInput[]
+  createMany?: Prisma.MotoCreateManyCategoryInputEnvelope
+  set?: Prisma.MotoWhereUniqueInput | Prisma.MotoWhereUniqueInput[]
+  disconnect?: Prisma.MotoWhereUniqueInput | Prisma.MotoWhereUniqueInput[]
+  delete?: Prisma.MotoWhereUniqueInput | Prisma.MotoWhereUniqueInput[]
+  connect?: Prisma.MotoWhereUniqueInput | Prisma.MotoWhereUniqueInput[]
+  update?: Prisma.MotoUpdateWithWhereUniqueWithoutCategoryInput | Prisma.MotoUpdateWithWhereUniqueWithoutCategoryInput[]
+  updateMany?: Prisma.MotoUpdateManyWithWhereWithoutCategoryInput | Prisma.MotoUpdateManyWithWhereWithoutCategoryInput[]
+  deleteMany?: Prisma.MotoScalarWhereInput | Prisma.MotoScalarWhereInput[]
+}
+
+export type MotoUncheckedUpdateManyWithoutCategoryNestedInput = {
+  create?: Prisma.XOR<Prisma.MotoCreateWithoutCategoryInput, Prisma.MotoUncheckedCreateWithoutCategoryInput> | Prisma.MotoCreateWithoutCategoryInput[] | Prisma.MotoUncheckedCreateWithoutCategoryInput[]
+  connectOrCreate?: Prisma.MotoCreateOrConnectWithoutCategoryInput | Prisma.MotoCreateOrConnectWithoutCategoryInput[]
+  upsert?: Prisma.MotoUpsertWithWhereUniqueWithoutCategoryInput | Prisma.MotoUpsertWithWhereUniqueWithoutCategoryInput[]
+  createMany?: Prisma.MotoCreateManyCategoryInputEnvelope
+  set?: Prisma.MotoWhereUniqueInput | Prisma.MotoWhereUniqueInput[]
+  disconnect?: Prisma.MotoWhereUniqueInput | Prisma.MotoWhereUniqueInput[]
+  delete?: Prisma.MotoWhereUniqueInput | Prisma.MotoWhereUniqueInput[]
+  connect?: Prisma.MotoWhereUniqueInput | Prisma.MotoWhereUniqueInput[]
+  update?: Prisma.MotoUpdateWithWhereUniqueWithoutCategoryInput | Prisma.MotoUpdateWithWhereUniqueWithoutCategoryInput[]
+  updateMany?: Prisma.MotoUpdateManyWithWhereWithoutCategoryInput | Prisma.MotoUpdateManyWithWhereWithoutCategoryInput[]
+  deleteMany?: Prisma.MotoScalarWhereInput | Prisma.MotoScalarWhereInput[]
+}
+
+export type MotoCreateNestedManyWithoutStatusInput = {
+  create?: Prisma.XOR<Prisma.MotoCreateWithoutStatusInput, Prisma.MotoUncheckedCreateWithoutStatusInput> | Prisma.MotoCreateWithoutStatusInput[] | Prisma.MotoUncheckedCreateWithoutStatusInput[]
+  connectOrCreate?: Prisma.MotoCreateOrConnectWithoutStatusInput | Prisma.MotoCreateOrConnectWithoutStatusInput[]
+  createMany?: Prisma.MotoCreateManyStatusInputEnvelope
+  connect?: Prisma.MotoWhereUniqueInput | Prisma.MotoWhereUniqueInput[]
+}
+
+export type MotoUncheckedCreateNestedManyWithoutStatusInput = {
+  create?: Prisma.XOR<Prisma.MotoCreateWithoutStatusInput, Prisma.MotoUncheckedCreateWithoutStatusInput> | Prisma.MotoCreateWithoutStatusInput[] | Prisma.MotoUncheckedCreateWithoutStatusInput[]
+  connectOrCreate?: Prisma.MotoCreateOrConnectWithoutStatusInput | Prisma.MotoCreateOrConnectWithoutStatusInput[]
+  createMany?: Prisma.MotoCreateManyStatusInputEnvelope
+  connect?: Prisma.MotoWhereUniqueInput | Prisma.MotoWhereUniqueInput[]
+}
+
+export type MotoUpdateManyWithoutStatusNestedInput = {
+  create?: Prisma.XOR<Prisma.MotoCreateWithoutStatusInput, Prisma.MotoUncheckedCreateWithoutStatusInput> | Prisma.MotoCreateWithoutStatusInput[] | Prisma.MotoUncheckedCreateWithoutStatusInput[]
+  connectOrCreate?: Prisma.MotoCreateOrConnectWithoutStatusInput | Prisma.MotoCreateOrConnectWithoutStatusInput[]
+  upsert?: Prisma.MotoUpsertWithWhereUniqueWithoutStatusInput | Prisma.MotoUpsertWithWhereUniqueWithoutStatusInput[]
+  createMany?: Prisma.MotoCreateManyStatusInputEnvelope
+  set?: Prisma.MotoWhereUniqueInput | Prisma.MotoWhereUniqueInput[]
+  disconnect?: Prisma.MotoWhereUniqueInput | Prisma.MotoWhereUniqueInput[]
+  delete?: Prisma.MotoWhereUniqueInput | Prisma.MotoWhereUniqueInput[]
+  connect?: Prisma.MotoWhereUniqueInput | Prisma.MotoWhereUniqueInput[]
+  update?: Prisma.MotoUpdateWithWhereUniqueWithoutStatusInput | Prisma.MotoUpdateWithWhereUniqueWithoutStatusInput[]
+  updateMany?: Prisma.MotoUpdateManyWithWhereWithoutStatusInput | Prisma.MotoUpdateManyWithWhereWithoutStatusInput[]
+  deleteMany?: Prisma.MotoScalarWhereInput | Prisma.MotoScalarWhereInput[]
+}
+
+export type MotoUncheckedUpdateManyWithoutStatusNestedInput = {
+  create?: Prisma.XOR<Prisma.MotoCreateWithoutStatusInput, Prisma.MotoUncheckedCreateWithoutStatusInput> | Prisma.MotoCreateWithoutStatusInput[] | Prisma.MotoUncheckedCreateWithoutStatusInput[]
+  connectOrCreate?: Prisma.MotoCreateOrConnectWithoutStatusInput | Prisma.MotoCreateOrConnectWithoutStatusInput[]
+  upsert?: Prisma.MotoUpsertWithWhereUniqueWithoutStatusInput | Prisma.MotoUpsertWithWhereUniqueWithoutStatusInput[]
+  createMany?: Prisma.MotoCreateManyStatusInputEnvelope
+  set?: Prisma.MotoWhereUniqueInput | Prisma.MotoWhereUniqueInput[]
+  disconnect?: Prisma.MotoWhereUniqueInput | Prisma.MotoWhereUniqueInput[]
+  delete?: Prisma.MotoWhereUniqueInput | Prisma.MotoWhereUniqueInput[]
+  connect?: Prisma.MotoWhereUniqueInput | Prisma.MotoWhereUniqueInput[]
+  update?: Prisma.MotoUpdateWithWhereUniqueWithoutStatusInput | Prisma.MotoUpdateWithWhereUniqueWithoutStatusInput[]
+  updateMany?: Prisma.MotoUpdateManyWithWhereWithoutStatusInput | Prisma.MotoUpdateManyWithWhereWithoutStatusInput[]
+  deleteMany?: Prisma.MotoScalarWhereInput | Prisma.MotoScalarWhereInput[]
 }
 
 export type IntFieldUpdateOperationsInput = {
@@ -471,74 +664,687 @@ export type FloatFieldUpdateOperationsInput = {
   divide?: number
 }
 
-export type DateTimeFieldUpdateOperationsInput = {
-  set?: Date | string
+export type MotoCreateNestedOneWithoutImagesInput = {
+  create?: Prisma.XOR<Prisma.MotoCreateWithoutImagesInput, Prisma.MotoUncheckedCreateWithoutImagesInput>
+  connectOrCreate?: Prisma.MotoCreateOrConnectWithoutImagesInput
+  connect?: Prisma.MotoWhereUniqueInput
 }
 
+export type MotoUpdateOneRequiredWithoutImagesNestedInput = {
+  create?: Prisma.XOR<Prisma.MotoCreateWithoutImagesInput, Prisma.MotoUncheckedCreateWithoutImagesInput>
+  connectOrCreate?: Prisma.MotoCreateOrConnectWithoutImagesInput
+  upsert?: Prisma.MotoUpsertWithoutImagesInput
+  connect?: Prisma.MotoWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.MotoUpdateToOneWithWhereWithoutImagesInput, Prisma.MotoUpdateWithoutImagesInput>, Prisma.MotoUncheckedUpdateWithoutImagesInput>
+}
+
+export type MotoCreateNestedOneWithoutBookingsInput = {
+  create?: Prisma.XOR<Prisma.MotoCreateWithoutBookingsInput, Prisma.MotoUncheckedCreateWithoutBookingsInput>
+  connectOrCreate?: Prisma.MotoCreateOrConnectWithoutBookingsInput
+  connect?: Prisma.MotoWhereUniqueInput
+}
+
+export type MotoUpdateOneRequiredWithoutBookingsNestedInput = {
+  create?: Prisma.XOR<Prisma.MotoCreateWithoutBookingsInput, Prisma.MotoUncheckedCreateWithoutBookingsInput>
+  connectOrCreate?: Prisma.MotoCreateOrConnectWithoutBookingsInput
+  upsert?: Prisma.MotoUpsertWithoutBookingsInput
+  connect?: Prisma.MotoWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.MotoUpdateToOneWithWhereWithoutBookingsInput, Prisma.MotoUpdateWithoutBookingsInput>, Prisma.MotoUncheckedUpdateWithoutBookingsInput>
+}
+
+export type MotoCreateWithoutBrandInput = {
+  id?: string
+  model: string
+  serialNumber: string
+  registration: string
+  currentKm: number
+  pricePerDay: number
+  description: string
+  createdAt?: Date | string
+  category: Prisma.CategoryCreateNestedOneWithoutMotosInput
+  status: Prisma.StatusCreateNestedOneWithoutMotosInput
+  images?: Prisma.ImageCreateNestedManyWithoutMotoInput
+  bookings?: Prisma.BookingCreateNestedManyWithoutMotoInput
+}
+
+export type MotoUncheckedCreateWithoutBrandInput = {
+  id?: string
+  model: string
+  serialNumber: string
+  registration: string
+  categoryId: string
+  statusId: string
+  currentKm: number
+  pricePerDay: number
+  description: string
+  createdAt?: Date | string
+  images?: Prisma.ImageUncheckedCreateNestedManyWithoutMotoInput
+  bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutMotoInput
+}
+
+export type MotoCreateOrConnectWithoutBrandInput = {
+  where: Prisma.MotoWhereUniqueInput
+  create: Prisma.XOR<Prisma.MotoCreateWithoutBrandInput, Prisma.MotoUncheckedCreateWithoutBrandInput>
+}
+
+export type MotoCreateManyBrandInputEnvelope = {
+  data: Prisma.MotoCreateManyBrandInput | Prisma.MotoCreateManyBrandInput[]
+  skipDuplicates?: boolean
+}
+
+export type MotoUpsertWithWhereUniqueWithoutBrandInput = {
+  where: Prisma.MotoWhereUniqueInput
+  update: Prisma.XOR<Prisma.MotoUpdateWithoutBrandInput, Prisma.MotoUncheckedUpdateWithoutBrandInput>
+  create: Prisma.XOR<Prisma.MotoCreateWithoutBrandInput, Prisma.MotoUncheckedCreateWithoutBrandInput>
+}
+
+export type MotoUpdateWithWhereUniqueWithoutBrandInput = {
+  where: Prisma.MotoWhereUniqueInput
+  data: Prisma.XOR<Prisma.MotoUpdateWithoutBrandInput, Prisma.MotoUncheckedUpdateWithoutBrandInput>
+}
+
+export type MotoUpdateManyWithWhereWithoutBrandInput = {
+  where: Prisma.MotoScalarWhereInput
+  data: Prisma.XOR<Prisma.MotoUpdateManyMutationInput, Prisma.MotoUncheckedUpdateManyWithoutBrandInput>
+}
+
+export type MotoScalarWhereInput = {
+  AND?: Prisma.MotoScalarWhereInput | Prisma.MotoScalarWhereInput[]
+  OR?: Prisma.MotoScalarWhereInput[]
+  NOT?: Prisma.MotoScalarWhereInput | Prisma.MotoScalarWhereInput[]
+  id?: Prisma.UuidFilter<"Moto"> | string
+  brandId?: Prisma.UuidFilter<"Moto"> | string
+  model?: Prisma.StringFilter<"Moto"> | string
+  serialNumber?: Prisma.StringFilter<"Moto"> | string
+  registration?: Prisma.StringFilter<"Moto"> | string
+  categoryId?: Prisma.UuidFilter<"Moto"> | string
+  statusId?: Prisma.UuidFilter<"Moto"> | string
+  currentKm?: Prisma.IntFilter<"Moto"> | number
+  pricePerDay?: Prisma.FloatFilter<"Moto"> | number
+  description?: Prisma.StringFilter<"Moto"> | string
+  createdAt?: Prisma.DateTimeFilter<"Moto"> | Date | string
+}
+
+export type MotoCreateWithoutCategoryInput = {
+  id?: string
+  model: string
+  serialNumber: string
+  registration: string
+  currentKm: number
+  pricePerDay: number
+  description: string
+  createdAt?: Date | string
+  brand: Prisma.BrandCreateNestedOneWithoutMotosInput
+  status: Prisma.StatusCreateNestedOneWithoutMotosInput
+  images?: Prisma.ImageCreateNestedManyWithoutMotoInput
+  bookings?: Prisma.BookingCreateNestedManyWithoutMotoInput
+}
+
+export type MotoUncheckedCreateWithoutCategoryInput = {
+  id?: string
+  brandId: string
+  model: string
+  serialNumber: string
+  registration: string
+  statusId: string
+  currentKm: number
+  pricePerDay: number
+  description: string
+  createdAt?: Date | string
+  images?: Prisma.ImageUncheckedCreateNestedManyWithoutMotoInput
+  bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutMotoInput
+}
+
+export type MotoCreateOrConnectWithoutCategoryInput = {
+  where: Prisma.MotoWhereUniqueInput
+  create: Prisma.XOR<Prisma.MotoCreateWithoutCategoryInput, Prisma.MotoUncheckedCreateWithoutCategoryInput>
+}
+
+export type MotoCreateManyCategoryInputEnvelope = {
+  data: Prisma.MotoCreateManyCategoryInput | Prisma.MotoCreateManyCategoryInput[]
+  skipDuplicates?: boolean
+}
+
+export type MotoUpsertWithWhereUniqueWithoutCategoryInput = {
+  where: Prisma.MotoWhereUniqueInput
+  update: Prisma.XOR<Prisma.MotoUpdateWithoutCategoryInput, Prisma.MotoUncheckedUpdateWithoutCategoryInput>
+  create: Prisma.XOR<Prisma.MotoCreateWithoutCategoryInput, Prisma.MotoUncheckedCreateWithoutCategoryInput>
+}
+
+export type MotoUpdateWithWhereUniqueWithoutCategoryInput = {
+  where: Prisma.MotoWhereUniqueInput
+  data: Prisma.XOR<Prisma.MotoUpdateWithoutCategoryInput, Prisma.MotoUncheckedUpdateWithoutCategoryInput>
+}
+
+export type MotoUpdateManyWithWhereWithoutCategoryInput = {
+  where: Prisma.MotoScalarWhereInput
+  data: Prisma.XOR<Prisma.MotoUpdateManyMutationInput, Prisma.MotoUncheckedUpdateManyWithoutCategoryInput>
+}
+
+export type MotoCreateWithoutStatusInput = {
+  id?: string
+  model: string
+  serialNumber: string
+  registration: string
+  currentKm: number
+  pricePerDay: number
+  description: string
+  createdAt?: Date | string
+  brand: Prisma.BrandCreateNestedOneWithoutMotosInput
+  category: Prisma.CategoryCreateNestedOneWithoutMotosInput
+  images?: Prisma.ImageCreateNestedManyWithoutMotoInput
+  bookings?: Prisma.BookingCreateNestedManyWithoutMotoInput
+}
+
+export type MotoUncheckedCreateWithoutStatusInput = {
+  id?: string
+  brandId: string
+  model: string
+  serialNumber: string
+  registration: string
+  categoryId: string
+  currentKm: number
+  pricePerDay: number
+  description: string
+  createdAt?: Date | string
+  images?: Prisma.ImageUncheckedCreateNestedManyWithoutMotoInput
+  bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutMotoInput
+}
+
+export type MotoCreateOrConnectWithoutStatusInput = {
+  where: Prisma.MotoWhereUniqueInput
+  create: Prisma.XOR<Prisma.MotoCreateWithoutStatusInput, Prisma.MotoUncheckedCreateWithoutStatusInput>
+}
+
+export type MotoCreateManyStatusInputEnvelope = {
+  data: Prisma.MotoCreateManyStatusInput | Prisma.MotoCreateManyStatusInput[]
+  skipDuplicates?: boolean
+}
+
+export type MotoUpsertWithWhereUniqueWithoutStatusInput = {
+  where: Prisma.MotoWhereUniqueInput
+  update: Prisma.XOR<Prisma.MotoUpdateWithoutStatusInput, Prisma.MotoUncheckedUpdateWithoutStatusInput>
+  create: Prisma.XOR<Prisma.MotoCreateWithoutStatusInput, Prisma.MotoUncheckedCreateWithoutStatusInput>
+}
+
+export type MotoUpdateWithWhereUniqueWithoutStatusInput = {
+  where: Prisma.MotoWhereUniqueInput
+  data: Prisma.XOR<Prisma.MotoUpdateWithoutStatusInput, Prisma.MotoUncheckedUpdateWithoutStatusInput>
+}
+
+export type MotoUpdateManyWithWhereWithoutStatusInput = {
+  where: Prisma.MotoScalarWhereInput
+  data: Prisma.XOR<Prisma.MotoUpdateManyMutationInput, Prisma.MotoUncheckedUpdateManyWithoutStatusInput>
+}
+
+export type MotoCreateWithoutImagesInput = {
+  id?: string
+  model: string
+  serialNumber: string
+  registration: string
+  currentKm: number
+  pricePerDay: number
+  description: string
+  createdAt?: Date | string
+  brand: Prisma.BrandCreateNestedOneWithoutMotosInput
+  category: Prisma.CategoryCreateNestedOneWithoutMotosInput
+  status: Prisma.StatusCreateNestedOneWithoutMotosInput
+  bookings?: Prisma.BookingCreateNestedManyWithoutMotoInput
+}
+
+export type MotoUncheckedCreateWithoutImagesInput = {
+  id?: string
+  brandId: string
+  model: string
+  serialNumber: string
+  registration: string
+  categoryId: string
+  statusId: string
+  currentKm: number
+  pricePerDay: number
+  description: string
+  createdAt?: Date | string
+  bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutMotoInput
+}
+
+export type MotoCreateOrConnectWithoutImagesInput = {
+  where: Prisma.MotoWhereUniqueInput
+  create: Prisma.XOR<Prisma.MotoCreateWithoutImagesInput, Prisma.MotoUncheckedCreateWithoutImagesInput>
+}
+
+export type MotoUpsertWithoutImagesInput = {
+  update: Prisma.XOR<Prisma.MotoUpdateWithoutImagesInput, Prisma.MotoUncheckedUpdateWithoutImagesInput>
+  create: Prisma.XOR<Prisma.MotoCreateWithoutImagesInput, Prisma.MotoUncheckedCreateWithoutImagesInput>
+  where?: Prisma.MotoWhereInput
+}
+
+export type MotoUpdateToOneWithWhereWithoutImagesInput = {
+  where?: Prisma.MotoWhereInput
+  data: Prisma.XOR<Prisma.MotoUpdateWithoutImagesInput, Prisma.MotoUncheckedUpdateWithoutImagesInput>
+}
+
+export type MotoUpdateWithoutImagesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  model?: Prisma.StringFieldUpdateOperationsInput | string
+  serialNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  registration?: Prisma.StringFieldUpdateOperationsInput | string
+  currentKm?: Prisma.IntFieldUpdateOperationsInput | number
+  pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  brand?: Prisma.BrandUpdateOneRequiredWithoutMotosNestedInput
+  category?: Prisma.CategoryUpdateOneRequiredWithoutMotosNestedInput
+  status?: Prisma.StatusUpdateOneRequiredWithoutMotosNestedInput
+  bookings?: Prisma.BookingUpdateManyWithoutMotoNestedInput
+}
+
+export type MotoUncheckedUpdateWithoutImagesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  brandId?: Prisma.StringFieldUpdateOperationsInput | string
+  model?: Prisma.StringFieldUpdateOperationsInput | string
+  serialNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  registration?: Prisma.StringFieldUpdateOperationsInput | string
+  categoryId?: Prisma.StringFieldUpdateOperationsInput | string
+  statusId?: Prisma.StringFieldUpdateOperationsInput | string
+  currentKm?: Prisma.IntFieldUpdateOperationsInput | number
+  pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  bookings?: Prisma.BookingUncheckedUpdateManyWithoutMotoNestedInput
+}
+
+export type MotoCreateWithoutBookingsInput = {
+  id?: string
+  model: string
+  serialNumber: string
+  registration: string
+  currentKm: number
+  pricePerDay: number
+  description: string
+  createdAt?: Date | string
+  brand: Prisma.BrandCreateNestedOneWithoutMotosInput
+  category: Prisma.CategoryCreateNestedOneWithoutMotosInput
+  status: Prisma.StatusCreateNestedOneWithoutMotosInput
+  images?: Prisma.ImageCreateNestedManyWithoutMotoInput
+}
+
+export type MotoUncheckedCreateWithoutBookingsInput = {
+  id?: string
+  brandId: string
+  model: string
+  serialNumber: string
+  registration: string
+  categoryId: string
+  statusId: string
+  currentKm: number
+  pricePerDay: number
+  description: string
+  createdAt?: Date | string
+  images?: Prisma.ImageUncheckedCreateNestedManyWithoutMotoInput
+}
+
+export type MotoCreateOrConnectWithoutBookingsInput = {
+  where: Prisma.MotoWhereUniqueInput
+  create: Prisma.XOR<Prisma.MotoCreateWithoutBookingsInput, Prisma.MotoUncheckedCreateWithoutBookingsInput>
+}
+
+export type MotoUpsertWithoutBookingsInput = {
+  update: Prisma.XOR<Prisma.MotoUpdateWithoutBookingsInput, Prisma.MotoUncheckedUpdateWithoutBookingsInput>
+  create: Prisma.XOR<Prisma.MotoCreateWithoutBookingsInput, Prisma.MotoUncheckedCreateWithoutBookingsInput>
+  where?: Prisma.MotoWhereInput
+}
+
+export type MotoUpdateToOneWithWhereWithoutBookingsInput = {
+  where?: Prisma.MotoWhereInput
+  data: Prisma.XOR<Prisma.MotoUpdateWithoutBookingsInput, Prisma.MotoUncheckedUpdateWithoutBookingsInput>
+}
+
+export type MotoUpdateWithoutBookingsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  model?: Prisma.StringFieldUpdateOperationsInput | string
+  serialNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  registration?: Prisma.StringFieldUpdateOperationsInput | string
+  currentKm?: Prisma.IntFieldUpdateOperationsInput | number
+  pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  brand?: Prisma.BrandUpdateOneRequiredWithoutMotosNestedInput
+  category?: Prisma.CategoryUpdateOneRequiredWithoutMotosNestedInput
+  status?: Prisma.StatusUpdateOneRequiredWithoutMotosNestedInput
+  images?: Prisma.ImageUpdateManyWithoutMotoNestedInput
+}
+
+export type MotoUncheckedUpdateWithoutBookingsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  brandId?: Prisma.StringFieldUpdateOperationsInput | string
+  model?: Prisma.StringFieldUpdateOperationsInput | string
+  serialNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  registration?: Prisma.StringFieldUpdateOperationsInput | string
+  categoryId?: Prisma.StringFieldUpdateOperationsInput | string
+  statusId?: Prisma.StringFieldUpdateOperationsInput | string
+  currentKm?: Prisma.IntFieldUpdateOperationsInput | number
+  pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  images?: Prisma.ImageUncheckedUpdateManyWithoutMotoNestedInput
+}
+
+export type MotoCreateManyBrandInput = {
+  id?: string
+  model: string
+  serialNumber: string
+  registration: string
+  categoryId: string
+  statusId: string
+  currentKm: number
+  pricePerDay: number
+  description: string
+  createdAt?: Date | string
+}
+
+export type MotoUpdateWithoutBrandInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  model?: Prisma.StringFieldUpdateOperationsInput | string
+  serialNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  registration?: Prisma.StringFieldUpdateOperationsInput | string
+  currentKm?: Prisma.IntFieldUpdateOperationsInput | number
+  pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  category?: Prisma.CategoryUpdateOneRequiredWithoutMotosNestedInput
+  status?: Prisma.StatusUpdateOneRequiredWithoutMotosNestedInput
+  images?: Prisma.ImageUpdateManyWithoutMotoNestedInput
+  bookings?: Prisma.BookingUpdateManyWithoutMotoNestedInput
+}
+
+export type MotoUncheckedUpdateWithoutBrandInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  model?: Prisma.StringFieldUpdateOperationsInput | string
+  serialNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  registration?: Prisma.StringFieldUpdateOperationsInput | string
+  categoryId?: Prisma.StringFieldUpdateOperationsInput | string
+  statusId?: Prisma.StringFieldUpdateOperationsInput | string
+  currentKm?: Prisma.IntFieldUpdateOperationsInput | number
+  pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  images?: Prisma.ImageUncheckedUpdateManyWithoutMotoNestedInput
+  bookings?: Prisma.BookingUncheckedUpdateManyWithoutMotoNestedInput
+}
+
+export type MotoUncheckedUpdateManyWithoutBrandInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  model?: Prisma.StringFieldUpdateOperationsInput | string
+  serialNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  registration?: Prisma.StringFieldUpdateOperationsInput | string
+  categoryId?: Prisma.StringFieldUpdateOperationsInput | string
+  statusId?: Prisma.StringFieldUpdateOperationsInput | string
+  currentKm?: Prisma.IntFieldUpdateOperationsInput | number
+  pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type MotoCreateManyCategoryInput = {
+  id?: string
+  brandId: string
+  model: string
+  serialNumber: string
+  registration: string
+  statusId: string
+  currentKm: number
+  pricePerDay: number
+  description: string
+  createdAt?: Date | string
+}
+
+export type MotoUpdateWithoutCategoryInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  model?: Prisma.StringFieldUpdateOperationsInput | string
+  serialNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  registration?: Prisma.StringFieldUpdateOperationsInput | string
+  currentKm?: Prisma.IntFieldUpdateOperationsInput | number
+  pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  brand?: Prisma.BrandUpdateOneRequiredWithoutMotosNestedInput
+  status?: Prisma.StatusUpdateOneRequiredWithoutMotosNestedInput
+  images?: Prisma.ImageUpdateManyWithoutMotoNestedInput
+  bookings?: Prisma.BookingUpdateManyWithoutMotoNestedInput
+}
+
+export type MotoUncheckedUpdateWithoutCategoryInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  brandId?: Prisma.StringFieldUpdateOperationsInput | string
+  model?: Prisma.StringFieldUpdateOperationsInput | string
+  serialNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  registration?: Prisma.StringFieldUpdateOperationsInput | string
+  statusId?: Prisma.StringFieldUpdateOperationsInput | string
+  currentKm?: Prisma.IntFieldUpdateOperationsInput | number
+  pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  images?: Prisma.ImageUncheckedUpdateManyWithoutMotoNestedInput
+  bookings?: Prisma.BookingUncheckedUpdateManyWithoutMotoNestedInput
+}
+
+export type MotoUncheckedUpdateManyWithoutCategoryInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  brandId?: Prisma.StringFieldUpdateOperationsInput | string
+  model?: Prisma.StringFieldUpdateOperationsInput | string
+  serialNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  registration?: Prisma.StringFieldUpdateOperationsInput | string
+  statusId?: Prisma.StringFieldUpdateOperationsInput | string
+  currentKm?: Prisma.IntFieldUpdateOperationsInput | number
+  pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type MotoCreateManyStatusInput = {
+  id?: string
+  brandId: string
+  model: string
+  serialNumber: string
+  registration: string
+  categoryId: string
+  currentKm: number
+  pricePerDay: number
+  description: string
+  createdAt?: Date | string
+}
+
+export type MotoUpdateWithoutStatusInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  model?: Prisma.StringFieldUpdateOperationsInput | string
+  serialNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  registration?: Prisma.StringFieldUpdateOperationsInput | string
+  currentKm?: Prisma.IntFieldUpdateOperationsInput | number
+  pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  brand?: Prisma.BrandUpdateOneRequiredWithoutMotosNestedInput
+  category?: Prisma.CategoryUpdateOneRequiredWithoutMotosNestedInput
+  images?: Prisma.ImageUpdateManyWithoutMotoNestedInput
+  bookings?: Prisma.BookingUpdateManyWithoutMotoNestedInput
+}
+
+export type MotoUncheckedUpdateWithoutStatusInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  brandId?: Prisma.StringFieldUpdateOperationsInput | string
+  model?: Prisma.StringFieldUpdateOperationsInput | string
+  serialNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  registration?: Prisma.StringFieldUpdateOperationsInput | string
+  categoryId?: Prisma.StringFieldUpdateOperationsInput | string
+  currentKm?: Prisma.IntFieldUpdateOperationsInput | number
+  pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  images?: Prisma.ImageUncheckedUpdateManyWithoutMotoNestedInput
+  bookings?: Prisma.BookingUncheckedUpdateManyWithoutMotoNestedInput
+}
+
+export type MotoUncheckedUpdateManyWithoutStatusInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  brandId?: Prisma.StringFieldUpdateOperationsInput | string
+  model?: Prisma.StringFieldUpdateOperationsInput | string
+  serialNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  registration?: Prisma.StringFieldUpdateOperationsInput | string
+  categoryId?: Prisma.StringFieldUpdateOperationsInput | string
+  currentKm?: Prisma.IntFieldUpdateOperationsInput | number
+  pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+
+/**
+ * Count Type MotoCountOutputType
+ */
+
+export type MotoCountOutputType = {
+  images: number
+  bookings: number
+}
+
+export type MotoCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  images?: boolean | MotoCountOutputTypeCountImagesArgs
+  bookings?: boolean | MotoCountOutputTypeCountBookingsArgs
+}
+
+/**
+ * MotoCountOutputType without action
+ */
+export type MotoCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the MotoCountOutputType
+   */
+  select?: Prisma.MotoCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * MotoCountOutputType without action
+ */
+export type MotoCountOutputTypeCountImagesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ImageWhereInput
+}
+
+/**
+ * MotoCountOutputType without action
+ */
+export type MotoCountOutputTypeCountBookingsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.BookingWhereInput
+}
 
 
 export type MotoSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  brand?: boolean
+  brandId?: boolean
   model?: boolean
+  serialNumber?: boolean
   registration?: boolean
-  category?: boolean
-  status?: boolean
+  categoryId?: boolean
+  statusId?: boolean
   currentKm?: boolean
   pricePerDay?: boolean
+  description?: boolean
   createdAt?: boolean
+  brand?: boolean | Prisma.BrandDefaultArgs<ExtArgs>
+  category?: boolean | Prisma.CategoryDefaultArgs<ExtArgs>
+  status?: boolean | Prisma.StatusDefaultArgs<ExtArgs>
+  images?: boolean | Prisma.Moto$imagesArgs<ExtArgs>
+  bookings?: boolean | Prisma.Moto$bookingsArgs<ExtArgs>
+  _count?: boolean | Prisma.MotoCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["moto"]>
 
 export type MotoSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  brand?: boolean
+  brandId?: boolean
   model?: boolean
+  serialNumber?: boolean
   registration?: boolean
-  category?: boolean
-  status?: boolean
+  categoryId?: boolean
+  statusId?: boolean
   currentKm?: boolean
   pricePerDay?: boolean
+  description?: boolean
   createdAt?: boolean
+  brand?: boolean | Prisma.BrandDefaultArgs<ExtArgs>
+  category?: boolean | Prisma.CategoryDefaultArgs<ExtArgs>
+  status?: boolean | Prisma.StatusDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["moto"]>
 
 export type MotoSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  brand?: boolean
+  brandId?: boolean
   model?: boolean
+  serialNumber?: boolean
   registration?: boolean
-  category?: boolean
-  status?: boolean
+  categoryId?: boolean
+  statusId?: boolean
   currentKm?: boolean
   pricePerDay?: boolean
+  description?: boolean
   createdAt?: boolean
+  brand?: boolean | Prisma.BrandDefaultArgs<ExtArgs>
+  category?: boolean | Prisma.CategoryDefaultArgs<ExtArgs>
+  status?: boolean | Prisma.StatusDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["moto"]>
 
 export type MotoSelectScalar = {
   id?: boolean
-  brand?: boolean
+  brandId?: boolean
   model?: boolean
+  serialNumber?: boolean
   registration?: boolean
-  category?: boolean
-  status?: boolean
+  categoryId?: boolean
+  statusId?: boolean
   currentKm?: boolean
   pricePerDay?: boolean
+  description?: boolean
   createdAt?: boolean
 }
 
-export type MotoOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "brand" | "model" | "registration" | "category" | "status" | "currentKm" | "pricePerDay" | "createdAt", ExtArgs["result"]["moto"]>
+export type MotoOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "brandId" | "model" | "serialNumber" | "registration" | "categoryId" | "statusId" | "currentKm" | "pricePerDay" | "description" | "createdAt", ExtArgs["result"]["moto"]>
+export type MotoInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  brand?: boolean | Prisma.BrandDefaultArgs<ExtArgs>
+  category?: boolean | Prisma.CategoryDefaultArgs<ExtArgs>
+  status?: boolean | Prisma.StatusDefaultArgs<ExtArgs>
+  images?: boolean | Prisma.Moto$imagesArgs<ExtArgs>
+  bookings?: boolean | Prisma.Moto$bookingsArgs<ExtArgs>
+  _count?: boolean | Prisma.MotoCountOutputTypeDefaultArgs<ExtArgs>
+}
+export type MotoIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  brand?: boolean | Prisma.BrandDefaultArgs<ExtArgs>
+  category?: boolean | Prisma.CategoryDefaultArgs<ExtArgs>
+  status?: boolean | Prisma.StatusDefaultArgs<ExtArgs>
+}
+export type MotoIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  brand?: boolean | Prisma.BrandDefaultArgs<ExtArgs>
+  category?: boolean | Prisma.CategoryDefaultArgs<ExtArgs>
+  status?: boolean | Prisma.StatusDefaultArgs<ExtArgs>
+}
 
 export type $MotoPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Moto"
-  objects: {}
+  objects: {
+    brand: Prisma.$BrandPayload<ExtArgs>
+    category: Prisma.$CategoryPayload<ExtArgs>
+    status: Prisma.$StatusPayload<ExtArgs>
+    images: Prisma.$ImagePayload<ExtArgs>[]
+    bookings: Prisma.$BookingPayload<ExtArgs>[]
+  }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
-    brand: string
+    brandId: string
     model: string
+    serialNumber: string
     registration: string
-    category: $Enums.MotoCategory
-    status: $Enums.MotoStatus
+    categoryId: string
+    statusId: string
     currentKm: number
     pricePerDay: number
+    description: string
     createdAt: Date
   }, ExtArgs["result"]["moto"]>
   composites: {}
@@ -934,6 +1740,11 @@ readonly fields: MotoFieldRefs;
  */
 export interface Prisma__MotoClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  brand<T extends Prisma.BrandDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.BrandDefaultArgs<ExtArgs>>): Prisma.Prisma__BrandClient<runtime.Types.Result.GetResult<Prisma.$BrandPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  category<T extends Prisma.CategoryDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CategoryDefaultArgs<ExtArgs>>): Prisma.Prisma__CategoryClient<runtime.Types.Result.GetResult<Prisma.$CategoryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  status<T extends Prisma.StatusDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.StatusDefaultArgs<ExtArgs>>): Prisma.Prisma__StatusClient<runtime.Types.Result.GetResult<Prisma.$StatusPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  images<T extends Prisma.Moto$imagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Moto$imagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ImagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  bookings<T extends Prisma.Moto$bookingsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Moto$bookingsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BookingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -964,13 +1775,15 @@ export interface Prisma__MotoClient<T, Null = never, ExtArgs extends runtime.Typ
  */
 export interface MotoFieldRefs {
   readonly id: Prisma.FieldRef<"Moto", 'String'>
-  readonly brand: Prisma.FieldRef<"Moto", 'String'>
+  readonly brandId: Prisma.FieldRef<"Moto", 'String'>
   readonly model: Prisma.FieldRef<"Moto", 'String'>
+  readonly serialNumber: Prisma.FieldRef<"Moto", 'String'>
   readonly registration: Prisma.FieldRef<"Moto", 'String'>
-  readonly category: Prisma.FieldRef<"Moto", 'MotoCategory'>
-  readonly status: Prisma.FieldRef<"Moto", 'MotoStatus'>
+  readonly categoryId: Prisma.FieldRef<"Moto", 'String'>
+  readonly statusId: Prisma.FieldRef<"Moto", 'String'>
   readonly currentKm: Prisma.FieldRef<"Moto", 'Int'>
   readonly pricePerDay: Prisma.FieldRef<"Moto", 'Float'>
+  readonly description: Prisma.FieldRef<"Moto", 'String'>
   readonly createdAt: Prisma.FieldRef<"Moto", 'DateTime'>
 }
     
@@ -988,6 +1801,10 @@ export type MotoFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Omit specific fields from the Moto
    */
   omit?: Prisma.MotoOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MotoInclude<ExtArgs> | null
   /**
    * Filter, which Moto to fetch.
    */
@@ -1007,6 +1824,10 @@ export type MotoFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Extensions.I
    */
   omit?: Prisma.MotoOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MotoInclude<ExtArgs> | null
+  /**
    * Filter, which Moto to fetch.
    */
   where: Prisma.MotoWhereUniqueInput
@@ -1024,6 +1845,10 @@ export type MotoFindFirstArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    * Omit specific fields from the Moto
    */
   omit?: Prisma.MotoOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MotoInclude<ExtArgs> | null
   /**
    * Filter, which Moto to fetch.
    */
@@ -1073,6 +1898,10 @@ export type MotoFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Extensions.In
    */
   omit?: Prisma.MotoOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MotoInclude<ExtArgs> | null
+  /**
    * Filter, which Moto to fetch.
    */
   where?: Prisma.MotoWhereInput
@@ -1120,6 +1949,10 @@ export type MotoFindManyArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
    * Omit specific fields from the Moto
    */
   omit?: Prisma.MotoOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MotoInclude<ExtArgs> | null
   /**
    * Filter, which Motos to fetch.
    */
@@ -1169,6 +2002,10 @@ export type MotoCreateArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs
    */
   omit?: Prisma.MotoOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MotoInclude<ExtArgs> | null
+  /**
    * The data needed to create a Moto.
    */
   data: Prisma.XOR<Prisma.MotoCreateInput, Prisma.MotoUncheckedCreateInput>
@@ -1202,6 +2039,10 @@ export type MotoCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions
    */
   data: Prisma.MotoCreateManyInput | Prisma.MotoCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MotoIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1216,6 +2057,10 @@ export type MotoUpdateArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs
    * Omit specific fields from the Moto
    */
   omit?: Prisma.MotoOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MotoInclude<ExtArgs> | null
   /**
    * The data needed to update a Moto.
    */
@@ -1268,6 +2113,10 @@ export type MotoUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions
    * Limit how many Motos to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MotoIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1282,6 +2131,10 @@ export type MotoUpsertArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs
    * Omit specific fields from the Moto
    */
   omit?: Prisma.MotoOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MotoInclude<ExtArgs> | null
   /**
    * The filter to search for the Moto to update in case it exists.
    */
@@ -1309,6 +2162,10 @@ export type MotoDeleteArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs
    */
   omit?: Prisma.MotoOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MotoInclude<ExtArgs> | null
+  /**
    * Filter which Moto to delete.
    */
   where: Prisma.MotoWhereUniqueInput
@@ -1329,6 +2186,54 @@ export type MotoDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
 }
 
 /**
+ * Moto.images
+ */
+export type Moto$imagesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Image
+   */
+  select?: Prisma.ImageSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Image
+   */
+  omit?: Prisma.ImageOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ImageInclude<ExtArgs> | null
+  where?: Prisma.ImageWhereInput
+  orderBy?: Prisma.ImageOrderByWithRelationInput | Prisma.ImageOrderByWithRelationInput[]
+  cursor?: Prisma.ImageWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ImageScalarFieldEnum | Prisma.ImageScalarFieldEnum[]
+}
+
+/**
+ * Moto.bookings
+ */
+export type Moto$bookingsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Booking
+   */
+  select?: Prisma.BookingSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Booking
+   */
+  omit?: Prisma.BookingOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BookingInclude<ExtArgs> | null
+  where?: Prisma.BookingWhereInput
+  orderBy?: Prisma.BookingOrderByWithRelationInput | Prisma.BookingOrderByWithRelationInput[]
+  cursor?: Prisma.BookingWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.BookingScalarFieldEnum | Prisma.BookingScalarFieldEnum[]
+}
+
+/**
  * Moto without action
  */
 export type MotoDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1340,4 +2245,8 @@ export type MotoDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
    * Omit specific fields from the Moto
    */
   omit?: Prisma.MotoOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MotoInclude<ExtArgs> | null
 }

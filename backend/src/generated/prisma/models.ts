@@ -8,5 +8,12 @@
  *
  * 🟢 You can import this file directly.
  */
+export type * from './models/Brand.js'
+export type * from './models/Category.js'
+export type * from './models/Status.js'
+export type * from './models/User.js'
+export type * from './models/Shop.js'
 export type * from './models/Moto.js'
+export type * from './models/Image.js'
+export type * from './models/Booking.js'
 export type * from './commonInputTypes.js'
