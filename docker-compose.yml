@@ -44,6 +44,20 @@ services:
       timeout: 5s
       retries: 5
 
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: moto-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
   keycloak:
     image: quay.io/keycloak/keycloak:23.0.0
     container_name: moto-keycloak
@@ -68,6 +82,7 @@ services:
     container_name: moto-backend
     environment:
       NODE_ENV: development
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/moto_rental?schema=public
       DATABASE_HOST: postgres
       DATABASE_PORT: 5432
       DATABASE_NAME: moto_rental
@@ -122,3 +137,4 @@ services:
 
 volumes:
   postgres_data:
+  pgadmin_data:
