@@ -1,11 +1,12 @@
 {
   "name": "moto-rental-backend",
   "version": "1.0.0",
+  "type": "module",
   "description": "Backend pour plateforme de location de motos",
   "main": "dist/main.js",
   "scripts": {
     "dev": "tsx watch src/main.ts",
-    "build": "tsc && tsc-alias",
+    "build": "tsc && tsc-alias --resolve-full-paths",
     "start": "node dist/main.js",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
@@ -18,13 +19,13 @@
     "db:migrate:generate": "typeorm migration:generate -d src/infrastructure/database/data-source.ts"
   },
   "dependencies": {
-    "@fastify/cors": "^8.4.2",
-    "@fastify/helmet": "^11.1.1",
-    "@prisma/client": "^7.5.0",
+    "@fastify/cors": "^11.2.0",
+    "@fastify/helmet": "^13.0.2",
     "@prisma/adapter-pg": "^7.5.0",
+    "@prisma/client": "^7.5.0",
     "amqplib": "^0.10.3",
     "dotenv": "^17.3.1",
-    "fastify": "^4.25.0",
+    "fastify": "^5.8.4",
     "joi": "^17.11.0",
     "neverthrow": "^6.1.0",
     "pdfkit": "^0.13.0",
@@ -39,14 +40,14 @@
     "@types/jest": "^29.5.0",
     "@types/node": "^20.10.0",
     "@types/uuid": "^9.0.7",
-    "@typescript-eslint/eslint-plugin": "^6.13.0",
-    "@typescript-eslint/parser": "^6.13.0",
-    "eslint": "^8.55.0",
+    "@typescript-eslint/eslint-plugin": "^8.57.2",
+    "@typescript-eslint/parser": "^8.57.2",
+    "eslint": "^10.1.0",
     "jest": "^29.7.0",
     "prisma": "^7.5.0",
     "ts-jest": "^29.1.1",
     "tsc-alias": "^1.8.8",
     "tsx": "^4.7.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.9.3"
   }
 }

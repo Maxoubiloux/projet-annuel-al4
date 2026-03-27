@@ -1,7 +1,6 @@
 import fastify from 'fastify'
 import helmet from '@fastify/helmet'
 import cors from '@fastify/cors'
-import { Logger } from '@shared/logging/Logger'
 import { authMiddleware } from '@presentation/middleware/AuthMiddleware'
 import v1Routes from '@presentation/routes/v1'
 import v2Routes from '@presentation/routes/v2'
@@ -10,7 +9,14 @@ import { PrismaMotoRepository } from '@infrastructure/db/prisma-moto.repository'
 const motoRepository = new PrismaMotoRepository()
 
 const app = fastify({
-  logger: new Logger().getPino() as any,
+  logger: process.env.NODE_ENV === 'production'
+    ? true
+    : {
+        transport: {
+          target: 'pino-pretty',
+          options: { colorize: true },
+        },
+      },
 })
 
 await app.register(helmet)
@@ -26,13 +32,13 @@ app.addHook('preHandler', authMiddleware)
 app.register(v1Routes, { prefix: '/api/v1', motoRepository })
 app.register(v2Routes, { prefix: '/api/v2' })
 
-app.setErrorHandler((error, request, reply) => {
-  request.log.error(error)
-  reply.status(error.statusCode || 500).send({
-    error: error.message || 'Internal Server Error',
-    correlationId: request.id,
-  })
-})
+// app.setErrorHandler((error, request, reply) => {
+//   request.log.error(error)
+//   reply.status(error.statusCode || 500).send({
+//     error: error.message || 'Internal Server Error',
+//     correlationId: request.id,
+//   })
+// })
 
 const start = async () => {
   try {
