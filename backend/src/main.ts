@@ -5,8 +5,10 @@ import { authMiddleware } from '@presentation/middleware/AuthMiddleware'
 import v1Routes from '@presentation/routes/v1'
 import v2Routes from '@presentation/routes/v2'
 import { PrismaMotoRepository } from '@infrastructure/db/prisma-moto.repository'
+import { PrismaShopRepository } from '@infrastructure/db/prisma-shop.repository'
 
 const motoRepository = new PrismaMotoRepository()
+const shopRepository = new PrismaShopRepository()
 
 const app = fastify({
   logger: process.env.NODE_ENV === 'production'
@@ -29,7 +31,7 @@ app.get('/health', async () => ({ status: 'ok' }))
 
 app.addHook('preHandler', authMiddleware)
 
-app.register(v1Routes, { prefix: '/api/v1', motoRepository })
+app.register(v1Routes, { prefix: '/api/v1', motoRepository, shopRepository })
 app.register(v2Routes, { prefix: '/api/v2' })
 
 // app.setErrorHandler((error, request, reply) => {
