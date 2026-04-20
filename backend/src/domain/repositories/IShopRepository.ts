@@ -1,4 +1,4 @@
-import { Shop } from '../entities/Shop'
+import { Shop, UpdateShopParams } from '../entities/Shop'
 
 export interface IShopRepository {
   findAll(): Promise<Shop[]>

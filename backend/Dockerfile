@@ -6,6 +6,7 @@ COPY package.json package-lock.json* ./
 RUN npm install
 
 COPY tsconfig.json ./
+COPY prisma.config.ts ./
 COPY prisma ./prisma
 COPY src ./src
 
@@ -23,8 +24,12 @@ RUN npm install --omit=dev
 
 COPY --from=builder /build/dist ./dist
 COPY --from=builder /build/prisma ./prisma
+COPY --from=builder /build/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /build/src/generated ./src/generated
+COPY docker-entrypoint.sh ./docker-entrypoint.sh
+
+RUN chmod +x docker-entrypoint.sh
 
 EXPOSE 3000
 
-CMD ["node", "dist/main.js"]
+ENTRYPOINT ["./docker-entrypoint.sh"]

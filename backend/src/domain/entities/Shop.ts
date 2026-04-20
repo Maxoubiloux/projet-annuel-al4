@@ -1,18 +1,3 @@
-import { create } from "domain"
-
-export class Shop {
-  constructor(
-    readonly id: string,
-    readonly name: string,
-    readonly address: string,
-    readonly city: string,
-    readonly zipCode: string,
-    readonly country: string,
-    readonly phone: string,
-    readonly email: string,
-    readonly createdAt: Date
-  ) { }
-}
 export interface CreateShopParams {
   name: string
   address: string
@@ -33,8 +18,20 @@ export interface UpdateShopParams {
   email?: string
 }
 
+export class Shop {
+  constructor(
+    readonly id: string,
+    readonly name: string,
+    readonly address: string,
+    readonly city: string,
+    readonly zipCode: string,
+    readonly country: string,
+    readonly phone: string,
+    readonly email: string,
+    readonly createdAt: Date
+  ) { }
 
-static create(id: string, params: CreateShopParams): Shop {
+  static create(id: string, params: CreateShopParams): Shop {
     return new Shop(
       id,
       params.name,
@@ -47,3 +44,4 @@ static create(id: string, params: CreateShopParams): Shop {
       new Date()
     )
   }
+}

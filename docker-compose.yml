@@ -101,6 +101,7 @@ services:
         condition: service_healthy
     volumes:
       - ./backend/src:/app/src
+      - backend_generated:/app/src/generated
 
   # worker:
   #   build:
@@ -132,3 +133,4 @@ services:
 volumes:
   postgres_data:
   pgadmin_data:
+  backend_generated:
