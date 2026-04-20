@@ -2,8 +2,13 @@
   "info": {
     "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     "name": "Moto Rental API",
-    "description": "Collection complète de l'API moto-rental. Utilise les variables d'environnement définies dans moto-rental.postman_environment.json.\n\n**Workflow recommandé :**\n1. POST Create Moto → motoId auto-sauvegardé\n2. GET Moto by ID → utilise {{motoId}}\n3. PUT Update Moto → utilise {{motoId}}\n4. DELETE Moto → utilise {{motoId}}",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    "description": "**v1.0.0** — 2026-04-20 : collection initiale (Motos, Shops, Health)\n\n---\n\nCollection complète de l'API moto-rental. Utilise les variables d'environnement définies dans moto-rental.postman_environment.json.\n\n**Versioning sémantique :**\n- MAJOR : endpoint supprimé, route renommée, format de réponse changé\n- MINOR : nouvel endpoint, nouvelle ressource, champ optionnel ajouté\n- PATCH : correction exemple, description, test Postman\n\n**Workflow recommandé :**\n1. POST Create Moto → motoId auto-sauvegardé\n2. GET Moto by ID → utilise {{motoId}}\n3. PUT Update Moto → utilise {{motoId}}\n4. DELETE Moto → utilise {{motoId}}",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": {
+      "major": 1,
+      "minor": 0,
+      "patch": 0
+    }
   },
   "variable": [
     {

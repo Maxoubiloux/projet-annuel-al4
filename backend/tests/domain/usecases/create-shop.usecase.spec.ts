@@ -1,6 +1,6 @@
-import { CreateShopUseCase } from './create-shop.usecase'
-import { IShopRepository } from '../repositories/IShopRepository'
-import { Shop } from '../entities/Shop'
+import { CreateShopUseCase } from '@domain/usecases/create-shop.usecase'
+import { IShopRepository } from '@domain/repositories/IShopRepository'
+import { Shop } from '@domain/entities/Shop'
 
 const makeMockRepository = (): IShopRepository => ({
   findAll: jest.fn(),

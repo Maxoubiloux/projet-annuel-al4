@@ -1,6 +1,6 @@
-import { UpdateBrandUseCase } from './update-brand.usecase'
-import { IBrandRepository } from '../repositories/IBrandRepository'
-import { Brand } from '../entities/Brand'
+import { UpdateBrandUseCase } from '@domain/usecases/update-brand.usecase'
+import { IBrandRepository } from '@domain/repositories/IBrandRepository'
+import { Brand } from '@domain/entities/Brand'
 
 const brandFixture = new Brand('id-1', 'Yamaha', new Date())
 

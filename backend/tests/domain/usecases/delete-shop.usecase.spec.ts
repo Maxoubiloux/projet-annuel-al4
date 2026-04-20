@@ -1,6 +1,6 @@
-import { GetShopByIdUseCase } from './get-shop-by-id.usecase'
-import { IShopRepository } from '../repositories/IShopRepository'
-import { Shop } from '../entities/Shop'
+import { DeleteShopUseCase } from '@domain/usecases/delete-shop.usecase'
+import { IShopRepository } from '@domain/repositories/IShopRepository'
+import { Shop } from '@domain/entities/Shop'
 
 const shopFixture = new Shop(
   'id-1', 'Magasin Paris', '12 rue de Rivoli', 'Paris',
@@ -15,22 +15,21 @@ const makeMockRepository = (shop: Shop | null): IShopRepository => ({
   delete: jest.fn(),
 })
 
-describe('GetShopByIdUseCase', () => {
-  it('should return the shop when found', async () => {
-    const useCase = new GetShopByIdUseCase(makeMockRepository(shopFixture))
+describe('DeleteShopUseCase', () => {
+  it('should delete a shop successfully', async () => {
+    const repo = makeMockRepository(shopFixture)
+    const useCase = new DeleteShopUseCase(repo)
 
     const result = await useCase.execute('id-1')
 
     expect(result.isOk).toBe(true)
-    if (result.isOk) {
-      expect(result.value.id).toBe('id-1')
-    }
+    expect(repo.delete).toHaveBeenCalledWith('id-1')
   })
 
   it('should return NotFoundError when shop does not exist', async () => {
-    const useCase = new GetShopByIdUseCase(makeMockRepository(null))
+    const useCase = new DeleteShopUseCase(makeMockRepository(null))
 
-    const result = await useCase.execute('unknown-id')
+    const result = await useCase.execute('unknown')
 
     expect(result.isErr).toBe(true)
     if (result.isErr) {

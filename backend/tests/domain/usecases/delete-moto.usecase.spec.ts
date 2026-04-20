@@ -1,6 +1,6 @@
-import { GetMotoByIdUseCase } from './get-moto-by-id.usecase'
-import { IMotoRepository } from '../repositories/IMotoRepository'
-import { Moto } from '../entities/Moto'
+import { DeleteMotoUseCase } from '@domain/usecases/delete-moto.usecase'
+import { IMotoRepository } from '@domain/repositories/IMotoRepository'
+import { Moto } from '@domain/entities/Moto'
 
 const motoFixture = new Moto(
   'id-1', 'brand-1', 'MT-07', 'VIN001', 'AB-123-CD',
@@ -15,22 +15,21 @@ const makeMockRepository = (moto: Moto | null): IMotoRepository => ({
   delete: jest.fn(),
 })
 
-describe('GetMotoByIdUseCase', () => {
-  it('should return the moto when found', async () => {
-    const useCase = new GetMotoByIdUseCase(makeMockRepository(motoFixture))
+describe('DeleteMotoUseCase', () => {
+  it('should delete a moto successfully', async () => {
+    const repo = makeMockRepository(motoFixture)
+    const useCase = new DeleteMotoUseCase(repo)
 
     const result = await useCase.execute('id-1')
 
     expect(result.isOk).toBe(true)
-    if (result.isOk) {
-      expect(result.value.id).toBe('id-1')
-    }
+    expect(repo.delete).toHaveBeenCalledWith('id-1')
   })
 
   it('should return NotFoundError when moto does not exist', async () => {
-    const useCase = new GetMotoByIdUseCase(makeMockRepository(null))
+    const useCase = new DeleteMotoUseCase(makeMockRepository(null))
 
-    const result = await useCase.execute('unknown-id')
+    const result = await useCase.execute('unknown')
 
     expect(result.isErr).toBe(true)
     if (result.isErr) {

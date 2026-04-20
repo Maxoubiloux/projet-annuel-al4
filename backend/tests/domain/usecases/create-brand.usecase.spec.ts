@@ -1,6 +1,6 @@
-import { CreateBrandUseCase } from './create-brand.usecase'
-import { IBrandRepository } from '../repositories/IBrandRepository'
-import { Brand } from '../entities/Brand'
+import { CreateBrandUseCase } from '@domain/usecases/create-brand.usecase'
+import { IBrandRepository } from '@domain/repositories/IBrandRepository'
+import { Brand } from '@domain/entities/Brand'
 
 const makeMockRepository = (existing: Brand | null = null): IBrandRepository => ({
   findAll: jest.fn(),

@@ -1,6 +1,6 @@
-import { UpdateShopUseCase } from './update-shop.usecase'
-import { IShopRepository } from '../repositories/IShopRepository'
-import { Shop } from '../entities/Shop'
+import { UpdateShopUseCase } from '@domain/usecases/update-shop.usecase'
+import { IShopRepository } from '@domain/repositories/IShopRepository'
+import { Shop } from '@domain/entities/Shop'
 
 const shopFixture = new Shop(
   'id-1', 'Magasin Paris', '12 rue de Rivoli', 'Paris',

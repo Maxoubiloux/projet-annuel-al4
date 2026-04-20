@@ -1,6 +1,6 @@
-import { GetAllMotosUseCase } from './get-all-motos.usecase'
-import { IMotoRepository } from '../repositories/IMotoRepository'
-import { Moto } from '../entities/Moto'
+import { GetAllMotosUseCase } from '@domain/usecases/get-all-motos.usecase'
+import { IMotoRepository } from '@domain/repositories/IMotoRepository'
+import { Moto } from '@domain/entities/Moto'
 
 const motoFixture = new Moto(
   'id-1', 'brand-1', 'MT-07', 'VIN001', 'AB-123-CD',

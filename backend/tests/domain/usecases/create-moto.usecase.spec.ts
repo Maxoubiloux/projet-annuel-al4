@@ -1,9 +1,13 @@
-import { CreateMotoUseCase } from './create-moto.usecase'
-import { IMotoRepository } from '../repositories/IMotoRepository'
-import { Moto } from '../entities/Moto'
+import { CreateMotoUseCase } from '@domain/usecases/create-moto.usecase'
+import { IMotoRepository } from '@domain/repositories/IMotoRepository'
+import { Moto } from '@domain/entities/Moto'
 
 const makeMockRepository = (): IMotoRepository => ({
+  findAll: jest.fn(async () => []),
+  findById: jest.fn(async () => null),
   save: jest.fn(async (moto: Moto) => moto),
+  update: jest.fn(async (_id: string, _params) => ({}) as Moto),
+  delete: jest.fn(async () => undefined),
 })
 
 describe('CreateMotoUseCase', () => {

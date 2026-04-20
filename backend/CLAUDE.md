@@ -258,8 +258,10 @@ Impact positif et négatifs de cette décision.
 
 - Les tests unitaires couvrent **en priorité** : le domaine métier, les cas d'usage, les validators
 - Les dépendances externes sont **mockées** — les tests ne doivent pas nécessiter de base de données ni de broker
-- Framework recommandé : `vitest` ou `jest`
-- Nommage des fichiers de test : `*.spec.ts` colocalisé avec le fichier testé
+- Framework : `jest` + `ts-jest`
+- **Emplacement** : dossier `backend/tests/` miroir de `backend/src/` — ex. `src/domain/usecases/create-moto.usecase.ts` → `tests/domain/usecases/create-moto.usecase.spec.ts`
+- Les imports dans les specs utilisent les alias TypeScript (`@domain/*`, `@application/*`, `@presentation/*`, `@shared/*`) — pas de chemins relatifs vers `src/`
+- Jest est configuré avec `roots: ['<rootDir>/src', '<rootDir>/tests']` dans `backend/jest.config.cjs`
 - Un test doit être lisible comme une spec : `describe / it / expect`
 - **Ne jamais utiliser `any` dans les tests**, sauf pour mocker une dépendance externe complexe
 
