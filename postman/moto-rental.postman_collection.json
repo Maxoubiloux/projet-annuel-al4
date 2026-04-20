@@ -1,0 +1,467 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "Moto Rental API",
+    "description": "Collection complète de l'API moto-rental. Utilise les variables d'environnement définies dans moto-rental.postman_environment.json.\n\n**Workflow recommandé :**\n1. POST Create Moto → motoId auto-sauvegardé\n2. GET Moto by ID → utilise {{motoId}}\n3. PUT Update Moto → utilise {{motoId}}\n4. DELETE Moto → utilise {{motoId}}",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "description": "JWT Bearer token (vide si auth non activée)"
+    },
+    {
+      "key": "motoId",
+      "value": "",
+      "description": "Auto-rempli après POST /motos"
+    },
+    {
+      "key": "shopId",
+      "value": "",
+      "description": "Auto-rempli après POST /shops"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Status ok', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.status).to.eql('ok');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Motos",
+      "item": [
+        {
+          "name": "GET All Motos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('success: true', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.be.true;",
+                  "  pm.expect(json.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}", "disabled": true }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/motos",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "motos"]
+            }
+          }
+        },
+        {
+          "name": "GET Moto by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 ou 404', () => {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+                  "});",
+                  "pm.test('Format correct', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('success');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}", "disabled": true }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/motos/{{motoId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "motos", "{{motoId}}"]
+            }
+          }
+        },
+        {
+          "name": "POST Create Moto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('success: true + id présent', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.be.true;",
+                  "  pm.expect(json.data.id).to.be.a('string');",
+                  "  pm.collectionVariables.set('motoId', json.data.id);",
+                  "  console.log('motoId sauvegardé :', json.data.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}", "disabled": true }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"brandId\": \"550e8400-e29b-41d4-a716-446655440001\",\n  \"model\": \"MT-07\",\n  \"serialNumber\": \"VIN123456789\",\n  \"registration\": \"AB-123-CD\",\n  \"categoryId\": \"550e8400-e29b-41d4-a716-446655440002\",\n  \"statusId\": \"550e8400-e29b-41d4-a716-446655440003\",\n  \"currentKm\": 15000,\n  \"pricePerDay\": 89,\n  \"description\": \"Belle moto en bon état\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/motos",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "motos"]
+            }
+          }
+        },
+        {
+          "name": "POST Create Moto — Validation Error",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('success: false + code VALIDATION_ERROR', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.be.false;",
+                  "  pm.expect(json.error.code).to.eql('VALIDATION_ERROR');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"model\": \"MT-07\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/motos",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "motos"]
+            }
+          }
+        },
+        {
+          "name": "PUT Update Moto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('success: true', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}", "disabled": true }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentKm\": 16000,\n  \"pricePerDay\": 95\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/motos/{{motoId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "motos", "{{motoId}}"]
+            }
+          }
+        },
+        {
+          "name": "DELETE Moto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 ou 204', () => {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "  pm.test('success: true', () => {",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "  });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}", "disabled": true }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/motos/{{motoId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "motos", "{{motoId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Shops",
+      "item": [
+        {
+          "name": "GET All Shops",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('success: true', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.be.true;",
+                  "  pm.expect(json.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}", "disabled": true }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/shops",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "shops"]
+            }
+          }
+        },
+        {
+          "name": "GET Shop by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 ou 404', () => {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+                  "});",
+                  "pm.test('Format correct', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('success');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}", "disabled": true }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/shops/{{shopId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "shops", "{{shopId}}"]
+            }
+          }
+        },
+        {
+          "name": "POST Create Shop",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('success: true + id présent', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.be.true;",
+                  "  pm.expect(json.data.id).to.be.a('string');",
+                  "  pm.collectionVariables.set('shopId', json.data.id);",
+                  "  console.log('shopId sauvegardé :', json.data.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}", "disabled": true }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Moto Paris Centre\",\n  \"address\": \"12 rue de Rivoli\",\n  \"city\": \"Paris\",\n  \"zipCode\": \"75001\",\n  \"country\": \"France\",\n  \"phone\": \"0123456789\",\n  \"email\": \"contact@moto-paris.fr\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/shops",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "shops"]
+            }
+          }
+        },
+        {
+          "name": "POST Create Shop — Validation Error",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('success: false + code VALIDATION_ERROR', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.be.false;",
+                  "  pm.expect(json.error.code).to.eql('VALIDATION_ERROR');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Shop sans adresse\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/shops",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "shops"]
+            }
+          }
+        },
+        {
+          "name": "PUT Update Shop",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('success: true', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}", "disabled": true }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"0987654321\",\n  \"email\": \"nouveau@moto-paris.fr\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/shops/{{shopId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "shops", "{{shopId}}"]
+            }
+          }
+        },
+        {
+          "name": "DELETE Shop",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 ou 204', () => {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}", "disabled": true }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/shops/{{shopId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "shops", "{{shopId}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
