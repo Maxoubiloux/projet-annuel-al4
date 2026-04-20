@@ -1,3 +1,5 @@
+import { create } from "domain"
+
 export class Shop {
   constructor(
     readonly id: string,
@@ -11,3 +13,37 @@ export class Shop {
     readonly createdAt: Date
   ) { }
 }
+export interface CreateShopParams {
+  name: string
+  address: string
+  city: string
+  zipCode: string
+  country: string
+  phone: string
+  email: string
+}
+
+export interface UpdateShopParams {
+  name?: string
+  address?: string
+  city?: string
+  zipCode?: string
+  country?: string
+  phone?: string
+  email?: string
+}
+
+
+static create(id: string, params: CreateShopParams): Shop {
+    return new Shop(
+      id,
+      params.name,
+      params.address,
+      params.city,
+      params.zipCode,
+      params.country,
+      params.phone,
+      params.email,
+      new Date()
+    )
+  }
