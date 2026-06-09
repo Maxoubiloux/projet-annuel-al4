@@ -65,8 +65,8 @@ export default function OffresPage() {
             {OFFERS.map((offer) => (
               <div key={offer.id} className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 flex flex-col md:flex-row h-full group hover:shadow-2xl transition-shadow duration-300">
                 <div className="relative w-full md:w-2/5 h-48 md:h-auto overflow-hidden">
-                  <div 
-                    className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110" 
+                  <div
+                    className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
                     style={{ backgroundImage: `url(${offer.imageUrl})` }}
                   ></div>
                   <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 text-sm font-bold italic rounded">
@@ -89,9 +89,9 @@ export default function OffresPage() {
                       </div>
                     )}
                     <div className="flex items-center justify-between mt-auto">
-                      <span className="text-xs text-gray-400 italic">Valable jusqu'au {offer.validUntil}</span>
-                      <Link 
-                        href="/motos" 
+                      <span className="text-xs text-gray-400 italic">Valable jusqu&apos;au {offer.validUntil}</span>
+                      <Link
+                        href="/motos"
                         className="bg-black text-white px-6 py-2 rounded-full text-sm font-bold hover:bg-red-600 transition-colors"
                       >
                         En profiter
@@ -111,13 +111,13 @@ export default function OffresPage() {
           <h2 className="text-3xl font-bold italic mb-6">NE MANQUEZ AUCUNE OFFRE</h2>
           <p className="text-lg mb-8 opacity-90">Inscrivez-vous à notre newsletter pour recevoir nos promotions en avant-première.</p>
           <div className="max-w-md mx-auto flex flex-col sm:flex-row gap-4">
-            <input 
-              type="email" 
-              placeholder="Votre adresse email" 
+            <input
+              type="email"
+              placeholder="Votre adresse email"
               className="flex-grow px-6 py-3 rounded-full text-black focus:outline-none focus:ring-2 focus:ring-white"
             />
             <button className="bg-black text-white px-8 py-3 rounded-full font-bold hover:bg-gray-800 transition-colors">
-              S'inscrire
+              S&apos;inscrire
             </button>
           </div>
         </div>
