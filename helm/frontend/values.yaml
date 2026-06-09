@@ -1,0 +1,19 @@
+replicaCount: 1
+
+image:
+  repository: frontend-image
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+nameOverride: "frontend"
+fullnameOverride: "frontend-app"
+
+service:
+  type: ClusterIP
+  port: 3000
+
+ingress:
+  enabled: true
+  gatewayName: http-gateway
+  gatewayNamespace: nginx-gateway
+  hostname: "frontend.local"
