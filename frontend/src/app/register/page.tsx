@@ -124,7 +124,7 @@ export default function RegisterPage() {
               className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
             />
             <label htmlFor="terms" className="ml-2 block text-sm text-gray-900">
-              J'accepte les <a href="#" className="text-red-600 hover:underline">conditions générales</a>
+              J&apos;accepte les <a href="#" className="text-red-600 hover:underline">conditions générales</a>
             </label>
           </div>
 

@@ -687,7 +687,7 @@ export default function MotoDetails() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">MOTO NON TROUVÉE</h1>
-        <p className="text-gray-600 mb-8">Désolé, la moto que vous recherchez n'existe pas ou a été retirée.</p>
+        <p className="text-gray-600 mb-8">Désolé, la moto que vous recherchez n&apos;existe pas ou a été retirée.</p>
         <Link href="/motos" className="bg-red-600 text-white px-8 py-3 rounded-full font-bold hover:bg-red-700 transition-colors">
           Retour au catalogue
         </Link>
@@ -724,17 +724,16 @@ export default function MotoDetails() {
           {/* Image Section */}
           <div className="space-y-6">
             <div className="relative aspect-[4/3] rounded-3xl overflow-hidden bg-gray-100 shadow-2xl">
-              <Image 
-                src={moto.imageUrl} 
+              <Image
+                src={moto.imageUrl}
                 alt={`${moto.brand} ${moto.model}`}
                 fill
                 className="object-cover"
                 priority
               />
               <div className="absolute top-6 left-6 flex flex-col gap-2">
-                <span className={`px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase text-white ${
-                  moto.category === 'A' ? 'bg-red-600' : moto.category === 'A2' ? 'bg-orange-500' : 'bg-green-600'
-                }`}>
+                <span className={`px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase text-white ${moto.category === 'A' ? 'bg-red-600' : moto.category === 'A2' ? 'bg-orange-500' : 'bg-green-600'
+                  }`}>
                   PERMIS {moto.category}
                 </span>
                 <span className="bg-black/80 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase text-white">
@@ -799,8 +798,8 @@ export default function MotoDetails() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Date de départ</label>
-                    <input 
-                      type="date" 
+                    <input
+                      type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
                       className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-gray-900 focus:border-red-600 focus:outline-none transition-colors"
@@ -808,8 +807,8 @@ export default function MotoDetails() {
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Date de retour</label>
-                    <input 
-                      type="date" 
+                    <input
+                      type="date"
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
                       className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-gray-900 focus:border-red-600 focus:outline-none transition-colors"
@@ -832,7 +831,7 @@ export default function MotoDetails() {
                   </div>
                 </div>
 
-                <button 
+                <button
                   disabled={!startDate || !endDate}
                   className="w-full bg-red-600 text-white py-5 rounded-2xl text-xl font-black italic uppercase tracking-widest hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-red-600/20"
                 >
