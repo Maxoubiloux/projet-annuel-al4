@@ -7,7 +7,12 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative h-[80vh] flex items-center justify-center bg-black overflow-hidden">
         <div className="absolute inset-0 opacity-60">
-          <div className="w-full h-full bg-[url('https://images.unsplash.com/photo-1558981403-c5f91cbcf523?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center"></div>
+          <Image
+            src="https://images.unsplash.com/photo-1558981403-c5f91cbcf523?q=80&w=2070&auto=format&fit=crop"
+            alt="Moto background"
+            fill
+            className="object-cover"
+          />
         </div>
         <div className="relative z-10 text-center text-white px-4 max-w-4xl">
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 italic uppercase">
@@ -17,14 +22,14 @@ export default function Home() {
             Le garage de référence pour louer la moto de vos rêves.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link 
-              href="/motos" 
+            <Link
+              href="/motos"
               className="bg-red-600 text-white px-8 py-4 rounded-full text-lg font-bold hover:bg-red-700 transition-all transform hover:scale-105"
             >
               Voir nos motos
             </Link>
-            <Link 
-              href="/agences" 
+            <Link
+              href="/agences"
               className="bg-white text-black px-8 py-4 rounded-full text-lg font-bold hover:bg-gray-100 transition-all transform hover:scale-105"
             >
               Trouver une agence
@@ -52,10 +57,12 @@ export default function Home() {
               { name: 'Trail', img: 'https://images.unsplash.com/photo-1591637333184-19aa84b3e01f?q=80&w=2070&auto=format&fit=crop' }
             ].map((cat) => (
               <div key={cat.name} className="group relative overflow-hidden rounded-2xl aspect-video cursor-pointer">
-                <div 
-                  className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110" 
-                  style={{ backgroundImage: `url(${cat.img})` }}
-                ></div>
+                <Image
+                  src={cat.img}
+                  alt={cat.name}
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-110"
+                />
                 <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors"></div>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <h3 className="text-white text-3xl font-bold tracking-tighter italic">{cat.name.toUpperCase()}</h3>
@@ -88,10 +95,12 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="relative rounded-2xl overflow-hidden aspect-[16/9] md:aspect-auto md:h-80 group">
-              <div 
-                className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" 
-                style={{ backgroundImage: "url('https://images.unsplash.com/photo-1558981403-c5f91cbcf523?q=80&w=2070&auto=format&fit=crop')" }}
-              ></div>
+              <Image
+                src="https://images.unsplash.com/photo-1558981403-c5f91cbcf523?q=80&w=2070&auto=format&fit=crop"
+                alt="Offre Évasion Week-end"
+                fill
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent"></div>
               <div className="absolute bottom-0 left-0 p-8">
                 <span className="bg-red-600 text-white px-3 py-1 text-sm font-bold italic rounded mb-4 inline-block">-15%</span>
@@ -101,10 +110,12 @@ export default function Home() {
               </div>
             </div>
             <div className="relative rounded-2xl overflow-hidden aspect-[16/9] md:aspect-auto md:h-80 group">
-              <div 
-                className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" 
-                style={{ backgroundImage: "url('https://images.unsplash.com/photo-1591637333184-19aa84b3e01f?q=80&w=2070&auto=format&fit=crop')" }}
-              ></div>
+              <Image
+                src="https://images.unsplash.com/photo-1591637333184-19aa84b3e01f?q=80&w=2070&auto=format&fit=crop"
+                alt="Offre Longue Durée"
+                fill
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent"></div>
               <div className="absolute bottom-0 left-0 p-8">
                 <span className="bg-red-600 text-white px-3 py-1 text-sm font-bold italic rounded mb-4 inline-block">2 JOURS OFFERTS</span>

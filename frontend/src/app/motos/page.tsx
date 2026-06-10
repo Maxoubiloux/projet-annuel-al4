@@ -705,18 +705,17 @@ export default function MotosPage() {
               <p className="text-gray-600 text-lg">Choisissez votre compagnon de route parmi notre sélection.</p>
             </div>
           </div>
-          
+
           <div className="space-y-6">
             <div>
               <p className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-3">Filtrer par style</p>
               <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                 {['Tous', 'Sportive', 'Roadster', 'Trail', 'Custom', 'Touring'].map((st) => (
-                  <button 
+                  <button
                     key={st}
                     onClick={() => setSelectedStyle(st)}
-                    className={`px-6 py-2 rounded-full text-sm font-bold border-2 transition-all whitespace-nowrap ${
-                      selectedStyle === st ? 'bg-red-600 border-red-600 text-white shadow-md shadow-red-200' : 'bg-white border-gray-200 text-gray-700 hover:border-red-600 hover:text-red-600'
-                    }`}
+                    className={`px-6 py-2 rounded-full text-sm font-bold border-2 transition-all whitespace-nowrap ${selectedStyle === st ? 'bg-red-600 border-red-600 text-white shadow-md shadow-red-200' : 'bg-white border-gray-200 text-gray-700 hover:border-red-600 hover:text-red-600'
+                      }`}
                   >
                     {st.toUpperCase()}
                   </button>
@@ -728,12 +727,11 @@ export default function MotosPage() {
               <p className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-3">Filtrer par permis</p>
               <div className="flex gap-3">
                 {['Tous', 'A', 'A2', 'A1'].map((cat) => (
-                  <button 
+                  <button
                     key={cat}
                     onClick={() => setSelectedCategory(cat)}
-                    className={`px-8 py-2 rounded-full text-sm font-bold border-2 transition-all ${
-                      selectedCategory === cat ? 'bg-black border-black text-white shadow-md shadow-gray-300' : 'bg-white border-gray-200 text-gray-700 hover:border-black hover:text-black'
-                    }`}
+                    className={`px-8 py-2 rounded-full text-sm font-bold border-2 transition-all ${selectedCategory === cat ? 'bg-black border-black text-white shadow-md shadow-gray-300' : 'bg-white border-gray-200 text-gray-700 hover:border-black hover:text-black'
+                      }`}
                   >
                     {cat === 'Tous' ? 'TOUS' : `PERMIS ${cat}`}
                   </button>
@@ -747,11 +745,13 @@ export default function MotosPage() {
           {filteredMotos.map((moto) => (
             <div key={moto.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow border border-gray-100 group">
               <div className="relative h-64 overflow-hidden">
-                <div 
-                  className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110" 
-                  style={{ backgroundImage: `url(${moto.imageUrl})` }}
-                ></div>
-                
+                <Image
+                  src={moto.imageUrl}
+                  alt={moto.model}
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-110"
+                />
+
                 {/* Badges */}
                 <div className="absolute top-4 left-4 flex flex-col gap-2">
                   <div className="bg-white/95 backdrop-blur-sm px-3 py-1 rounded-lg text-[10px] font-black text-gray-900 border border-gray-100 shadow-sm flex items-center gap-1.5">
@@ -782,7 +782,7 @@ export default function MotosPage() {
                 <p className="text-gray-600 text-sm mb-6 line-clamp-2">
                   {moto.description}
                 </p>
-                <Link 
+                <Link
                   href={`/motos/${moto.id}`}
                   className="block w-full text-center bg-gray-900 text-white py-3 rounded-xl font-bold hover:bg-red-600 transition-colors"
                 >
@@ -796,7 +796,7 @@ export default function MotosPage() {
         {filteredMotos.length === 0 && (
           <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-gray-200">
             <p className="text-gray-400 text-xl font-medium italic">Aucune moto ne correspond à vos critères de recherche.</p>
-            <button 
+            <button
               onClick={handleReset}
               className="mt-4 text-red-600 font-bold hover:underline"
             >
