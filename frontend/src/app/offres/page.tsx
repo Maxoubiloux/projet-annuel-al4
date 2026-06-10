@@ -65,10 +65,12 @@ export default function OffresPage() {
             {OFFERS.map((offer) => (
               <div key={offer.id} className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 flex flex-col md:flex-row h-full group hover:shadow-2xl transition-shadow duration-300">
                 <div className="relative w-full md:w-2/5 h-48 md:h-auto overflow-hidden">
-                  <div
-                    className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
-                    style={{ backgroundImage: `url(${offer.imageUrl})` }}
-                  ></div>
+                  <Image
+                    src={offer.imageUrl}
+                    alt={offer.title}
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
                   <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 text-sm font-bold italic rounded">
                     {offer.discount}
                   </div>

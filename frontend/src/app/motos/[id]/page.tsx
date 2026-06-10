@@ -4,7 +4,7 @@ import { Motorbike } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useState, use } from 'react';
+import { useState } from 'react';
 
 // On importe les données mockées pour la démo (on pourrait aussi les mettre dans un service partagé)
 const MOCK_MOTOS: Motorbike[] = [
