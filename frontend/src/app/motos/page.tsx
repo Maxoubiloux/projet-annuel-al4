@@ -5,7 +5,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 
-// Mock data pour la démo
+const kmFormatter = new Intl.NumberFormat('fr-FR');
+
 const MOCK_MOTOS: Motorbike[] = [
   {
     id: '1',
@@ -752,7 +753,6 @@ export default function MotosPage() {
                   className="object-cover transition-transform duration-500 group-hover:scale-110"
                 />
 
-                {/* Badges */}
                 <div className="absolute top-4 left-4 flex flex-col gap-2">
                   <div className="bg-white/95 backdrop-blur-sm px-3 py-1 rounded-lg text-[10px] font-black text-gray-900 border border-gray-100 shadow-sm flex items-center gap-1.5">
                     <div className={`w-2 h-2 rounded-full ${moto.category === 'A' ? 'bg-red-600' : moto.category === 'A2' ? 'bg-orange-500' : 'bg-green-500'}`}></div>
@@ -776,7 +776,7 @@ export default function MotosPage() {
                   </div>
                 </div>
                 <div className="flex justify-between items-center mb-4 text-xs text-gray-500">
-                  <span>{moto.currentKm.toLocaleString()} km</span>
+                  <span>{kmFormatter.format(moto.currentKm)} km</span>
                   <span className={moto.status === 'PUBLISHED' ? 'text-green-600' : 'text-gray-400'}>{moto.status}</span>
                 </div>
                 <p className="text-gray-600 text-sm mb-6 line-clamp-2">

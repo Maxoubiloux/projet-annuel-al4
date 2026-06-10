@@ -6,7 +6,8 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 
-// On importe les données mockées pour la démo (on pourrait aussi les mettre dans un service partagé)
+const kmFormatter = new Intl.NumberFormat('fr-FR');
+
 const MOCK_MOTOS: Motorbike[] = [
   {
     id: '1',
@@ -706,7 +707,7 @@ export default function MotoDetails() {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Navigation Breadcrumbs */}
+
       <div className="bg-gray-50 border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <nav className="flex text-sm font-medium text-gray-500">
@@ -721,7 +722,7 @@ export default function MotoDetails() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Image Section */}
+
           <div className="space-y-6">
             <div className="relative aspect-[4/3] rounded-3xl overflow-hidden bg-gray-100 shadow-2xl">
               <Image
@@ -742,7 +743,6 @@ export default function MotoDetails() {
               </div>
             </div>
 
-            {/* Technical Specs Cards */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 text-center">
                 <p className="text-gray-500 text-xs font-bold uppercase mb-1">Année</p>
@@ -766,12 +766,11 @@ export default function MotoDetails() {
               </div>
               <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 text-center">
                 <p className="text-gray-500 text-xs font-bold uppercase mb-1">Kilométrage</p>
-                <p className="text-xl font-bold text-gray-900" suppressHydrationWarning>{moto.currentKm.toLocaleString()} <span className="text-sm">km</span></p>
+                <p className="text-xl font-bold text-gray-900">{kmFormatter.format(moto.currentKm)} <span className="text-sm">km</span></p>
               </div>
             </div>
           </div>
 
-          {/* Details & Booking Section */}
           <div className="flex flex-col">
             <div className="mb-8">
               <h1 className="text-4xl md:text-5xl font-black text-gray-900 italic uppercase leading-none mb-4">
@@ -782,7 +781,6 @@ export default function MotoDetails() {
               </p>
             </div>
 
-            {/* Booking Card */}
             <div className="bg-white rounded-3xl border-2 border-gray-100 p-8 shadow-xl">
               <div className="flex items-center justify-between mb-8 pb-6 border-b border-gray-100">
                 <div>
@@ -839,7 +837,6 @@ export default function MotoDetails() {
                 </button>
               </div>
 
-              {/* Trust Badges */}
               <div className="mt-8 grid grid-cols-2 gap-4 pt-6 border-t border-gray-100">
                 <div className="flex items-center gap-2">
                   <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
