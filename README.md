@@ -4,7 +4,7 @@ Ce projet est une plateforme de location de motos nommée City Moto Yard.
 
 ## 🏍️ Frontend (Next.js)
 
-Le frontend est situé dans le dossier `Location_Moto/frontend`. Il utilise **Next.js 15**, **TypeScript** et **Tailwind CSS**.
+Le frontend est situé dans le dossier `/frontend`. Il utilise **Next.js 15**, **TypeScript** et **Tailwind CSS**.
 
 ### Prérequis
 
@@ -15,7 +15,7 @@ Le frontend est situé dans le dossier `Location_Moto/frontend`. Il utilise **Ne
 
 1. Naviguez dans le dossier du frontend :
    ```bash
-   cd Location_Moto/frontend
+   cd /frontend
    ```
 
 2. Installez les dépendances :
@@ -46,7 +46,7 @@ npm run start
 
 ## 🏗️ Architecture du projet
 
-- `Location_Moto/frontend` : Interface utilisateur Next.js.
-- `Location_Moto/backend` : API (à implémenter).
-- `Location_Moto/worker` : Traitements asynchrones (à implémenter).
-- `Location_Moto/docs/adr` : Architecture Decision Records (ADR).
+- `frontend` : Interface utilisateur Next.js.
+- `backend` : API (à implémenter).
+- `worker` : Traitements asynchrones (à implémenter).
+- `docs/adr` : Architecture Decision Records (ADR).
