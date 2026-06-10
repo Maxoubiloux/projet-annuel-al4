@@ -1,0 +1,17 @@
+name: Check branch source
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  check-source-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Allow only develop -> main
+        run: |
+          if [ "${{ github.head_ref }}" != "develop" ]; then
+            echo "Only develop can be merged into main."
+            exit 1
+          fi
