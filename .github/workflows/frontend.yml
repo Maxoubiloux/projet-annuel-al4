@@ -5,6 +5,9 @@ on:
     branches:
       - main
       - develop
+      - "feature/**"
+      - "fix/**"
+      - "hotfix/**"
   pull_request:
     branches:
       - main
