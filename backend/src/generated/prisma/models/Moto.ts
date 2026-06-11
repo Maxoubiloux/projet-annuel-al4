@@ -29,11 +29,21 @@ export type AggregateMoto = {
 export type MotoAvgAggregateOutputType = {
   currentKm: number | null
   pricePerDay: number | null
+  year: number | null
+  hp: number | null
+  torque: number | null
+  consumption: number | null
+  range: number | null
 }
 
 export type MotoSumAggregateOutputType = {
   currentKm: number | null
   pricePerDay: number | null
+  year: number | null
+  hp: number | null
+  torque: number | null
+  consumption: number | null
+  range: number | null
 }
 
 export type MotoMinAggregateOutputType = {
@@ -47,6 +57,12 @@ export type MotoMinAggregateOutputType = {
   currentKm: number | null
   pricePerDay: number | null
   description: string | null
+  style: string | null
+  year: number | null
+  hp: number | null
+  torque: number | null
+  consumption: number | null
+  range: number | null
   createdAt: Date | null
 }
 
@@ -61,6 +77,12 @@ export type MotoMaxAggregateOutputType = {
   currentKm: number | null
   pricePerDay: number | null
   description: string | null
+  style: string | null
+  year: number | null
+  hp: number | null
+  torque: number | null
+  consumption: number | null
+  range: number | null
   createdAt: Date | null
 }
 
@@ -75,6 +97,12 @@ export type MotoCountAggregateOutputType = {
   currentKm: number
   pricePerDay: number
   description: number
+  style: number
+  year: number
+  hp: number
+  torque: number
+  consumption: number
+  range: number
   createdAt: number
   _all: number
 }
@@ -83,11 +111,21 @@ export type MotoCountAggregateOutputType = {
 export type MotoAvgAggregateInputType = {
   currentKm?: true
   pricePerDay?: true
+  year?: true
+  hp?: true
+  torque?: true
+  consumption?: true
+  range?: true
 }
 
 export type MotoSumAggregateInputType = {
   currentKm?: true
   pricePerDay?: true
+  year?: true
+  hp?: true
+  torque?: true
+  consumption?: true
+  range?: true
 }
 
 export type MotoMinAggregateInputType = {
@@ -101,6 +139,12 @@ export type MotoMinAggregateInputType = {
   currentKm?: true
   pricePerDay?: true
   description?: true
+  style?: true
+  year?: true
+  hp?: true
+  torque?: true
+  consumption?: true
+  range?: true
   createdAt?: true
 }
 
@@ -115,6 +159,12 @@ export type MotoMaxAggregateInputType = {
   currentKm?: true
   pricePerDay?: true
   description?: true
+  style?: true
+  year?: true
+  hp?: true
+  torque?: true
+  consumption?: true
+  range?: true
   createdAt?: true
 }
 
@@ -129,6 +179,12 @@ export type MotoCountAggregateInputType = {
   currentKm?: true
   pricePerDay?: true
   description?: true
+  style?: true
+  year?: true
+  hp?: true
+  torque?: true
+  consumption?: true
+  range?: true
   createdAt?: true
   _all?: true
 }
@@ -230,6 +286,12 @@ export type MotoGroupByOutputType = {
   currentKm: number
   pricePerDay: number
   description: string
+  style: string
+  year: number
+  hp: number
+  torque: number
+  consumption: number
+  range: number
   createdAt: Date
   _count: MotoCountAggregateOutputType | null
   _avg: MotoAvgAggregateOutputType | null
@@ -267,6 +329,12 @@ export type MotoWhereInput = {
   currentKm?: Prisma.IntFilter<"Moto"> | number
   pricePerDay?: Prisma.FloatFilter<"Moto"> | number
   description?: Prisma.StringFilter<"Moto"> | string
+  style?: Prisma.StringFilter<"Moto"> | string
+  year?: Prisma.IntFilter<"Moto"> | number
+  hp?: Prisma.FloatFilter<"Moto"> | number
+  torque?: Prisma.FloatFilter<"Moto"> | number
+  consumption?: Prisma.FloatFilter<"Moto"> | number
+  range?: Prisma.IntFilter<"Moto"> | number
   createdAt?: Prisma.DateTimeFilter<"Moto"> | Date | string
   brand?: Prisma.XOR<Prisma.BrandScalarRelationFilter, Prisma.BrandWhereInput>
   category?: Prisma.XOR<Prisma.CategoryScalarRelationFilter, Prisma.CategoryWhereInput>
@@ -286,6 +354,12 @@ export type MotoOrderByWithRelationInput = {
   currentKm?: Prisma.SortOrder
   pricePerDay?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  style?: Prisma.SortOrder
+  year?: Prisma.SortOrder
+  hp?: Prisma.SortOrder
+  torque?: Prisma.SortOrder
+  consumption?: Prisma.SortOrder
+  range?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   brand?: Prisma.BrandOrderByWithRelationInput
   category?: Prisma.CategoryOrderByWithRelationInput
@@ -308,6 +382,12 @@ export type MotoWhereUniqueInput = Prisma.AtLeast<{
   currentKm?: Prisma.IntFilter<"Moto"> | number
   pricePerDay?: Prisma.FloatFilter<"Moto"> | number
   description?: Prisma.StringFilter<"Moto"> | string
+  style?: Prisma.StringFilter<"Moto"> | string
+  year?: Prisma.IntFilter<"Moto"> | number
+  hp?: Prisma.FloatFilter<"Moto"> | number
+  torque?: Prisma.FloatFilter<"Moto"> | number
+  consumption?: Prisma.FloatFilter<"Moto"> | number
+  range?: Prisma.IntFilter<"Moto"> | number
   createdAt?: Prisma.DateTimeFilter<"Moto"> | Date | string
   brand?: Prisma.XOR<Prisma.BrandScalarRelationFilter, Prisma.BrandWhereInput>
   category?: Prisma.XOR<Prisma.CategoryScalarRelationFilter, Prisma.CategoryWhereInput>
@@ -327,6 +407,12 @@ export type MotoOrderByWithAggregationInput = {
   currentKm?: Prisma.SortOrder
   pricePerDay?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  style?: Prisma.SortOrder
+  year?: Prisma.SortOrder
+  hp?: Prisma.SortOrder
+  torque?: Prisma.SortOrder
+  consumption?: Prisma.SortOrder
+  range?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.MotoCountOrderByAggregateInput
   _avg?: Prisma.MotoAvgOrderByAggregateInput
@@ -349,6 +435,12 @@ export type MotoScalarWhereWithAggregatesInput = {
   currentKm?: Prisma.IntWithAggregatesFilter<"Moto"> | number
   pricePerDay?: Prisma.FloatWithAggregatesFilter<"Moto"> | number
   description?: Prisma.StringWithAggregatesFilter<"Moto"> | string
+  style?: Prisma.StringWithAggregatesFilter<"Moto"> | string
+  year?: Prisma.IntWithAggregatesFilter<"Moto"> | number
+  hp?: Prisma.FloatWithAggregatesFilter<"Moto"> | number
+  torque?: Prisma.FloatWithAggregatesFilter<"Moto"> | number
+  consumption?: Prisma.FloatWithAggregatesFilter<"Moto"> | number
+  range?: Prisma.IntWithAggregatesFilter<"Moto"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Moto"> | Date | string
 }
 
@@ -360,6 +452,12 @@ export type MotoCreateInput = {
   currentKm: number
   pricePerDay: number
   description: string
+  style: string
+  year: number
+  hp: number
+  torque: number
+  consumption: number
+  range: number
   createdAt?: Date | string
   brand: Prisma.BrandCreateNestedOneWithoutMotosInput
   category: Prisma.CategoryCreateNestedOneWithoutMotosInput
@@ -379,6 +477,12 @@ export type MotoUncheckedCreateInput = {
   currentKm: number
   pricePerDay: number
   description: string
+  style: string
+  year: number
+  hp: number
+  torque: number
+  consumption: number
+  range: number
   createdAt?: Date | string
   images?: Prisma.ImageUncheckedCreateNestedManyWithoutMotoInput
   bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutMotoInput
@@ -392,6 +496,12 @@ export type MotoUpdateInput = {
   currentKm?: Prisma.IntFieldUpdateOperationsInput | number
   pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  style?: Prisma.StringFieldUpdateOperationsInput | string
+  year?: Prisma.IntFieldUpdateOperationsInput | number
+  hp?: Prisma.FloatFieldUpdateOperationsInput | number
+  torque?: Prisma.FloatFieldUpdateOperationsInput | number
+  consumption?: Prisma.FloatFieldUpdateOperationsInput | number
+  range?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   brand?: Prisma.BrandUpdateOneRequiredWithoutMotosNestedInput
   category?: Prisma.CategoryUpdateOneRequiredWithoutMotosNestedInput
@@ -411,6 +521,12 @@ export type MotoUncheckedUpdateInput = {
   currentKm?: Prisma.IntFieldUpdateOperationsInput | number
   pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  style?: Prisma.StringFieldUpdateOperationsInput | string
+  year?: Prisma.IntFieldUpdateOperationsInput | number
+  hp?: Prisma.FloatFieldUpdateOperationsInput | number
+  torque?: Prisma.FloatFieldUpdateOperationsInput | number
+  consumption?: Prisma.FloatFieldUpdateOperationsInput | number
+  range?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   images?: Prisma.ImageUncheckedUpdateManyWithoutMotoNestedInput
   bookings?: Prisma.BookingUncheckedUpdateManyWithoutMotoNestedInput
@@ -427,6 +543,12 @@ export type MotoCreateManyInput = {
   currentKm: number
   pricePerDay: number
   description: string
+  style: string
+  year: number
+  hp: number
+  torque: number
+  consumption: number
+  range: number
   createdAt?: Date | string
 }
 
@@ -438,6 +560,12 @@ export type MotoUpdateManyMutationInput = {
   currentKm?: Prisma.IntFieldUpdateOperationsInput | number
   pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  style?: Prisma.StringFieldUpdateOperationsInput | string
+  year?: Prisma.IntFieldUpdateOperationsInput | number
+  hp?: Prisma.FloatFieldUpdateOperationsInput | number
+  torque?: Prisma.FloatFieldUpdateOperationsInput | number
+  consumption?: Prisma.FloatFieldUpdateOperationsInput | number
+  range?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -452,6 +580,12 @@ export type MotoUncheckedUpdateManyInput = {
   currentKm?: Prisma.IntFieldUpdateOperationsInput | number
   pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  style?: Prisma.StringFieldUpdateOperationsInput | string
+  year?: Prisma.IntFieldUpdateOperationsInput | number
+  hp?: Prisma.FloatFieldUpdateOperationsInput | number
+  torque?: Prisma.FloatFieldUpdateOperationsInput | number
+  consumption?: Prisma.FloatFieldUpdateOperationsInput | number
+  range?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -476,12 +610,23 @@ export type MotoCountOrderByAggregateInput = {
   currentKm?: Prisma.SortOrder
   pricePerDay?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  style?: Prisma.SortOrder
+  year?: Prisma.SortOrder
+  hp?: Prisma.SortOrder
+  torque?: Prisma.SortOrder
+  consumption?: Prisma.SortOrder
+  range?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
 export type MotoAvgOrderByAggregateInput = {
   currentKm?: Prisma.SortOrder
   pricePerDay?: Prisma.SortOrder
+  year?: Prisma.SortOrder
+  hp?: Prisma.SortOrder
+  torque?: Prisma.SortOrder
+  consumption?: Prisma.SortOrder
+  range?: Prisma.SortOrder
 }
 
 export type MotoMaxOrderByAggregateInput = {
@@ -495,6 +640,12 @@ export type MotoMaxOrderByAggregateInput = {
   currentKm?: Prisma.SortOrder
   pricePerDay?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  style?: Prisma.SortOrder
+  year?: Prisma.SortOrder
+  hp?: Prisma.SortOrder
+  torque?: Prisma.SortOrder
+  consumption?: Prisma.SortOrder
+  range?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -509,12 +660,23 @@ export type MotoMinOrderByAggregateInput = {
   currentKm?: Prisma.SortOrder
   pricePerDay?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  style?: Prisma.SortOrder
+  year?: Prisma.SortOrder
+  hp?: Prisma.SortOrder
+  torque?: Prisma.SortOrder
+  consumption?: Prisma.SortOrder
+  range?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
 export type MotoSumOrderByAggregateInput = {
   currentKm?: Prisma.SortOrder
   pricePerDay?: Prisma.SortOrder
+  year?: Prisma.SortOrder
+  hp?: Prisma.SortOrder
+  torque?: Prisma.SortOrder
+  consumption?: Prisma.SortOrder
+  range?: Prisma.SortOrder
 }
 
 export type MotoScalarRelationFilter = {
@@ -700,6 +862,12 @@ export type MotoCreateWithoutBrandInput = {
   currentKm: number
   pricePerDay: number
   description: string
+  style: string
+  year: number
+  hp: number
+  torque: number
+  consumption: number
+  range: number
   createdAt?: Date | string
   category: Prisma.CategoryCreateNestedOneWithoutMotosInput
   status: Prisma.StatusCreateNestedOneWithoutMotosInput
@@ -717,6 +885,12 @@ export type MotoUncheckedCreateWithoutBrandInput = {
   currentKm: number
   pricePerDay: number
   description: string
+  style: string
+  year: number
+  hp: number
+  torque: number
+  consumption: number
+  range: number
   createdAt?: Date | string
   images?: Prisma.ImageUncheckedCreateNestedManyWithoutMotoInput
   bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutMotoInput
@@ -762,6 +936,12 @@ export type MotoScalarWhereInput = {
   currentKm?: Prisma.IntFilter<"Moto"> | number
   pricePerDay?: Prisma.FloatFilter<"Moto"> | number
   description?: Prisma.StringFilter<"Moto"> | string
+  style?: Prisma.StringFilter<"Moto"> | string
+  year?: Prisma.IntFilter<"Moto"> | number
+  hp?: Prisma.FloatFilter<"Moto"> | number
+  torque?: Prisma.FloatFilter<"Moto"> | number
+  consumption?: Prisma.FloatFilter<"Moto"> | number
+  range?: Prisma.IntFilter<"Moto"> | number
   createdAt?: Prisma.DateTimeFilter<"Moto"> | Date | string
 }
 
@@ -773,6 +953,12 @@ export type MotoCreateWithoutCategoryInput = {
   currentKm: number
   pricePerDay: number
   description: string
+  style: string
+  year: number
+  hp: number
+  torque: number
+  consumption: number
+  range: number
   createdAt?: Date | string
   brand: Prisma.BrandCreateNestedOneWithoutMotosInput
   status: Prisma.StatusCreateNestedOneWithoutMotosInput
@@ -790,6 +976,12 @@ export type MotoUncheckedCreateWithoutCategoryInput = {
   currentKm: number
   pricePerDay: number
   description: string
+  style: string
+  year: number
+  hp: number
+  torque: number
+  consumption: number
+  range: number
   createdAt?: Date | string
   images?: Prisma.ImageUncheckedCreateNestedManyWithoutMotoInput
   bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutMotoInput
@@ -829,6 +1021,12 @@ export type MotoCreateWithoutStatusInput = {
   currentKm: number
   pricePerDay: number
   description: string
+  style: string
+  year: number
+  hp: number
+  torque: number
+  consumption: number
+  range: number
   createdAt?: Date | string
   brand: Prisma.BrandCreateNestedOneWithoutMotosInput
   category: Prisma.CategoryCreateNestedOneWithoutMotosInput
@@ -846,6 +1044,12 @@ export type MotoUncheckedCreateWithoutStatusInput = {
   currentKm: number
   pricePerDay: number
   description: string
+  style: string
+  year: number
+  hp: number
+  torque: number
+  consumption: number
+  range: number
   createdAt?: Date | string
   images?: Prisma.ImageUncheckedCreateNestedManyWithoutMotoInput
   bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutMotoInput
@@ -885,6 +1089,12 @@ export type MotoCreateWithoutImagesInput = {
   currentKm: number
   pricePerDay: number
   description: string
+  style: string
+  year: number
+  hp: number
+  torque: number
+  consumption: number
+  range: number
   createdAt?: Date | string
   brand: Prisma.BrandCreateNestedOneWithoutMotosInput
   category: Prisma.CategoryCreateNestedOneWithoutMotosInput
@@ -903,6 +1113,12 @@ export type MotoUncheckedCreateWithoutImagesInput = {
   currentKm: number
   pricePerDay: number
   description: string
+  style: string
+  year: number
+  hp: number
+  torque: number
+  consumption: number
+  range: number
   createdAt?: Date | string
   bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutMotoInput
 }
@@ -931,6 +1147,12 @@ export type MotoUpdateWithoutImagesInput = {
   currentKm?: Prisma.IntFieldUpdateOperationsInput | number
   pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  style?: Prisma.StringFieldUpdateOperationsInput | string
+  year?: Prisma.IntFieldUpdateOperationsInput | number
+  hp?: Prisma.FloatFieldUpdateOperationsInput | number
+  torque?: Prisma.FloatFieldUpdateOperationsInput | number
+  consumption?: Prisma.FloatFieldUpdateOperationsInput | number
+  range?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   brand?: Prisma.BrandUpdateOneRequiredWithoutMotosNestedInput
   category?: Prisma.CategoryUpdateOneRequiredWithoutMotosNestedInput
@@ -949,6 +1171,12 @@ export type MotoUncheckedUpdateWithoutImagesInput = {
   currentKm?: Prisma.IntFieldUpdateOperationsInput | number
   pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  style?: Prisma.StringFieldUpdateOperationsInput | string
+  year?: Prisma.IntFieldUpdateOperationsInput | number
+  hp?: Prisma.FloatFieldUpdateOperationsInput | number
+  torque?: Prisma.FloatFieldUpdateOperationsInput | number
+  consumption?: Prisma.FloatFieldUpdateOperationsInput | number
+  range?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bookings?: Prisma.BookingUncheckedUpdateManyWithoutMotoNestedInput
 }
@@ -961,6 +1189,12 @@ export type MotoCreateWithoutBookingsInput = {
   currentKm: number
   pricePerDay: number
   description: string
+  style: string
+  year: number
+  hp: number
+  torque: number
+  consumption: number
+  range: number
   createdAt?: Date | string
   brand: Prisma.BrandCreateNestedOneWithoutMotosInput
   category: Prisma.CategoryCreateNestedOneWithoutMotosInput
@@ -979,6 +1213,12 @@ export type MotoUncheckedCreateWithoutBookingsInput = {
   currentKm: number
   pricePerDay: number
   description: string
+  style: string
+  year: number
+  hp: number
+  torque: number
+  consumption: number
+  range: number
   createdAt?: Date | string
   images?: Prisma.ImageUncheckedCreateNestedManyWithoutMotoInput
 }
@@ -1007,6 +1247,12 @@ export type MotoUpdateWithoutBookingsInput = {
   currentKm?: Prisma.IntFieldUpdateOperationsInput | number
   pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  style?: Prisma.StringFieldUpdateOperationsInput | string
+  year?: Prisma.IntFieldUpdateOperationsInput | number
+  hp?: Prisma.FloatFieldUpdateOperationsInput | number
+  torque?: Prisma.FloatFieldUpdateOperationsInput | number
+  consumption?: Prisma.FloatFieldUpdateOperationsInput | number
+  range?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   brand?: Prisma.BrandUpdateOneRequiredWithoutMotosNestedInput
   category?: Prisma.CategoryUpdateOneRequiredWithoutMotosNestedInput
@@ -1025,6 +1271,12 @@ export type MotoUncheckedUpdateWithoutBookingsInput = {
   currentKm?: Prisma.IntFieldUpdateOperationsInput | number
   pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  style?: Prisma.StringFieldUpdateOperationsInput | string
+  year?: Prisma.IntFieldUpdateOperationsInput | number
+  hp?: Prisma.FloatFieldUpdateOperationsInput | number
+  torque?: Prisma.FloatFieldUpdateOperationsInput | number
+  consumption?: Prisma.FloatFieldUpdateOperationsInput | number
+  range?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   images?: Prisma.ImageUncheckedUpdateManyWithoutMotoNestedInput
 }
@@ -1039,6 +1291,12 @@ export type MotoCreateManyBrandInput = {
   currentKm: number
   pricePerDay: number
   description: string
+  style: string
+  year: number
+  hp: number
+  torque: number
+  consumption: number
+  range: number
   createdAt?: Date | string
 }
 
@@ -1050,6 +1308,12 @@ export type MotoUpdateWithoutBrandInput = {
   currentKm?: Prisma.IntFieldUpdateOperationsInput | number
   pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  style?: Prisma.StringFieldUpdateOperationsInput | string
+  year?: Prisma.IntFieldUpdateOperationsInput | number
+  hp?: Prisma.FloatFieldUpdateOperationsInput | number
+  torque?: Prisma.FloatFieldUpdateOperationsInput | number
+  consumption?: Prisma.FloatFieldUpdateOperationsInput | number
+  range?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   category?: Prisma.CategoryUpdateOneRequiredWithoutMotosNestedInput
   status?: Prisma.StatusUpdateOneRequiredWithoutMotosNestedInput
@@ -1067,6 +1331,12 @@ export type MotoUncheckedUpdateWithoutBrandInput = {
   currentKm?: Prisma.IntFieldUpdateOperationsInput | number
   pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  style?: Prisma.StringFieldUpdateOperationsInput | string
+  year?: Prisma.IntFieldUpdateOperationsInput | number
+  hp?: Prisma.FloatFieldUpdateOperationsInput | number
+  torque?: Prisma.FloatFieldUpdateOperationsInput | number
+  consumption?: Prisma.FloatFieldUpdateOperationsInput | number
+  range?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   images?: Prisma.ImageUncheckedUpdateManyWithoutMotoNestedInput
   bookings?: Prisma.BookingUncheckedUpdateManyWithoutMotoNestedInput
@@ -1082,6 +1352,12 @@ export type MotoUncheckedUpdateManyWithoutBrandInput = {
   currentKm?: Prisma.IntFieldUpdateOperationsInput | number
   pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  style?: Prisma.StringFieldUpdateOperationsInput | string
+  year?: Prisma.IntFieldUpdateOperationsInput | number
+  hp?: Prisma.FloatFieldUpdateOperationsInput | number
+  torque?: Prisma.FloatFieldUpdateOperationsInput | number
+  consumption?: Prisma.FloatFieldUpdateOperationsInput | number
+  range?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -1095,6 +1371,12 @@ export type MotoCreateManyCategoryInput = {
   currentKm: number
   pricePerDay: number
   description: string
+  style: string
+  year: number
+  hp: number
+  torque: number
+  consumption: number
+  range: number
   createdAt?: Date | string
 }
 
@@ -1106,6 +1388,12 @@ export type MotoUpdateWithoutCategoryInput = {
   currentKm?: Prisma.IntFieldUpdateOperationsInput | number
   pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  style?: Prisma.StringFieldUpdateOperationsInput | string
+  year?: Prisma.IntFieldUpdateOperationsInput | number
+  hp?: Prisma.FloatFieldUpdateOperationsInput | number
+  torque?: Prisma.FloatFieldUpdateOperationsInput | number
+  consumption?: Prisma.FloatFieldUpdateOperationsInput | number
+  range?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   brand?: Prisma.BrandUpdateOneRequiredWithoutMotosNestedInput
   status?: Prisma.StatusUpdateOneRequiredWithoutMotosNestedInput
@@ -1123,6 +1411,12 @@ export type MotoUncheckedUpdateWithoutCategoryInput = {
   currentKm?: Prisma.IntFieldUpdateOperationsInput | number
   pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  style?: Prisma.StringFieldUpdateOperationsInput | string
+  year?: Prisma.IntFieldUpdateOperationsInput | number
+  hp?: Prisma.FloatFieldUpdateOperationsInput | number
+  torque?: Prisma.FloatFieldUpdateOperationsInput | number
+  consumption?: Prisma.FloatFieldUpdateOperationsInput | number
+  range?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   images?: Prisma.ImageUncheckedUpdateManyWithoutMotoNestedInput
   bookings?: Prisma.BookingUncheckedUpdateManyWithoutMotoNestedInput
@@ -1138,6 +1432,12 @@ export type MotoUncheckedUpdateManyWithoutCategoryInput = {
   currentKm?: Prisma.IntFieldUpdateOperationsInput | number
   pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  style?: Prisma.StringFieldUpdateOperationsInput | string
+  year?: Prisma.IntFieldUpdateOperationsInput | number
+  hp?: Prisma.FloatFieldUpdateOperationsInput | number
+  torque?: Prisma.FloatFieldUpdateOperationsInput | number
+  consumption?: Prisma.FloatFieldUpdateOperationsInput | number
+  range?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -1151,6 +1451,12 @@ export type MotoCreateManyStatusInput = {
   currentKm: number
   pricePerDay: number
   description: string
+  style: string
+  year: number
+  hp: number
+  torque: number
+  consumption: number
+  range: number
   createdAt?: Date | string
 }
 
@@ -1162,6 +1468,12 @@ export type MotoUpdateWithoutStatusInput = {
   currentKm?: Prisma.IntFieldUpdateOperationsInput | number
   pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  style?: Prisma.StringFieldUpdateOperationsInput | string
+  year?: Prisma.IntFieldUpdateOperationsInput | number
+  hp?: Prisma.FloatFieldUpdateOperationsInput | number
+  torque?: Prisma.FloatFieldUpdateOperationsInput | number
+  consumption?: Prisma.FloatFieldUpdateOperationsInput | number
+  range?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   brand?: Prisma.BrandUpdateOneRequiredWithoutMotosNestedInput
   category?: Prisma.CategoryUpdateOneRequiredWithoutMotosNestedInput
@@ -1179,6 +1491,12 @@ export type MotoUncheckedUpdateWithoutStatusInput = {
   currentKm?: Prisma.IntFieldUpdateOperationsInput | number
   pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  style?: Prisma.StringFieldUpdateOperationsInput | string
+  year?: Prisma.IntFieldUpdateOperationsInput | number
+  hp?: Prisma.FloatFieldUpdateOperationsInput | number
+  torque?: Prisma.FloatFieldUpdateOperationsInput | number
+  consumption?: Prisma.FloatFieldUpdateOperationsInput | number
+  range?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   images?: Prisma.ImageUncheckedUpdateManyWithoutMotoNestedInput
   bookings?: Prisma.BookingUncheckedUpdateManyWithoutMotoNestedInput
@@ -1194,6 +1512,12 @@ export type MotoUncheckedUpdateManyWithoutStatusInput = {
   currentKm?: Prisma.IntFieldUpdateOperationsInput | number
   pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
   description?: Prisma.StringFieldUpdateOperationsInput | string
+  style?: Prisma.StringFieldUpdateOperationsInput | string
+  year?: Prisma.IntFieldUpdateOperationsInput | number
+  hp?: Prisma.FloatFieldUpdateOperationsInput | number
+  torque?: Prisma.FloatFieldUpdateOperationsInput | number
+  consumption?: Prisma.FloatFieldUpdateOperationsInput | number
+  range?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -1248,6 +1572,12 @@ export type MotoSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   currentKm?: boolean
   pricePerDay?: boolean
   description?: boolean
+  style?: boolean
+  year?: boolean
+  hp?: boolean
+  torque?: boolean
+  consumption?: boolean
+  range?: boolean
   createdAt?: boolean
   brand?: boolean | Prisma.BrandDefaultArgs<ExtArgs>
   category?: boolean | Prisma.CategoryDefaultArgs<ExtArgs>
@@ -1268,6 +1598,12 @@ export type MotoSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   currentKm?: boolean
   pricePerDay?: boolean
   description?: boolean
+  style?: boolean
+  year?: boolean
+  hp?: boolean
+  torque?: boolean
+  consumption?: boolean
+  range?: boolean
   createdAt?: boolean
   brand?: boolean | Prisma.BrandDefaultArgs<ExtArgs>
   category?: boolean | Prisma.CategoryDefaultArgs<ExtArgs>
@@ -1285,6 +1621,12 @@ export type MotoSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   currentKm?: boolean
   pricePerDay?: boolean
   description?: boolean
+  style?: boolean
+  year?: boolean
+  hp?: boolean
+  torque?: boolean
+  consumption?: boolean
+  range?: boolean
   createdAt?: boolean
   brand?: boolean | Prisma.BrandDefaultArgs<ExtArgs>
   category?: boolean | Prisma.CategoryDefaultArgs<ExtArgs>
@@ -1302,10 +1644,16 @@ export type MotoSelectScalar = {
   currentKm?: boolean
   pricePerDay?: boolean
   description?: boolean
+  style?: boolean
+  year?: boolean
+  hp?: boolean
+  torque?: boolean
+  consumption?: boolean
+  range?: boolean
   createdAt?: boolean
 }
 
-export type MotoOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "brandId" | "model" | "serialNumber" | "registration" | "categoryId" | "statusId" | "currentKm" | "pricePerDay" | "description" | "createdAt", ExtArgs["result"]["moto"]>
+export type MotoOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "brandId" | "model" | "serialNumber" | "registration" | "categoryId" | "statusId" | "currentKm" | "pricePerDay" | "description" | "style" | "year" | "hp" | "torque" | "consumption" | "range" | "createdAt", ExtArgs["result"]["moto"]>
 export type MotoInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   brand?: boolean | Prisma.BrandDefaultArgs<ExtArgs>
   category?: boolean | Prisma.CategoryDefaultArgs<ExtArgs>
@@ -1345,6 +1693,12 @@ export type $MotoPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     currentKm: number
     pricePerDay: number
     description: string
+    style: string
+    year: number
+    hp: number
+    torque: number
+    consumption: number
+    range: number
     createdAt: Date
   }, ExtArgs["result"]["moto"]>
   composites: {}
@@ -1784,6 +2138,12 @@ export interface MotoFieldRefs {
   readonly currentKm: Prisma.FieldRef<"Moto", 'Int'>
   readonly pricePerDay: Prisma.FieldRef<"Moto", 'Float'>
   readonly description: Prisma.FieldRef<"Moto", 'String'>
+  readonly style: Prisma.FieldRef<"Moto", 'String'>
+  readonly year: Prisma.FieldRef<"Moto", 'Int'>
+  readonly hp: Prisma.FieldRef<"Moto", 'Float'>
+  readonly torque: Prisma.FieldRef<"Moto", 'Float'>
+  readonly consumption: Prisma.FieldRef<"Moto", 'Float'>
+  readonly range: Prisma.FieldRef<"Moto", 'Int'>
   readonly createdAt: Prisma.FieldRef<"Moto", 'DateTime'>
 }
     

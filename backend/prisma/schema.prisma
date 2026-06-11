@@ -71,6 +71,12 @@ model Moto {
   currentKm    Int      @map("current_km")
   pricePerDay  Float    @map("price_per_day")
   description  String   @db.Text
+  style        String   @db.VarChar(50)
+  year         Int
+  hp           Float
+  torque       Float
+  consumption  Float
+  range        Int
   createdAt    DateTime @default(now()) @map("created_at")
 
   brand    Brand     @relation(fields: [brandId], references: [id])

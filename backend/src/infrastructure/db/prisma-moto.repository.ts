@@ -3,32 +3,75 @@ import { Moto, UpdateMotoParams } from '@domain/entities/Moto'
 import prisma from './prisma.client'
 
 export class PrismaMotoRepository implements IMotoRepository {
-  async findAll(): Promise<Moto[]> {
-    const records = await prisma.moto.findMany({ orderBy: { createdAt: 'desc' } })
+  async findAll(): Promise<any[]> {
+    const records = await prisma.moto.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        brand: true,
+        category: true,
+        status: true,
+        images: true,
+      }
+    })
 
-    return records.map(
-      (r) =>
-        new Moto(
-          r.id, r.brandId, r.model, r.serialNumber, r.registration,
-          r.categoryId, r.statusId, r.currentKm, r.pricePerDay,
-          r.description, r.createdAt,
-        ),
-    )
+    return records.map(r => ({
+      id: r.id,
+      brand: r.brand.name,
+      model: r.model,
+      serialNumber: r.serialNumber,
+      registration: r.registration,
+      category: r.category.name,
+      status: r.status.name,
+      currentKm: r.currentKm,
+      pricePerDay: r.pricePerDay,
+      description: r.description,
+      style: r.style,
+      year: r.year,
+      hp: r.hp,
+      torque: r.torque,
+      consumption: r.consumption,
+      range: r.range,
+      imageUrl: r.images?.[0]?.url || '/images/motos/default.jpg',
+      createdAt: r.createdAt,
+    }))
   }
 
-  async findById(id: string): Promise<Moto | null> {
-    const r = await prisma.moto.findUnique({ where: { id } })
+  async findById(id: string): Promise<any | null> {
+    const r = await prisma.moto.findUnique({
+      where: { id },
+      include: {
+        brand: true,
+        category: true,
+        status: true,
+        images: true,
+      }
+    })
 
     if (!r) return null
 
-    return new Moto(
-      r.id, r.brandId, r.model, r.serialNumber, r.registration,
-      r.categoryId, r.statusId, r.currentKm, r.pricePerDay,
-      r.description, r.createdAt,
-    )
+    return {
+      id: r.id,
+      brand: r.brand.name,
+      model: r.model,
+      serialNumber: r.serialNumber,
+      registration: r.registration,
+      category: r.category.name,
+      status: r.status.name,
+      currentKm: r.currentKm,
+      pricePerDay: r.pricePerDay,
+      description: r.description,
+      style: r.style,
+      year: r.year,
+      hp: r.hp,
+      torque: r.torque,
+      consumption: r.consumption,
+      range: r.range,
+      imageUrl: r.images?.[0]?.url || '/images/motos/default.jpg',
+      createdAt: r.createdAt,
+    }
   }
 
-  async save(moto: Moto): Promise<Moto> {
+  async save(moto: Moto): Promise<any> {
     const r = await prisma.moto.create({
       data: {
         id: moto.id,
@@ -41,28 +84,26 @@ export class PrismaMotoRepository implements IMotoRepository {
         currentKm: moto.currentKm,
         pricePerDay: moto.pricePerDay,
         description: moto.description,
+        style: moto.style,
+        year: moto.year,
+        hp: moto.hp,
+        torque: moto.torque,
+        consumption: moto.consumption,
+        range: moto.range,
         createdAt: moto.createdAt,
       },
     })
 
-    return new Moto(
-      r.id, r.brandId, r.model, r.serialNumber, r.registration,
-      r.categoryId, r.statusId, r.currentKm, r.pricePerDay,
-      r.description, r.createdAt,
-    )
+    return r
   }
 
-  async update(id: string, params: UpdateMotoParams): Promise<Moto> {
+  async update(id: string, params: UpdateMotoParams): Promise<any> {
     const r = await prisma.moto.update({
       where: { id },
       data: params,
     })
 
-    return new Moto(
-      r.id, r.brandId, r.model, r.serialNumber, r.registration,
-      r.categoryId, r.statusId, r.currentKm, r.pricePerDay,
-      r.description, r.createdAt,
-    )
+    return r
   }
 
   async delete(id: string): Promise<void> {
