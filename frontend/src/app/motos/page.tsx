@@ -25,7 +25,20 @@ export default function MotosPage() {
   };
 
   useEffect(() => {
-    loadMotos();
+    let active = true;
+    motosService.getAll()
+      .then((data) => {
+        if (active) setMotos(data);
+      })
+      .catch((e) => {
+        if (active) setError(e.message || 'Erreur lors du chargement des motos.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const handleReset = () => {
