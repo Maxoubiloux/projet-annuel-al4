@@ -22,6 +22,12 @@ interface MotoJson {
   pricePerDay: number
   description: string
   photos: string[]
+  style: string
+  year: number
+  hp: number
+  torque: number
+  consumption: number
+  range: number
 }
 
 async function main() {
@@ -89,6 +95,12 @@ async function main() {
         currentKm: m.currentKm,
         pricePerDay: m.pricePerDay,
         description: m.description,
+        style: m.style,
+        year: m.year,
+        hp: m.hp,
+        torque: m.torque,
+        consumption: m.consumption,
+        range: m.range,
         images: {
           create: m.photos.map((url) => ({ id: uuidv4(), url })),
         },

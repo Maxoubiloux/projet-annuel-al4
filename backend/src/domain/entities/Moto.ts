@@ -8,6 +8,12 @@ export interface CreateMotoParams {
   currentKm: number
   pricePerDay: number
   description: string
+  style: string
+  year: number
+  hp: number
+  torque: number
+  consumption: number
+  range: number
 }
 
 export interface UpdateMotoParams {
@@ -20,6 +26,12 @@ export interface UpdateMotoParams {
   currentKm?: number
   pricePerDay?: number
   description?: string
+  style?: string
+  year?: number
+  hp?: number
+  torque?: number
+  consumption?: number
+  range?: number
 }
 
 export class Moto {
@@ -34,6 +46,12 @@ export class Moto {
     readonly currentKm: number,
     readonly pricePerDay: number,
     readonly description: string,
+    readonly style: string,
+    readonly year: number,
+    readonly hp: number,
+    readonly torque: number,
+    readonly consumption: number,
+    readonly range: number,
     readonly createdAt: Date
   ) { }
 
@@ -49,6 +67,12 @@ export class Moto {
       params.currentKm,
       params.pricePerDay,
       params.description,
+      params.style,
+      params.year,
+      params.hp,
+      params.torque,
+      params.consumption,
+      params.range,
       new Date()
     )
   }
