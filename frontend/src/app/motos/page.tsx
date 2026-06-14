@@ -31,7 +31,12 @@ export default function MotosPage() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { loadMotos(); }, []);
+  useEffect(() => {
+    motosService.getAll()
+      .then(setMotos)
+      .catch((e) => setError(e.message || 'Erreur lors du chargement des motos.'))
+      .finally(() => setLoading(false));
+  }, []);
 
   const handleReset = () => {
     setSelectedStyle('Tous');
