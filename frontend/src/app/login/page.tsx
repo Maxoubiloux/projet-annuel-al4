@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
@@ -18,84 +19,102 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[70vh] flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-xl">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 italic tracking-tight">
-            SE CONNECTER
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Ou{' '}
-            <Link href="/register" className="font-medium text-red-600 hover:text-red-500 underline decoration-red-600 underline-offset-4">
-              créer un nouveau compte
-            </Link>
-          </p>
+    <div className="flex justify-center px-4 py-16">
+      <div className="grid grid-cols-1 md:grid-cols-2 w-full max-w-[980px] bg-white border border-[#ECE5D5] rounded-[20px] overflow-hidden shadow-[0_40px_90px_-50px_rgba(40,30,20,0.45)]">
+        {/* Left: dark panel */}
+        <div className="relative bg-[#1B1A17] text-[#F4F1E9] px-11 py-12 flex flex-col justify-between min-h-[520px] overflow-hidden">
+          <div className="font-serif text-[23px] font-semibold relative z-10">
+            City Moto Yard<span className="text-[#d8a96a]">.</span>
+          </div>
+          <div className="relative z-10">
+            <h2 className="font-serif font-medium text-[42px] leading-[1.05] mb-3">
+              Reprenez<br />
+              <span className="italic text-[#d8a96a]">la route.</span>
+            </h2>
+            <p className="text-[14px] text-[#bcb3a1] max-w-[280px]">
+              Retrouvez vos réservations, vos favoris et vos offres personnalisées.
+            </p>
+          </div>
+          {/* Decorative moto */}
+          <div className="absolute right-[-70px] bottom-6 w-[400px] opacity-90 pointer-events-none z-[1] mix-blend-lighten">
+            <Image
+              src="/images/motos/diavelv4.jpg"
+              alt=""
+              width={400}
+              height={260}
+              className="object-contain"
+            />
+          </div>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm space-y-4">
-            <div>
-              <label htmlFor="email-address" className="block text-sm font-medium text-gray-700 mb-1">
+
+        {/* Right: form */}
+        <div className="px-12 py-[52px]">
+          <p className="font-mono text-[11px] tracking-[0.22em] uppercase text-[#7E2E32] mb-[10px]">
+            Espace client
+          </p>
+          <h1 className="font-serif font-semibold text-[38px] mb-7">Se connecter</h1>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <label className="block">
+              <span className="block font-mono text-[9.5px] tracking-[0.16em] uppercase text-[#a0967f] mb-2">
                 Adresse e-mail
-              </label>
+              </span>
               <input
-                id="email-address"
-                name="email"
                 type="email"
                 autoComplete="email"
                 required
-                className="appearance-none rounded-lg relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-red-500 focus:border-red-500 focus:z-10 sm:text-sm"
-                placeholder="votre@email.com"
+                placeholder="vous@exemple.fr"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                className="w-full border border-[#E4DECF] bg-[#FBF9F3] rounded-[10px] px-[14px] py-[13px] text-[14px] text-[#1B1A17] outline-none focus:border-[#7E2E32] transition-colors"
               />
-            </div>
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+            </label>
+
+            <label className="block">
+              <span className="block font-mono text-[9.5px] tracking-[0.16em] uppercase text-[#a0967f] mb-2">
                 Mot de passe
-              </label>
+              </span>
               <input
-                id="password"
-                name="password"
                 type="password"
                 autoComplete="current-password"
                 required
-                className="appearance-none rounded-lg relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-red-500 focus:border-red-500 focus:z-10 sm:text-sm"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                className="w-full border border-[#E4DECF] bg-[#FBF9F3] rounded-[10px] px-[14px] py-[13px] text-[14px] text-[#1B1A17] outline-none focus:border-[#7E2E32] transition-colors"
               />
-            </div>
-          </div>
+            </label>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
-              />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                Se souvenir de moi
-              </label>
-            </div>
-
-            <div className="text-sm">
-              <a href="#" className="font-medium text-red-600 hover:text-red-500">
+            <div className="text-right">
+              <a href="#" className="text-[12px] text-[#7E2E32] hover:opacity-70 transition-opacity">
                 Mot de passe oublié ?
               </a>
             </div>
-          </div>
 
-          <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-full text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all transform hover:scale-105"
+              className="w-full bg-[#7E2E32] text-[#F4F1E9] text-[13.5px] tracking-[0.04em] py-[15px] rounded-full hover:bg-[#651f23] transition-colors mt-2"
             >
-              CONNEXION
+              Se connecter
             </button>
+          </form>
+
+          <div className="flex items-center gap-3 my-[26px]">
+            <span className="flex-1 h-px bg-[#E4DECF]" />
+            <span className="text-[11px] text-[#a0967f]">ou</span>
+            <span className="flex-1 h-px bg-[#E4DECF]" />
           </div>
-        </form>
+
+          <p className="text-center text-[13.5px] text-[#56503f]">
+            Pas encore de compte ?{' '}
+            <Link
+              href="/register"
+              className="text-[#7E2E32] border-b border-[#7E2E32] pb-px hover:opacity-70 transition-opacity"
+            >
+              Créer un compte
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
