@@ -1,26 +1,58 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #F4F1E9;
+  --foreground: #1B1A17;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-bordeaux: #7E2E32;
+  --color-bordeaux-hover: #651f23;
+  --color-ink: #1B1A17;
+  --color-warm-muted: #56503f;
+  --color-warm-border: #E4DECF;
+  --color-card-border: #ECE5D5;
+  --color-mono-muted: #9a8f74;
+  --color-warm-dim: #5d5749;
+  --color-warm-dark: #8a7f63;
+  --color-warm-sand: #b9a87f;
+  --color-warm-label: #b3a585;
+  --color-warm-link: #7a715a;
+  --color-warm-beige: #faf7f0;
+  --color-inner-border: #F0EADB;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-serif: var(--font-cormorant);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans, Arial, sans-serif);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: #7E2E32;
+  color: #F4F1E9;
+}
+
+input[type="date"] {
+  font-family: var(--font-geist-sans, Arial, sans-serif);
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.5;
+}
+
+@keyframes floatY {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+.animate-float {
+  animation: floatY 7s ease-in-out infinite;
 }
