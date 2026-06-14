@@ -7,49 +7,65 @@ export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
 
   return (
-    <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16 items-center">
-          <div className="flex-shrink-0 flex items-center">
-            <Link href="/" className="text-2xl font-bold text-red-600 tracking-tighter">
-              CITY MOTO <span className="text-black">YARD</span>
-            </Link>
-          </div>
-          <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-            <Link href="/motos" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-              Louer une moto
-            </Link>
-            <Link href="/agences" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-              Nos agences
-            </Link>
-            <Link href="/offres" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-              Offres & Promotions
-            </Link>
-          </div>
-          <div className="hidden sm:ml-6 sm:flex sm:items-center space-x-4">
-            {isAuthenticated ? (
-              <div className="flex items-center space-x-4">
-                <span className="text-sm font-medium text-gray-700">
-                  Bonjour, <span className="text-red-600">{user?.firstName}</span>
-                </span>
-                <button 
-                  onClick={logout}
-                  className="text-gray-500 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                >
-                  Déconnexion
-                </button>
-              </div>
-            ) : (
-              <>
-                <Link href="/login" className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
-                  Se connecter
-                </Link>
-                <Link href="/register" className="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700 transition-colors">
-                  Créer un compte
-                </Link>
-              </>
-            )}
-          </div>
+    <nav className="sticky top-0 z-50 bg-[rgba(244,241,233,0.88)] backdrop-blur-md border-b border-[#E4DECF]">
+      <div className="max-w-[1240px] mx-auto flex items-center justify-between px-10 py-[22px]">
+        <Link
+          href="/"
+          className="font-serif text-[24px] font-semibold tracking-[0.01em] text-[#1B1A17] hover:opacity-80 transition-opacity"
+        >
+          City Moto Yard<span className="text-[#7E2E32]">.</span>
+        </Link>
+
+        <div className="hidden md:flex items-center gap-[34px]">
+          <Link
+            href="/motos"
+            className="font-mono text-[12px] tracking-[0.16em] uppercase text-[#5d5749] hover:text-[#7E2E32] transition-colors"
+          >
+            Motos
+          </Link>
+          <Link
+            href="/agences"
+            className="font-mono text-[12px] tracking-[0.16em] uppercase text-[#5d5749] hover:text-[#7E2E32] transition-colors"
+          >
+            Agences
+          </Link>
+          <Link
+            href="/offres"
+            className="font-mono text-[12px] tracking-[0.16em] uppercase text-[#5d5749] hover:text-[#7E2E32] transition-colors"
+          >
+            Offres
+          </Link>
+        </div>
+
+        <div className="hidden md:flex items-center gap-[18px]">
+          {isAuthenticated ? (
+            <>
+              <span className="font-mono text-[12px] tracking-[0.16em] uppercase text-[#5d5749]">
+                {user?.firstName}
+              </span>
+              <button
+                onClick={logout}
+                className="font-mono text-[11.5px] tracking-[0.16em] uppercase border border-[#7E2E32] text-[#7E2E32] px-5 py-[9px] rounded-full hover:bg-[#7E2E32] hover:text-[#F4F1E9] transition-colors"
+              >
+                Déconnexion
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="font-mono text-[12px] tracking-[0.16em] uppercase text-[#5d5749] hover:text-[#7E2E32] transition-colors"
+              >
+                Connexion
+              </Link>
+              <Link
+                href="/motos"
+                className="font-mono text-[11.5px] tracking-[0.16em] uppercase border border-[#7E2E32] text-[#7E2E32] px-5 py-[9px] rounded-full hover:bg-[#7E2E32] hover:text-[#F4F1E9] transition-colors"
+              >
+                Réserver
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </nav>
