@@ -6,7 +6,14 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
-const kmFormatter = new Intl.NumberFormat('fr-FR');
+const categoryDot: Record<string, string> = {
+  A: '#7E2E32',
+  A2: '#B5792F',
+  A1: '#5d7a4a',
+};
+
+const STYLES = ['Tous', 'Sportive', 'Roadster', 'Trail', 'Custom', 'Touring'] as const;
+const CATEGORIES = ['Tous', 'A', 'A2', 'A1'] as const;
 
 export default function MotosPage() {
   const [motos, setMotos] = useState<Motorbike[]>([]);
@@ -24,165 +31,189 @@ export default function MotosPage() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => {
-    loadMotos();
-  }, []);
+  useEffect(() => { loadMotos(); }, []);
 
   const handleReset = () => {
     setSelectedStyle('Tous');
     setSelectedCategory('Tous');
   };
 
-  const filteredMotos = motos.filter((moto) => {
-    const styleMatch = selectedStyle === 'Tous' || moto.style === selectedStyle;
-    const categoryMatch = selectedCategory === 'Tous' || moto.category === selectedCategory;
-    return styleMatch && categoryMatch;
+  const filteredMotos = motos.filter((m) => {
+    const styleMatch = selectedStyle === 'Tous' || m.style === selectedStyle;
+    const catMatch = selectedCategory === 'Tous' || m.category === selectedCategory;
+    return styleMatch && catMatch;
   });
 
   return (
-    <div className="bg-gray-50 min-h-screen py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col mb-12">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-            <div>
-              <h1 className="text-4xl font-extrabold italic tracking-tight text-gray-900 mb-2">
-                NOS <span className="text-red-600">MOTOS</span>
-              </h1>
-              <p className="text-gray-600 text-lg">Choisissez votre compagnon de route parmi notre sélection.</p>
+    <div className="min-h-screen">
+      <div className="max-w-[1240px] mx-auto px-10 pt-14 pb-5">
+        {/* Header */}
+        <div className="mb-8">
+          <p className="font-mono text-[11px] tracking-[0.28em] uppercase text-[#7E2E32] mb-3">
+            La collection
+          </p>
+          <h1 className="font-serif font-semibold text-[60px] leading-none tracking-[-0.015em] mb-3">
+            Nos motos
+          </h1>
+          <p className="text-[16px] text-[#56503f] max-w-[520px]">
+            Choisissez votre compagnon de route. Chaque modèle est récent, contrôlé et prêt à partir depuis nos agences.
+          </p>
+        </div>
+
+        {/* Filters */}
+        <div className="flex flex-wrap gap-8 items-start pb-7 border-b border-[#E4DECF] mb-8">
+          <div>
+            <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-[#a0967f] mb-3">Style</p>
+            <div className="flex gap-[10px] flex-wrap">
+              {STYLES.map((s) => {
+                const active = selectedStyle === s;
+                return (
+                  <button
+                    key={s}
+                    onClick={() => setSelectedStyle(s)}
+                    className={`text-[12px] tracking-[0.08em] uppercase px-[18px] py-[9px] rounded-full border transition-all ${
+                      active
+                        ? 'border-[#1B1A17] bg-[#1B1A17] text-[#F4F1E9]'
+                        : 'border-[#E4DECF] bg-white text-[#5d5749] hover:border-[#1B1A17] hover:text-[#1B1A17]'
+                    }`}
+                  >
+                    {s}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          <div className="space-y-6">
-            <div>
-              <p className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-3">Filtrer par style</p>
-              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                {['Tous', 'Sportive', 'Roadster', 'Trail', 'Custom', 'Touring'].map((st) => (
+          <div>
+            <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-[#a0967f] mb-3">Permis</p>
+            <div className="flex gap-[10px] flex-wrap">
+              {CATEGORIES.map((c) => {
+                const active = selectedCategory === c;
+                return (
                   <button
-                    key={st}
-                    onClick={() => setSelectedStyle(st)}
-                    className={`px-6 py-2 rounded-full text-sm font-bold border-2 transition-all whitespace-nowrap ${
-                      selectedStyle === st
-                        ? 'bg-red-600 border-red-600 text-white shadow-md shadow-red-200'
-                        : 'bg-white border-gray-200 text-gray-700 hover:border-red-600 hover:text-red-600'
+                    key={c}
+                    onClick={() => setSelectedCategory(c)}
+                    className={`text-[12px] tracking-[0.08em] uppercase px-[18px] py-[9px] rounded-full border transition-all ${
+                      active
+                        ? 'border-[#1B1A17] bg-[#1B1A17] text-[#F4F1E9]'
+                        : 'border-[#E4DECF] bg-white text-[#5d5749] hover:border-[#1B1A17] hover:text-[#1B1A17]'
                     }`}
                   >
-                    {st.toUpperCase()}
+                    {c === 'Tous' ? 'Tous' : `Permis ${c}`}
                   </button>
-                ))}
-              </div>
+                );
+              })}
             </div>
+          </div>
 
-            <div>
-              <p className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-3">Filtrer par permis</p>
-              <div className="flex gap-3">
-                {['Tous', 'A', 'A2', 'A1'].map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`px-8 py-2 rounded-full text-sm font-bold border-2 transition-all ${
-                      selectedCategory === cat
-                        ? 'bg-black border-black text-white shadow-md shadow-gray-300'
-                        : 'bg-white border-gray-200 text-gray-700 hover:border-black hover:text-black'
-                    }`}
-                  >
-                    {cat === 'Tous' ? 'TOUS' : `PERMIS ${cat}`}
-                  </button>
-                ))}
-              </div>
-            </div>
+          <div className="ml-auto self-end">
+            <span className="font-mono text-[12px] text-[#8a7f63]">
+              {filteredMotos.length} {filteredMotos.length > 1 ? 'modèles' : 'modèle'}
+            </span>
           </div>
         </div>
 
         {/* Loading skeleton */}
         {loading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 animate-pulse">
-                <div className="h-64 bg-gray-200" />
+              <div key={i} className="bg-white border border-[#ECE5D5] rounded-[14px] overflow-hidden animate-pulse">
+                <div className="h-[200px] bg-[#ece8df]" />
                 <div className="p-6 space-y-3">
-                  <div className="h-4 bg-gray-200 rounded w-1/3" />
-                  <div className="h-6 bg-gray-200 rounded w-2/3" />
-                  <div className="h-4 bg-gray-200 rounded w-full" />
-                  <div className="h-10 bg-gray-200 rounded-xl mt-4" />
+                  <div className="h-3 bg-[#ece8df] rounded w-1/3" />
+                  <div className="h-6 bg-[#ece8df] rounded w-2/3" />
+                  <div className="h-3 bg-[#ece8df] rounded w-full" />
+                  <div className="h-10 bg-[#ece8df] rounded-xl mt-4" />
                 </div>
               </div>
             ))}
           </div>
         )}
 
-        {/* Error state */}
+        {/* Error */}
         {error && !loading && (
-          <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-red-200">
-            <p className="text-red-500 text-xl font-medium italic">⚠️ {error}</p>
+          <div className="text-center py-20 border border-dashed border-[#d9cfb8] rounded-[16px] bg-[#fbf9f3]">
+            <p className="font-serif italic text-[24px] text-[#8a7f63] mb-4">⚠️ {error}</p>
             <button
               onClick={loadMotos}
-              className="mt-4 text-red-600 font-bold hover:underline"
+              className="text-[13px] text-[#7E2E32] border-b border-[#7E2E32] pb-[2px] hover:opacity-70 transition-opacity"
             >
               Réessayer
             </button>
           </div>
         )}
 
-        {/* Content */}
+        {/* Grid */}
         {!loading && !error && (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredMotos.map((moto) => (
-                <div key={moto.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow border border-gray-100 group">
-                  <div className="relative h-64 overflow-hidden">
+                <div
+                  key={moto.id}
+                  className="bg-white border border-[#ECE5D5] rounded-[14px] overflow-hidden hover:shadow-[0_28px_50px_-30px_rgba(60,45,30,0.45)] transition-shadow"
+                >
+                  {/* Image */}
+                  <div
+                    className="relative h-[200px] flex items-center justify-center p-3"
+                    style={{ background: 'radial-gradient(closest-side, #ffffff 60%, #faf7f0 100%)' }}
+                  >
+                    <span className="absolute top-3 left-3 flex items-center gap-[7px] font-mono text-[10px] tracking-[0.1em] text-[#5d5749] bg-white/90 border border-[#ECE5D5] px-[10px] py-1 rounded-full">
+                      <span
+                        className="w-[7px] h-[7px] rounded-full flex-shrink-0"
+                        style={{ background: categoryDot[moto.category] ?? '#9a8f74' }}
+                      />
+                      Permis {moto.category}
+                    </span>
+                    <span className="absolute top-3 right-3 font-mono text-[9.5px] tracking-[0.14em] uppercase text-[#9a8f74]">
+                      {moto.style}
+                    </span>
                     <Image
                       src={moto.imageUrl}
                       alt={moto.model}
-                      fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-110"
+                      width={280}
+                      height={172}
+                      className="max-h-[172px] w-auto object-contain"
                     />
-
-                    <div className="absolute top-4 left-4 flex flex-col gap-2">
-                      <div className="bg-white/95 backdrop-blur-sm px-3 py-1 rounded-lg text-[10px] font-black text-gray-900 border border-gray-100 shadow-sm flex items-center gap-1.5">
-                        <div className={`w-2 h-2 rounded-full ${moto.category === 'A' ? 'bg-red-600' : moto.category === 'A2' ? 'bg-orange-500' : 'bg-green-500'}`}></div>
-                        PERMIS {moto.category}
-                      </div>
-                    </div>
-
-                    <div className="absolute top-4 right-4 bg-gray-900/80 backdrop-blur-sm px-3 py-1 rounded-lg text-[10px] font-bold text-white uppercase tracking-wider">
-                      {moto.style}
-                    </div>
                   </div>
-                  <div className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <p className="text-sm font-bold text-red-600 uppercase tracking-wider">{moto.brand}</p>
-                        <h3 className="text-2xl font-bold italic text-gray-900">{moto.model}</h3>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-gray-500">À partir de</p>
-                        <p className="text-2xl font-black italic text-gray-900">{moto.pricePerDay}€<span className="text-xs font-normal not-italic text-gray-500">/jour</span></p>
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center mb-4 text-xs text-gray-500">
-                      <span>{kmFormatter.format(moto.currentKm)} km</span>
-                      <span className={moto.status === 'PUBLISHED' ? 'text-green-600' : 'text-gray-400'}>{moto.status}</span>
-                    </div>
-                    <p className="text-gray-600 text-sm mb-6 line-clamp-2">
-                      {moto.description}
+
+                  {/* Info */}
+                  <div className="px-6 pt-[22px] pb-6 border-t border-[#F0EADB]">
+                    <p className="font-mono text-[10.5px] tracking-[0.16em] uppercase text-[#7E2E32]">
+                      {moto.brand}
                     </p>
-                    <Link
-                      href={`/motos/${moto.id}`}
-                      className="block w-full text-center bg-gray-900 text-white py-3 rounded-xl font-bold hover:bg-red-600 transition-colors"
-                    >
-                      Réserver maintenant
-                    </Link>
+                    <h3 className="font-serif font-semibold text-[26px] leading-[1.05] mt-[5px] mb-3">
+                      {moto.model}
+                    </h3>
+                    <div className="flex gap-4 font-mono text-[12px] text-[#8a7f63] mb-[18px]">
+                      <span>{moto.hp} ch</span>
+                      <span>{moto.range} km</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-[12px] text-[#9a8f74]">dès </span>
+                        <span className="font-serif font-semibold text-[28px]">{moto.pricePerDay}€</span>
+                        <span className="text-[12px] text-[#9a8f74]"> /jour</span>
+                      </div>
+                      <Link
+                        href={`/motos/${moto.id}`}
+                        className="font-mono text-[11.5px] tracking-[0.1em] uppercase border border-[#1B1A17] px-4 py-[9px] rounded-full hover:bg-[#1B1A17] hover:text-[#F4F1E9] transition-colors"
+                      >
+                        Réserver
+                      </Link>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
 
             {filteredMotos.length === 0 && (
-              <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-gray-200">
-                <p className="text-gray-400 text-xl font-medium italic">Aucune moto ne correspond à vos critères de recherche.</p>
+              <div className="text-center py-[90px] border border-dashed border-[#d9cfb8] rounded-[16px] bg-[#fbf9f3]">
+                <p className="font-serif italic text-[24px] text-[#8a7f63] mb-3">
+                  Aucune moto ne correspond à votre recherche.
+                </p>
                 <button
                   onClick={handleReset}
-                  className="mt-4 text-red-600 font-bold hover:underline"
+                  className="text-[13px] text-[#7E2E32] border-b border-[#7E2E32] pb-[2px] hover:opacity-70 transition-opacity"
                 >
                   Réinitialiser les filtres
                 </button>
