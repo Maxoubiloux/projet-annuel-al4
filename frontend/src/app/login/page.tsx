@@ -21,7 +21,6 @@ export default function LoginPage() {
   return (
     <div className="flex justify-center px-4 py-16">
       <div className="grid grid-cols-1 md:grid-cols-2 w-full max-w-[980px] bg-white border border-[#ECE5D5] rounded-[20px] overflow-hidden shadow-[0_40px_90px_-50px_rgba(40,30,20,0.45)]">
-        {/* Left: dark panel */}
         <div className="relative bg-[#1B1A17] text-[#F4F1E9] px-11 py-12 flex flex-col justify-between min-h-[520px] overflow-hidden">
           <div className="font-serif text-[23px] font-semibold relative z-10">
             City Moto Yard<span className="text-[#d8a96a]">.</span>
@@ -35,7 +34,6 @@ export default function LoginPage() {
               Retrouvez vos réservations, vos favoris et vos offres personnalisées.
             </p>
           </div>
-          {/* Decorative moto */}
           <div className="absolute right-[-70px] bottom-6 w-[400px] opacity-90 pointer-events-none z-[1] mix-blend-lighten">
             <Image
               src="/images/motos/diavelv4.jpg"
@@ -47,7 +45,6 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Right: form */}
         <div className="px-12 py-[52px]">
           <p className="font-mono text-[11px] tracking-[0.22em] uppercase text-[#7E2E32] mb-[10px]">
             Espace client

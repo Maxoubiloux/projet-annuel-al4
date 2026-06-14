@@ -92,7 +92,6 @@ export default function MotoDetails() {
 
   return (
     <div className="max-w-[1240px] mx-auto px-10 pt-[34px] pb-5">
-      {/* Breadcrumb */}
       <p className="font-mono text-[11px] tracking-[0.1em] text-[#9a8f74] mb-7">
         <Link href="/motos" className="text-[#7E2E32] hover:opacity-70 transition-opacity">
           ← Collection
@@ -101,9 +100,7 @@ export default function MotoDetails() {
       </p>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-11 items-start">
-        {/* Left: image + specs */}
         <div>
-          {/* Image */}
           <div
             className="relative bg-white border border-[#ECE5D5] rounded-[18px] h-[420px] flex items-center justify-center overflow-hidden"
           >
@@ -131,7 +128,6 @@ export default function MotoDetails() {
             />
           </div>
 
-          {/* Specs grid */}
           <h2 className="font-serif font-semibold text-[30px] mt-10 mb-[18px]">Caractéristiques</h2>
           <div
             className="grid grid-cols-3 border-t border-l border-[#E4DECF]"
@@ -153,7 +149,6 @@ export default function MotoDetails() {
           </div>
         </div>
 
-        {/* Right: sticky booking panel */}
         <div className="lg:sticky lg:top-24">
           <p className="font-mono text-[11px] tracking-[0.18em] uppercase text-[#7E2E32] mb-2">
             {moto.brand}
@@ -165,9 +160,7 @@ export default function MotoDetails() {
             {moto.description}
           </p>
 
-          {/* Booking card */}
           <div className="bg-white border border-[#ECE5D5] rounded-[16px] p-7">
-            {/* Price + status */}
             <div className="flex items-baseline justify-between mb-[22px]">
               <div>
                 <span className="font-serif font-semibold text-[38px]">{moto.pricePerDay}€</span>
@@ -176,7 +169,6 @@ export default function MotoDetails() {
               <span className="font-mono text-[11px] tracking-[0.08em] text-[#5d9a6a]">✓ Disponible</span>
             </div>
 
-            {/* Date pickers */}
             <div className="grid grid-cols-2 gap-3 mb-[18px]">
               <label className="block">
                 <span className="block font-mono text-[9.5px] tracking-[0.16em] uppercase text-[#a0967f] mb-[7px]">
@@ -202,7 +194,6 @@ export default function MotoDetails() {
               </label>
             </div>
 
-            {/* Price breakdown */}
             <div className="border-t border-[#F0EADB] pt-4">
               <div className="flex justify-between text-[13.5px] text-[#56503f] mb-[10px]">
                 <span>{moto.pricePerDay}€ × {days} jour{days > 1 ? 's' : ''}</span>

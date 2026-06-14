@@ -47,7 +47,6 @@ export default function MotosPage() {
   return (
     <div className="min-h-screen">
       <div className="max-w-[1240px] mx-auto px-10 pt-14 pb-5">
-        {/* Header */}
         <div className="mb-8">
           <p className="font-mono text-[11px] tracking-[0.28em] uppercase text-[#7E2E32] mb-3">
             La collection
@@ -60,7 +59,6 @@ export default function MotosPage() {
           </p>
         </div>
 
-        {/* Filters */}
         <div className="flex flex-wrap gap-8 items-start pb-7 border-b border-[#E4DECF] mb-8">
           <div>
             <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-[#a0967f] mb-3">Style</p>
@@ -71,11 +69,10 @@ export default function MotosPage() {
                   <button
                     key={s}
                     onClick={() => setSelectedStyle(s)}
-                    className={`text-[12px] tracking-[0.08em] uppercase px-[18px] py-[9px] rounded-full border transition-all ${
-                      active
+                    className={`text-[12px] tracking-[0.08em] uppercase px-[18px] py-[9px] rounded-full border transition-all ${active
                         ? 'border-[#1B1A17] bg-[#1B1A17] text-[#F4F1E9]'
                         : 'border-[#E4DECF] bg-white text-[#5d5749] hover:border-[#1B1A17] hover:text-[#1B1A17]'
-                    }`}
+                      }`}
                   >
                     {s}
                   </button>
@@ -93,11 +90,10 @@ export default function MotosPage() {
                   <button
                     key={c}
                     onClick={() => setSelectedCategory(c)}
-                    className={`text-[12px] tracking-[0.08em] uppercase px-[18px] py-[9px] rounded-full border transition-all ${
-                      active
+                    className={`text-[12px] tracking-[0.08em] uppercase px-[18px] py-[9px] rounded-full border transition-all ${active
                         ? 'border-[#1B1A17] bg-[#1B1A17] text-[#F4F1E9]'
                         : 'border-[#E4DECF] bg-white text-[#5d5749] hover:border-[#1B1A17] hover:text-[#1B1A17]'
-                    }`}
+                      }`}
                   >
                     {c === 'Tous' ? 'Tous' : `Permis ${c}`}
                   </button>
@@ -113,7 +109,6 @@ export default function MotosPage() {
           </div>
         </div>
 
-        {/* Loading skeleton */}
         {loading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -130,7 +125,6 @@ export default function MotosPage() {
           </div>
         )}
 
-        {/* Error */}
         {error && !loading && (
           <div className="text-center py-20 border border-dashed border-[#d9cfb8] rounded-[16px] bg-[#fbf9f3]">
             <p className="font-serif italic text-[24px] text-[#8a7f63] mb-4">⚠️ {error}</p>
@@ -143,7 +137,6 @@ export default function MotosPage() {
           </div>
         )}
 
-        {/* Grid */}
         {!loading && !error && (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -152,7 +145,6 @@ export default function MotosPage() {
                   key={moto.id}
                   className="bg-white border border-[#ECE5D5] rounded-[14px] overflow-hidden hover:shadow-[0_28px_50px_-30px_rgba(60,45,30,0.45)] transition-shadow"
                 >
-                  {/* Image */}
                   <div
                     className="relative h-[200px] flex items-center justify-center p-3"
                     style={{ background: 'radial-gradient(closest-side, #ffffff 60%, #faf7f0 100%)' }}
@@ -176,7 +168,6 @@ export default function MotosPage() {
                     />
                   </div>
 
-                  {/* Info */}
                   <div className="px-6 pt-[22px] pb-6 border-t border-[#F0EADB]">
                     <p className="font-mono text-[10.5px] tracking-[0.16em] uppercase text-[#7E2E32]">
                       {moto.brand}

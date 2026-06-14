@@ -42,19 +42,11 @@ const FEATURED = [
   },
 ];
 
-const categoryDot: Record<string, string> = {
-  A: '#7E2E32',
-  A2: '#B5792F',
-  A1: '#5d7a4a',
-};
-
 export default function Home() {
   return (
     <div>
-      {/* ── HERO ────────────────────────────────────────────────────────────── */}
       <section className="max-w-[1240px] mx-auto px-10 pt-[74px] pb-9">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-          {/* Left: editorial copy */}
           <div>
             <p className="font-mono text-[11px] tracking-[0.28em] uppercase text-[#7E2E32] mb-6">
               Location de motos premium · depuis 2019
@@ -82,7 +74,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Right: floating moto */}
           <div className="relative flex items-center justify-center min-h-[380px] lg:min-h-[420px]">
             <div className="absolute w-[380px] h-[380px] border border-[#d9cfb8] rounded-full pointer-events-none" />
             <div
@@ -106,7 +97,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── STATS ROW ───────────────────────────────────────────────────────── */}
       <section className="max-w-[1240px] mx-auto px-10">
         <div className="grid grid-cols-2 md:grid-cols-4 border-t border-b border-[#E4DECF]">
           {[
@@ -126,7 +116,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── UNIVERS ─────────────────────────────────────────────────────────── */}
       <section className="max-w-[1240px] mx-auto px-10 pt-[74px] pb-5">
         <div className="flex items-end justify-between mb-8">
           <h2 className="font-serif font-semibold text-[42px] tracking-[-0.01em]">
@@ -155,7 +144,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── FEATURED ────────────────────────────────────────────────────────── */}
       <section className="max-w-[1240px] mx-auto px-10 pt-[60px] pb-2">
         <p className="font-mono text-[11px] tracking-[0.28em] uppercase text-[#7E2E32] mb-2">
           La sélection
@@ -169,7 +157,6 @@ export default function Home() {
               key={m.model}
               className="bg-white border border-[#ECE5D5] rounded-[14px] overflow-hidden hover:shadow-[0_28px_50px_-30px_rgba(60,45,30,0.45)] transition-shadow"
             >
-              {/* Image area */}
               <div
                 className="relative h-[212px] flex items-center justify-center p-3"
                 style={{ background: 'radial-gradient(closest-side, #ffffff 60%, #faf7f0 100%)' }}
@@ -186,7 +173,6 @@ export default function Home() {
                 />
               </div>
 
-              {/* Info */}
               <div className="px-6 pt-6 pb-[26px] border-t border-[#F0EADB]">
                 <p className="font-mono text-[10.5px] tracking-[0.16em] uppercase text-[#7E2E32]">
                   {m.brand}
@@ -215,7 +201,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── OFFER BAND ──────────────────────────────────────────────────────── */}
       <section className="max-w-[1240px] mx-auto px-10 pt-16 pb-4">
         <div className="bg-[#1B1A17] rounded-[16px] px-14 py-[54px] grid grid-cols-1 md:grid-cols-[1fr_auto] items-center gap-8 text-[#F4F1E9]">
           <div>
