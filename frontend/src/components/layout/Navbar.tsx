@@ -24,6 +24,12 @@ export default function Navbar() {
             Motos
           </Link>
           <Link
+            href="/univers"
+            className="font-mono text-[12px] tracking-[0.16em] uppercase text-[#5d5749] hover:text-[#7E2E32] transition-colors"
+          >
+            Univers
+          </Link>
+          <Link
             href="/agences"
             className="font-mono text-[12px] tracking-[0.16em] uppercase text-[#5d5749] hover:text-[#7E2E32] transition-colors"
           >

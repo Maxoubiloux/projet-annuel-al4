@@ -30,8 +30,8 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-[13px] text-[#7a715a] hover:text-[#7E2E32] transition-colors">
-                  Comment ça marche
+                <Link href="/univers" className="text-[13px] text-[#7a715a] hover:text-[#7E2E32] transition-colors">
+                  Nos univers
                 </Link>
               </li>
             </ul>
@@ -53,7 +53,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/login" className="text-[13px] text-[#7a715a] hover:text-[#7E2E32] transition-colors">
+                <Link href="/reservations" className="text-[13px] text-[#7a715a] hover:text-[#7E2E32] transition-colors">
                   Mes réservations
                 </Link>
               </li>
