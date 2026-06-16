@@ -71,12 +71,12 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-[13px] text-[#7a715a] hover:text-[#7E2E32] transition-colors">
+                <Link href="/contact" className="text-[13px] text-[#7a715a] hover:text-[#7E2E32] transition-colors">
                   Nous contacter
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-[13px] text-[#7a715a] hover:text-[#7E2E32] transition-colors">
+                <Link href="/mentions-legales" className="text-[13px] text-[#7a715a] hover:text-[#7E2E32] transition-colors">
                   Mentions légales
                 </Link>
               </li>

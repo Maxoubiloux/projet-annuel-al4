@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import AccountSidebar from '@/components/ui/AccountSidebar';
 
 const UPCOMING = [
   {
@@ -64,12 +65,6 @@ const PAST = [
   },
 ];
 
-function statusStyle(status: string) {
-  if (status === 'Terminée') return 'color:#9a8f74; background:#F1ECE0;';
-  if (status === 'À venir') return 'color:#7E2E32; background:#F6E9E6;';
-  return 'color:#3d7a52; background:#E6F0E8;';
-}
-
 function StatusBadge({ status }: { status: string }) {
   const base = 'font-mono text-[10px] tracking-[0.1em] uppercase px-3 py-[6px] rounded-full';
   if (status === 'Terminée')
@@ -123,31 +118,7 @@ export default function ReservationsPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[0.26fr_0.74fr] gap-11 items-start">
-          <div className="lg:sticky lg:top-24 border-t border-[#E4DECF]">
-            <div className="py-4 border-b border-[#E4DECF] flex items-center gap-[10px]">
-              <span className="w-[6px] h-[6px] rounded-full bg-[#7E2E32]" />
-              <span className="text-[13.5px] text-[#1B1A17]">Mes réservations</span>
-            </div>
-            {[
-              { label: 'Mes favoris', href: '#' },
-              { label: 'Mon profil', href: '#' },
-              { label: 'Mes documents', href: '#' },
-            ].map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                className="py-4 border-b border-[#E4DECF] flex text-[13.5px] text-[#7a715a] hover:text-[#7E2E32] transition-colors"
-              >
-                {item.label}
-              </Link>
-            ))}
-            <Link
-              href="/"
-              className="py-4 flex text-[13.5px] text-[#7a715a] hover:text-[#7E2E32] transition-colors"
-            >
-              Déconnexion
-            </Link>
-          </div>
+          <AccountSidebar />
 
           <div>
             <h2 className="font-serif font-semibold text-[28px] mb-[18px]">À venir</h2>
