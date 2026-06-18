@@ -93,6 +93,7 @@ services:
       KEYCLOAK_URL: http://keycloak:8080
       KEYCLOAK_REALM: moto-rental
       PORT: 3000
+      CORS_ORIGIN: http://localhost:3001,http://localhost:5173
     ports:
       - "3000:3000"
     depends_on:

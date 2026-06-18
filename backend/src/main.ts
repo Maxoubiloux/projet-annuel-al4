@@ -25,7 +25,7 @@ const app = fastify({
 
 await app.register(helmet)
 await app.register(cors, {
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  origin: (process.env.CORS_ORIGIN || 'http://localhost:3001').split(','),
   credentials: true,
 })
 

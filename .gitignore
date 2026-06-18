@@ -3,3 +3,4 @@ claude*
 .mcp.json
 .claude
 backend/CLAUDE.md
+.env
