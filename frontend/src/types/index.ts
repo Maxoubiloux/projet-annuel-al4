@@ -11,12 +11,11 @@ export interface Motorbike {
   imageUrl: string;
   description: string;
   createdAt: string;
-  // Spécifications techniques
   year: number;
-  hp: number; // Chevaux (ch)
-  torque: number; // Couple (Nm)
-  consumption: number; // Consommation (L/100km)
-  range: number; // Autonomie (km)
+  hp: number;
+  torque: number;
+  consumption: number;
+  range: number;
 }
 
 export interface Booking {
