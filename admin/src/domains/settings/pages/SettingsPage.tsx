@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Save } from 'lucide-react';
 import { useLayout } from '@/core/hooks/useLayout';
 
@@ -32,38 +33,74 @@ const inputStyle: React.CSSProperties = {
   fontFamily: "'Geist',system-ui,sans-serif",
 };
 
-function Toggle({ label, desc, on }: { label: string; desc: string; on: boolean }) {
+function Toggle({ label, desc, on, onChange }: { label: string; desc: string; on: boolean; onChange: (v: boolean) => void }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 0', borderTop: '1px solid var(--border-2)' }}>
       <div>
         <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)' }}>{label}</div>
         <div style={{ fontSize: 11.5, color: 'var(--faint)', marginTop: 2 }}>{desc}</div>
       </div>
-      <div style={{
-        position: 'relative', width: 38, height: 22, borderRadius: 999,
-        background: on ? 'var(--brand)' : 'var(--border)', cursor: 'pointer', flexShrink: 0,
-      }}>
+      <button
+        role="switch"
+        aria-checked={on}
+        aria-label={label}
+        onClick={() => onChange(!on)}
+        style={{
+          position: 'relative', width: 38, height: 22, borderRadius: 999,
+          background: on ? 'var(--brand)' : 'var(--border)',
+          cursor: 'pointer', flexShrink: 0,
+          border: 'none', padding: 0,
+          transition: 'background .18s',
+        }}
+      >
         <div style={{
           position: 'absolute', top: 2, left: on ? 18 : 2, width: 18, height: 18,
           borderRadius: 999, background: '#fff',
           boxShadow: '0 1px 2px rgba(0,0,0,.25)',
           transition: 'left .18s',
         }} />
-      </div>
+      </button>
     </div>
   );
 }
 
-export function SettingsPage() {
-  const { theme, toggleTheme } = useLayout();
+/* ── Save feedback toast (local only — TODO: connect to PUT /api/settings) ── */
+function useSaveToast() {
+  const [saved, setSaved] = useState(false);
+  const trigger = () => {
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+  return { saved, trigger };
+}
 
-  const saveBtn: React.CSSProperties = {
+export function SettingsPage() {
+  const { theme, toggleTheme, collapsed, toggleCollapsed } = useLayout();
+  const bookingToast = useSaveToast();
+  const companyToast = useSaveToast();
+
+  /* Booking rules — controlled inputs */
+  const [rules, setRules] = useState({ minDays: 1, maxDays: 30, minAge: 21, freeCancelHours: 48 });
+
+  /* Company info — controlled inputs */
+  const [company, setCompany] = useState({
+    name: 'City Moto Yard',
+    address: '12 Rue des Motards, 75011 Paris',
+    email: 'contact@citymotoyard.fr',
+    phone: '+33 1 42 00 00 00',
+  });
+
+  /* Appearance toggles */
+  const [emailNotif, setEmailNotif] = useState(true);
+
+  const saveBtn = (saved: boolean): React.CSSProperties => ({
     display: 'inline-flex', alignItems: 'center', gap: 7, marginTop: 16,
     height: 36, padding: '0 16px',
-    background: 'var(--brand)', color: '#fff',
+    background: saved ? 'var(--cmy-green)' : 'var(--brand)', color: '#fff',
     border: 'none', borderRadius: 9,
     fontSize: 13, fontWeight: 500, cursor: 'pointer',
-  };
+    transition: 'background .2s',
+  });
 
   return (
     <div style={{ maxWidth: 780 }}>
@@ -77,56 +114,93 @@ export function SettingsPage() {
         <Section title="Booking rules" desc="Set constraints that apply to all rentals.">
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <Field label="Minimum rental duration (days)">
-              <input type="number" defaultValue={1} style={inputStyle} />
+              <input
+                type="number" value={rules.minDays} style={inputStyle}
+                onChange={e => setRules(r => ({ ...r, minDays: +e.target.value }))}
+              />
             </Field>
             <Field label="Maximum rental duration (days)">
-              <input type="number" defaultValue={30} style={inputStyle} />
+              <input
+                type="number" value={rules.maxDays} style={inputStyle}
+                onChange={e => setRules(r => ({ ...r, maxDays: +e.target.value }))}
+              />
             </Field>
             <Field label="Minimum driver age">
-              <input type="number" defaultValue={21} style={inputStyle} />
+              <input
+                type="number" value={rules.minAge} style={inputStyle}
+                onChange={e => setRules(r => ({ ...r, minAge: +e.target.value }))}
+              />
             </Field>
             <Field label="Free cancellation window (hours)">
-              <input type="number" defaultValue={48} style={inputStyle} />
+              <input
+                type="number" value={rules.freeCancelHours} style={inputStyle}
+                onChange={e => setRules(r => ({ ...r, freeCancelHours: +e.target.value }))}
+              />
             </Field>
           </div>
-          <button style={saveBtn}><Save size={14} strokeWidth={1.6} />Save rules</button>
+          {/* TODO: connect onClick to PUT /api/settings/rules */}
+          <button style={saveBtn(bookingToast.saved)} onClick={bookingToast.trigger}>
+            <Save size={14} strokeWidth={1.6} />
+            {bookingToast.saved ? 'Saved!' : 'Save rules'}
+          </button>
         </Section>
 
         {/* Company info */}
         <Section title="Company information" desc="Shown on invoices and rental contracts.">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <Field label="Company name">
-              <input defaultValue="City Moto Yard" style={inputStyle} />
+              <input
+                value={company.name} style={inputStyle}
+                onChange={e => setCompany(c => ({ ...c, name: e.target.value }))}
+              />
             </Field>
             <Field label="Address">
-              <input defaultValue="12 Rue des Motards, 75011 Paris" style={inputStyle} />
+              <input
+                value={company.address} style={inputStyle}
+                onChange={e => setCompany(c => ({ ...c, address: e.target.value }))}
+              />
             </Field>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
               <Field label="Contact email">
-                <input type="email" defaultValue="contact@citymotoyard.fr" style={inputStyle} />
+                <input
+                  type="email" value={company.email} style={inputStyle}
+                  onChange={e => setCompany(c => ({ ...c, email: e.target.value }))}
+                />
               </Field>
               <Field label="Phone">
-                <input defaultValue="+33 1 42 00 00 00" style={inputStyle} />
+                <input
+                  value={company.phone} style={inputStyle}
+                  onChange={e => setCompany(c => ({ ...c, phone: e.target.value }))}
+                />
               </Field>
             </div>
           </div>
-          <button style={saveBtn}><Save size={14} strokeWidth={1.6} />Save company info</button>
+          {/* TODO: connect onClick to PUT /api/settings/company */}
+          <button style={saveBtn(companyToast.saved)} onClick={companyToast.trigger}>
+            <Save size={14} strokeWidth={1.6} />
+            {companyToast.saved ? 'Saved!' : 'Save company info'}
+          </button>
         </Section>
 
         {/* Appearance */}
-        <Section title="Appearance" desc="Interface preferences for this session.">
+        <Section title="Appearance" desc="Interface preferences, persisted in localStorage.">
           <div>
+            {/* Dark mode — driven by useLayout (persists in localStorage) */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0 13px' }}>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)' }}>Dark mode</div>
                 <div style={{ fontSize: 11.5, color: 'var(--faint)', marginTop: 2 }}>Switch to the dark theme</div>
               </div>
-              <div
+              <button
+                role="switch"
+                aria-checked={theme === 'dark'}
+                aria-label="Dark mode"
                 onClick={toggleTheme}
                 style={{
                   position: 'relative', width: 38, height: 22, borderRadius: 999,
                   background: theme === 'dark' ? 'var(--brand)' : 'var(--border)',
-                  cursor: 'pointer', flexShrink: 0,
+                  cursor: 'pointer', flexShrink: 0, border: 'none', padding: 0,
+                  transition: 'background .18s',
                 }}
               >
                 <div style={{
@@ -135,10 +209,22 @@ export function SettingsPage() {
                   boxShadow: '0 1px 2px rgba(0,0,0,.25)',
                   transition: 'left .18s',
                 }} />
-              </div>
+              </button>
             </div>
-            <Toggle label="Compact sidebar" desc="Always collapse the sidebar to icon-only mode" on={false} />
-            <Toggle label="Email notifications" desc="Receive an email for new reservations and overdue returns" on={true} />
+            {/* Compact sidebar — driven by useLayout (persists in localStorage) */}
+            <Toggle
+              label="Compact sidebar"
+              desc="Always collapse the sidebar to icon-only mode"
+              on={collapsed}
+              onChange={toggleCollapsed}
+            />
+            {/* Email notifications — local preference (TODO: persist via PUT /api/settings/preferences) */}
+            <Toggle
+              label="Email notifications"
+              desc="Receive an email for new reservations and overdue returns"
+              on={emailNotif}
+              onChange={setEmailNotif}
+            />
           </div>
         </Section>
       </div>
