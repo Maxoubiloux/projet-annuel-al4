@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 
 interface LayoutContextType {
@@ -11,8 +11,21 @@ interface LayoutContextType {
 const LayoutContext = createContext<LayoutContextType | undefined>(undefined);
 
 export function LayoutProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [collapsed, setCollapsed] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>(
+    () => (localStorage.getItem('layout_theme') as 'light' | 'dark') ?? 'light'
+  );
+  const [collapsed, setCollapsed] = useState<boolean>(
+    () => localStorage.getItem('layout_collapsed') === 'true'
+  );
+
+  useEffect(() => {
+    localStorage.setItem('layout_theme', theme);
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem('layout_collapsed', String(collapsed));
+  }, [collapsed]);
 
   return (
     <LayoutContext.Provider value={{
