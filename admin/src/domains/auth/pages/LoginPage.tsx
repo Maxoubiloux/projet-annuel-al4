@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@/core/auth/AuthContext';
 import { Button } from '@/core/components/ui/Button';
 import { Bike } from 'lucide-react';
@@ -87,7 +87,7 @@ export function LoginPage() {
           </form>
 
           <p className="mt-6 text-center text-[11px] text-gray-600">
-            Tout email / mot de passe fonctionne pour cette démo.
+            <Link to="/forgot-password" className="text-gray-500 hover:text-gray-400 transition-colors">Mot de passe oublié ?</Link>
           </p>
         </div>
       </div>
