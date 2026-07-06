@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   LayoutGrid, LayoutPanelLeft, Download,
   TrendingUp, TrendingDown, ArrowRight,
@@ -86,6 +87,40 @@ function Pill({ status }: { status: string }) {
   );
 }
 
+/* ── CSV export ───────────────────────────────────────────── */
+function exportDashboard() {
+  const date = new Date().toISOString().slice(0, 10);
+  const lines: string[] = [
+    `MotoManager — Dashboard export · ${date}`,
+    '',
+    'KPIs',
+    'Metric,Value,Delta,vs',
+    'Fleet utilization,87.4%,+4.2,vs 83.2%',
+    'Active rentals,142,+12,vs 130',
+    'Revenue MTD,€90.2k,+9.8%,vs €82.1k',
+    'Maintenance due,7,−2,vs 9',
+    '',
+    'Recent reservations',
+    'ID,Customer,Motorcycle,Period,Days,Amount,Status',
+    ...reservations.map(r =>
+      [r.id, r.customer, r.moto, r.period, r.days, r.amount, r.status].join(',')
+    ),
+    '',
+    'Maintenance alerts',
+    'Severity,Title,Motorcycle,ID,Mileage,Due',
+    ...alerts.map(a =>
+      [a.sev, a.title, a.moto, a.id, a.km, a.due].join(',')
+    ),
+  ];
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `dashboard-${date}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 /* ── main component ───────────────────────────────────────── */
 export function DashboardPage() {
   const [pane, setPane] = useState<'A' | 'B'>('A');
@@ -140,7 +175,7 @@ export function DashboardPage() {
           }}>Good morning, {firstName}</h1>
           <p style={{ margin: '5px 0 0', fontSize: 13.5, color: 'var(--muted)' }}>
             Here's how the yard is running —{' '}
-            <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 12 }}>Sat, 21 Jun 2026</span>
+            <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 12 }}>{new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -163,13 +198,16 @@ export function DashboardPage() {
               </button>
             ))}
           </div>
-          <button style={{
-            display: 'flex', alignItems: 'center', gap: 7,
-            height: 36, padding: '0 14px',
-            background: 'var(--brand)', color: '#fff',
-            border: 'none', borderRadius: 10,
-            fontSize: 13, fontWeight: 500, cursor: 'pointer',
-          }}>
+          <button
+            onClick={exportDashboard}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 7,
+              height: 36, padding: '0 14px',
+              background: 'var(--brand)', color: '#fff',
+              border: 'none', borderRadius: 10,
+              fontSize: 13, fontWeight: 500, cursor: 'pointer',
+            }}
+          >
             <Download size={14} strokeWidth={1.6} />Export
           </button>
         </div>
@@ -300,9 +338,9 @@ export function DashboardPage() {
             <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '17px 20px 13px' }}>
                 <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)' }}>Recent reservations</div>
-                <a href="/reservations" style={{ fontSize: 12, color: 'var(--brand)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 3 }}>
+                <Link to="/reservations" style={{ fontSize: 12, color: 'var(--brand)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 3 }}>
                   View all <ArrowRight size={12} />
-                </a>
+                </Link>
               </div>
               <div style={{
                 display: 'grid', gridTemplateColumns: '1.15fr 1fr 0.95fr 74px 84px',
