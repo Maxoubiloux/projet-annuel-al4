@@ -14,4 +14,5 @@ export interface Moto {
   location: string;
   description: string;
   imageUrl?: string;
+  nextServiceDate?: string;
 }

@@ -14,6 +14,7 @@ export const MOTOS_MOCK: Moto[] = [
     status: 'available',
     location: 'Agence Paris Centre',
     description: 'Moto très maniable idéale pour la ville et les balades.',
+    nextServiceDate: '2026-08-15',
   },
   {
     id: 'm2',
@@ -28,6 +29,7 @@ export const MOTOS_MOCK: Moto[] = [
     status: 'reserved',
     location: 'Agence Lyon',
     description: 'Moto accessible permis A2, fiable et économique.',
+    nextServiceDate: '2026-07-20',
   },
   {
     id: 'm3',
@@ -42,6 +44,7 @@ export const MOTOS_MOCK: Moto[] = [
     status: 'maintenance',
     location: 'Agence Paris Sud',
     description: 'Le trail de référence pour les longs voyages.',
+    nextServiceDate: '2026-07-10',
   },
   {
     id: 'm4',
@@ -56,6 +59,7 @@ export const MOTOS_MOCK: Moto[] = [
     status: 'available',
     location: 'Agence Paris Centre',
     description: 'Roadster sportif avec un moteur 4 cylindres plein de caractère.',
+    nextServiceDate: '2026-09-01',
   },
   {
     id: 'm5',
@@ -69,6 +73,7 @@ export const MOTOS_MOCK: Moto[] = [
     deposit: 2500,
     status: 'inactive',
     location: 'Agence Nice',
-    description: 'Sportive italienne d\'exception.',
+    description: "Sportive italienne d'exception.",
+    nextServiceDate: '2026-10-15',
   }
 ];
