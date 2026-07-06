@@ -13,6 +13,9 @@ export const CUSTOMERS_MOCK: Customer[] = [
     licenseNumber: 'PC123456789',
     licenseVerified: true,
     status: 'active',
+    totalRentals: 12,
+    totalSpent: 1840,
+    createdAt: '2024-03-15',
   },
   {
     id: 'c2',
@@ -23,6 +26,9 @@ export const CUSTOMERS_MOCK: Customer[] = [
     licenseNumber: 'PC987654321',
     licenseVerified: false,
     status: 'active',
+    totalRentals: 3,
+    totalSpent: 490,
+    createdAt: '2025-01-08',
   },
   {
     id: 'c3',
@@ -33,6 +39,9 @@ export const CUSTOMERS_MOCK: Customer[] = [
     licenseNumber: 'PC112233445',
     licenseVerified: true,
     status: 'suspended',
+    totalRentals: 7,
+    totalSpent: 1120,
+    createdAt: '2024-09-22',
   }
 ];
 
