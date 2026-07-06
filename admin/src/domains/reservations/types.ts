@@ -10,6 +10,9 @@ export interface Customer {
   licenseNumber: string;
   licenseVerified: boolean;
   status: 'active' | 'suspended';
+  totalRentals?: number;
+  totalSpent?: number;
+  createdAt?: string;
 }
 
 export interface Reservation {
