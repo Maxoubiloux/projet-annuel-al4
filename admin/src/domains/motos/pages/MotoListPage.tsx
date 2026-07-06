@@ -1,15 +1,22 @@
-import { useState } from 'react';
-import { Bike, Plus, SlidersHorizontal, ArrowUpDown, Search, Ellipsis } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Bike, Plus, SlidersHorizontal, ArrowUpDown, Search, Ellipsis, ChevronLeft, ChevronRight, X, ArrowUp, ArrowDown } from 'lucide-react';
 import { MOTOS_MOCK } from '@/mocks/motos';
-import type { MotoStatus } from '../types';
+import type { Moto, MotoStatus } from '../types';
+import { ConfirmDialog } from '@/core/components/ui/ConfirmDialog';
 
-const tabs: { key: MotoStatus | 'all'; label: string; count: number }[] = [
-  { key: 'all',         label: 'All',         count: 163 },
-  { key: 'available',   label: 'Available',   count: 93  },
-  { key: 'reserved',    label: 'On rent',     count: 44  },
-  { key: 'maintenance', label: 'Maintenance', count: 15  },
-  { key: 'inactive',    label: 'Reserved',    count: 11  },
+type SortField = 'brand' | 'mileage' | 'pricePerDay' | 'status';
+type SortDir = 'asc' | 'desc';
+
+const STATUS_TABS: { key: MotoStatus | 'all'; label: string }[] = [
+  { key: 'all',         label: 'All'         },
+  { key: 'available',   label: 'Available'   },
+  { key: 'reserved',    label: 'On rent'     },
+  { key: 'maintenance', label: 'Maintenance' },
+  { key: 'inactive',    label: 'Inactive'    },
 ];
+
+const CATEGORIES = Array.from(new Set(MOTOS_MOCK.map(m => m.category)));
+const PAGE_SIZE = 10;
 
 const statusCfg: Record<MotoStatus, { label: string; color: string; bg: string }> = {
   available:   { label: 'Available',   color: 'var(--cmy-green)', bg: 'color-mix(in srgb,var(--cmy-green) 13%,transparent)' },
@@ -34,44 +41,186 @@ function StatusPill({ status }: { status: MotoStatus }) {
   );
 }
 
+function RowActionsMenu({ moto, onClose, onDelete }: { moto: Moto; onClose: () => void; onDelete: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [onClose]);
+
+  const actions = [
+    { label: 'View details', onClick: onClose },
+    { label: 'Edit', onClick: onClose },
+    { label: 'Change status', onClick: onClose },
+  ];
+
+  return (
+    <div ref={ref} style={{
+      position: 'absolute', right: 0, top: 32,
+      background: 'var(--surface)', border: '1px solid var(--border)',
+      borderRadius: 10, boxShadow: 'var(--shadow)',
+      minWidth: 160, padding: 5, zIndex: 50,
+    }}>
+      {actions.map(a => (
+        <button key={a.label} onClick={a.onClick} style={{
+          display: 'block', width: '100%', padding: '7px 10px',
+          textAlign: 'left', fontSize: 12.5, color: 'var(--ink)',
+          border: 'none', background: 'transparent',
+          borderRadius: 7, cursor: 'pointer',
+        }}>{a.label}</button>
+      ))}
+      <div style={{ borderTop: '1px solid var(--border-2)', marginTop: 4, paddingTop: 4 }}>
+        <button onClick={() => { onClose(); onDelete(); }} style={{
+          display: 'block', width: '100%', padding: '7px 10px',
+          textAlign: 'left', fontSize: 12.5, color: 'var(--cmy-red)',
+          border: 'none', background: 'transparent',
+          borderRadius: 7, cursor: 'pointer',
+        }}>Delete</button>
+      </div>
+    </div>
+  );
+}
+
 export function MotoListPage() {
   const [tab, setTab] = useState<MotoStatus | 'all'>('all');
   const [search, setSearch] = useState('');
+  const [catFilter, setCatFilter] = useState<string>('all');
+  const [sort, setSort] = useState<{ field: SortField; dir: SortDir }>({ field: 'brand', dir: 'asc' });
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [deleteTarget, setDeleteTarget] = useState<Moto | null>(null);
 
-  const filtered = MOTOS_MOCK.filter(m => {
-    const matchTab = tab === 'all' || m.status === tab;
-    const matchSearch = !search ||
-      m.brand.toLowerCase().includes(search.toLowerCase()) ||
-      m.model.toLowerCase().includes(search.toLowerCase()) ||
-      m.plate.toLowerCase().includes(search.toLowerCase());
-    return matchTab && matchSearch;
-  });
+  const counts = STATUS_TABS.reduce((acc, t) => {
+    acc[t.key] = t.key === 'all'
+      ? MOTOS_MOCK.length
+      : MOTOS_MOCK.filter(m => m.status === t.key).length;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const filtered = MOTOS_MOCK
+    .filter(m => {
+      const matchTab = tab === 'all' || m.status === tab;
+      const matchCat = catFilter === 'all' || m.category === catFilter;
+      const matchSearch = !search ||
+        m.brand.toLowerCase().includes(search.toLowerCase()) ||
+        m.model.toLowerCase().includes(search.toLowerCase()) ||
+        m.plate.toLowerCase().includes(search.toLowerCase());
+      return matchTab && matchCat && matchSearch;
+    })
+    .sort((a, b) => {
+      const dir = sort.dir === 'asc' ? 1 : -1;
+      if (sort.field === 'brand') return dir * (a.brand + a.model).localeCompare(b.brand + b.model);
+      if (sort.field === 'mileage') return dir * (a.mileage - b.mileage);
+      if (sort.field === 'pricePerDay') return dir * (a.pricePerDay - b.pricePerDay);
+      if (sort.field === 'status') return dir * a.status.localeCompare(b.status);
+      return 0;
+    });
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const toggleSort = (field: SortField) => {
+    setSort(s => s.field === field
+      ? { field, dir: s.dir === 'asc' ? 'desc' : 'asc' }
+      : { field, dir: 'asc' }
+    );
+    setPage(1);
+  };
+
+  const allOnPageSelected = paginated.length > 0 && paginated.every(m => selectedIds.has(m.id));
+  const someSelected = paginated.some(m => selectedIds.has(m.id));
+
+  const toggleAll = () => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (allOnPageSelected) paginated.forEach(m => next.delete(m.id));
+      else paginated.forEach(m => next.add(m.id));
+      return next;
+    });
+  };
+
+  const toggleRow = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sort.field !== field) return <ArrowUpDown size={11} style={{ opacity: 0.4 }} />;
+    return sort.dir === 'asc' ? <ArrowUp size={11} /> : <ArrowDown size={11} />;
+  };
 
   const card: React.CSSProperties = {
     background: 'var(--surface)', border: '1px solid var(--border)',
     borderRadius: 16, boxShadow: 'var(--shadow)', overflow: 'hidden',
   };
 
+  const colBtn: React.CSSProperties = {
+    display: 'inline-flex', alignItems: 'center', gap: 4,
+    background: 'none', border: 'none', cursor: 'pointer',
+    fontFamily: "'Geist Mono',monospace", fontSize: 10,
+    letterSpacing: '.08em', textTransform: 'uppercase',
+    color: 'var(--faint)', padding: 0,
+  };
+
   return (
     <div>
+      {deleteTarget && (
+        <ConfirmDialog
+          title="Delete motorcycle"
+          message={`Are you sure you want to permanently delete ${deleteTarget.brand} ${deleteTarget.model} (${deleteTarget.plate})? This action cannot be undone.`}
+          confirmLabel="Delete"
+          danger
+          onConfirm={() => {
+            // TODO: DELETE /api/motos/:id
+            setDeleteTarget(null);
+          }}
+          onCancel={() => setDeleteTarget(null)}
+        />
+      )}
+
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', marginBottom: 20 }}>
         <div>
           <h1 style={{ margin: 0, fontFamily: "'Cormorant Garamond',serif", fontSize: 30, fontWeight: 600, letterSpacing: '.01em', lineHeight: 1.05, color: 'var(--ink)' }}>Fleet</h1>
           <p style={{ margin: '5px 0 0', fontSize: 13.5, color: 'var(--muted)' }}>
-            163 motorcycles ·{' '}
-            <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 12 }}>137 in rotation</span> ·{' '}
-            <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 12, color: 'var(--cmy-amber)' }}>15 in service</span>
+            {MOTOS_MOCK.length} motorcycles ·{' '}
+            <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 12 }}>
+              {counts['available'] ?? 0} available
+            </span> ·{' '}
+            <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 12, color: 'var(--cmy-amber)' }}>
+              {counts['maintenance'] ?? 0} in service
+            </span>
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
-          <button style={{
-            display: 'flex', alignItems: 'center', gap: 7, height: 36, padding: '0 13px',
-            border: '1px solid var(--border)', background: 'var(--surface)',
-            borderRadius: 10, fontSize: 13, fontWeight: 500, color: 'var(--ink)', cursor: 'pointer',
-          }}>
+          <button
+            onClick={() => setFiltersOpen(o => !o)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 7, height: 36, padding: '0 13px',
+              border: '1px solid var(--border)',
+              background: filtersOpen ? 'var(--surface-2)' : 'var(--surface)',
+              borderRadius: 10, fontSize: 13, fontWeight: 500, color: 'var(--ink)', cursor: 'pointer',
+            }}
+          >
             <SlidersHorizontal size={15} strokeWidth={1.6} />Filters
+            {(catFilter !== 'all') && (
+              <span style={{
+                background: 'var(--brand)', color: '#fff',
+                borderRadius: 999, width: 16, height: 16,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 9, fontFamily: "'Geist Mono',monospace",
+              }}>1</span>
+            )}
           </button>
+          {/* TODO: open CreateMotoModal + POST /api/motos */}
           <button style={{
             display: 'flex', alignItems: 'center', gap: 7, height: 36, padding: '0 14px',
             background: 'var(--brand)', color: '#fff',
@@ -82,6 +231,41 @@ export function MotoListPage() {
         </div>
       </div>
 
+      {/* Filters panel */}
+      {filtersOpen && (
+        <div style={{
+          background: 'var(--surface)', border: '1px solid var(--border)',
+          borderRadius: 12, padding: '16px 18px', marginBottom: 14,
+          display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap',
+        }}>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Category</div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {['all', ...CATEGORIES].map(c => (
+                <button key={c} onClick={() => { setCatFilter(c); setPage(1); }} style={{
+                  padding: '4px 10px', borderRadius: 7, fontSize: 12,
+                  border: '1px solid var(--border)',
+                  background: catFilter === c ? 'var(--ink)' : 'transparent',
+                  color: catFilter === c ? 'var(--bg)' : 'var(--muted)',
+                  cursor: 'pointer',
+                }}>
+                  {c === 'all' ? 'All categories' : c}
+                </button>
+              ))}
+            </div>
+          </div>
+          {catFilter !== 'all' && (
+            <button onClick={() => { setCatFilter('all'); setPage(1); }} style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              fontSize: 12, color: 'var(--faint)', border: 'none',
+              background: 'transparent', cursor: 'pointer',
+            }}>
+              <X size={13} />Clear filters
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Tabs + search row */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
         <div style={{
@@ -89,15 +273,15 @@ export function MotoListPage() {
           background: 'var(--surface)', border: '1px solid var(--border)',
           borderRadius: 10, padding: 4,
         }}>
-          {tabs.map(t => (
-            <button key={t.key} onClick={() => setTab(t.key)} style={{
+          {STATUS_TABS.map(t => (
+            <button key={t.key} onClick={() => { setTab(t.key); setPage(1); }} style={{
               fontSize: 12.5, fontWeight: 500, padding: '6px 11px', borderRadius: 7,
               border: 'none', cursor: 'pointer',
               background: tab === t.key ? 'var(--ink)' : 'transparent',
               color: tab === t.key ? 'var(--bg)' : 'var(--muted)',
             }}>
               {t.label}{' '}
-              <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10, opacity: 0.65 }}>{t.count}</span>
+              <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10, opacity: 0.65 }}>{counts[t.key] ?? 0}</span>
             </button>
           ))}
         </div>
@@ -109,58 +293,88 @@ export function MotoListPage() {
           }}>
             <Search size={14} strokeWidth={1.6} />
             <input
-              value={search} onChange={e => setSearch(e.target.value)}
+              value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
               placeholder="Search fleet…"
               style={{ fontSize: 13, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink)', width: '100%' }}
             />
           </div>
-          <button style={{
-            display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 12px',
-            border: '1px solid var(--border)', background: 'var(--surface)',
-            borderRadius: 10, fontSize: 12.5, color: 'var(--ink)', cursor: 'pointer',
-          }}>
-            <ArrowUpDown size={14} strokeWidth={1.6} />Sort
-          </button>
         </div>
       </div>
+
+      {/* Bulk actions bar */}
+      {selectedIds.size > 0 && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12,
+          padding: '10px 16px', marginBottom: 10,
+          background: 'var(--brand-tint)', border: '1px solid var(--border)',
+          borderRadius: 10, fontSize: 13,
+        }}>
+          <span style={{ color: 'var(--brand)', fontWeight: 500 }}>{selectedIds.size} selected</span>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {/* TODO: bulk actions → API */}
+            <button onClick={() => setSelectedIds(new Set())} style={{
+              fontSize: 12, padding: '4px 10px', border: '1px solid var(--border)',
+              borderRadius: 7, background: 'var(--surface)', color: 'var(--muted)', cursor: 'pointer',
+            }}>Clear selection</button>
+          </div>
+        </div>
+      )}
 
       {/* Table */}
       <div style={card}>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: '34px 2.4fr 1fr 1.15fr 1fr 1fr .9fr .7fr 36px',
+          gridTemplateColumns: '34px 2.4fr 1fr 1.15fr 1fr 1.1fr 1.2fr .7fr 36px',
           gap: 12, alignItems: 'center', padding: '11px 18px',
-          fontFamily: "'Geist Mono',monospace", fontSize: 10,
-          letterSpacing: '.08em', textTransform: 'uppercase',
-          color: 'var(--faint)', background: 'var(--surface-2)',
+          background: 'var(--surface-2)',
           borderBottom: '1px solid var(--border-2)',
         }}>
-          <input type="checkbox" style={{ width: 15, height: 15, accentColor: 'var(--brand)', cursor: 'pointer' }} />
-          <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--ink)', cursor: 'pointer' }}>
-            Motorcycle
-          </span>
-          <span>Category</span>
-          <span>Status</span>
-          <span>Mileage</span>
-          <span>Next service</span>
-          <span>Location</span>
-          <span>Rate</span>
+          <input
+            type="checkbox"
+            checked={allOnPageSelected}
+            ref={el => { if (el) el.indeterminate = someSelected && !allOnPageSelected; }}
+            onChange={toggleAll}
+            aria-label="Select all"
+            style={{ width: 15, height: 15, accentColor: 'var(--brand)', cursor: 'pointer' }}
+          />
+          <button style={colBtn} onClick={() => toggleSort('brand')}>
+            Motorcycle <SortIcon field="brand" />
+          </button>
+          <span style={{ ...colBtn, cursor: 'default' }}>Category</span>
+          <button style={colBtn} onClick={() => toggleSort('status')}>
+            Status <SortIcon field="status" />
+          </button>
+          <button style={colBtn} onClick={() => toggleSort('mileage')}>
+            Mileage <SortIcon field="mileage" />
+          </button>
+          <span style={{ ...colBtn, cursor: 'default' }}>Next service</span>
+          <span style={{ ...colBtn, cursor: 'default' }}>Location</span>
+          <button style={colBtn} onClick={() => toggleSort('pricePerDay')}>
+            Rate <SortIcon field="pricePerDay" />
+          </button>
           <span />
         </div>
 
-        {filtered.length === 0 ? (
+        {paginated.length === 0 ? (
           <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--faint)', fontSize: 13 }}>
             No motorcycles found.
           </div>
         ) : (
-          filtered.map((moto) => (
+          paginated.map((moto) => (
             <div key={moto.id} style={{
               display: 'grid',
-              gridTemplateColumns: '34px 2.4fr 1fr 1.15fr 1fr 1fr .9fr .7fr 36px',
+              gridTemplateColumns: '34px 2.4fr 1fr 1.15fr 1fr 1.1fr 1.2fr .7fr 36px',
               gap: 12, alignItems: 'center', padding: '11px 18px',
               borderTop: '1px solid var(--border-2)', fontSize: 12.5,
+              background: selectedIds.has(moto.id) ? 'var(--brand-tint)' : undefined,
             }}>
-              <input type="checkbox" style={{ width: 15, height: 15, accentColor: 'var(--brand)', cursor: 'pointer' }} />
+              <input
+                type="checkbox"
+                checked={selectedIds.has(moto.id)}
+                onChange={() => toggleRow(moto.id)}
+                aria-label={`Select ${moto.brand} ${moto.model}`}
+                style={{ width: 15, height: 15, accentColor: 'var(--brand)', cursor: 'pointer' }}
+              />
               <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
                 <div style={{
                   width: 34, height: 34, borderRadius: 8,
@@ -180,18 +394,72 @@ export function MotoListPage() {
               <span style={{ fontFamily: "'Geist Mono',monospace", color: 'var(--ink)' }}>
                 {moto.mileage.toLocaleString('fr-FR')} km
               </span>
-              <span style={{ fontFamily: "'Geist Mono',monospace", color: 'var(--cmy-amber)', fontSize: 12 }}>—</span>
-              <span style={{ fontFamily: "'Geist Mono',monospace", color: 'var(--faint)', fontSize: 12 }}>—</span>
+              <span style={{ fontFamily: "'Geist Mono',monospace", color: 'var(--muted)', fontSize: 12 }}>
+                {moto.nextServiceDate
+                  ? new Date(moto.nextServiceDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                  : '—'}
+              </span>
+              <span style={{ fontFamily: "'Geist Mono',monospace", color: 'var(--muted)', fontSize: 12 }}>
+                {moto.location}
+              </span>
               <span style={{ fontFamily: "'Geist Mono',monospace", color: 'var(--ink)' }}>€{moto.pricePerDay}</span>
-              <button style={{
-                width: 28, height: 28, border: 'none', background: 'transparent',
-                borderRadius: 7, color: 'var(--faint)', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <Ellipsis size={15} strokeWidth={1.6} />
-              </button>
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setOpenMenuId(openMenuId === moto.id ? null : moto.id)}
+                  aria-label="Row actions"
+                  style={{
+                    width: 28, height: 28, border: 'none', background: 'transparent',
+                    borderRadius: 7, color: 'var(--faint)', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                >
+                  <Ellipsis size={15} strokeWidth={1.6} />
+                </button>
+                {openMenuId === moto.id && (
+                  <RowActionsMenu
+                    moto={moto}
+                    onClose={() => setOpenMenuId(null)}
+                    onDelete={() => setDeleteTarget(moto)}
+                  />
+                )}
+              </div>
             </div>
           ))
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '12px 18px', borderTop: '1px solid var(--border-2)',
+            background: 'var(--surface-2)',
+          }}>
+            <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 11, color: 'var(--faint)' }}>
+              {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
+            </span>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: 30, height: 30, borderRadius: 8,
+                  border: '1px solid var(--border)', background: 'var(--surface)',
+                  color: page === 1 ? 'var(--border)' : 'var(--ink)', cursor: page === 1 ? 'default' : 'pointer',
+                }}
+              ><ChevronLeft size={14} /></button>
+              <button
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: 30, height: 30, borderRadius: 8,
+                  border: '1px solid var(--border)', background: 'var(--surface)',
+                  color: page === totalPages ? 'var(--border)' : 'var(--ink)', cursor: page === totalPages ? 'default' : 'pointer',
+                }}
+              ><ChevronRight size={14} /></button>
+            </div>
+          </div>
         )}
       </div>
     </div>
