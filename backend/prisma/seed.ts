@@ -31,7 +31,7 @@ interface MotoJson {
 }
 
 async function main() {
-  const raw = readFileSync(join(__dirname, '../../motos.json'), 'utf-8')
+  const raw = readFileSync(join(__dirname, '../motos.json'), 'utf-8')
   const motos: MotoJson[] = JSON.parse(raw)
 
   const brandNames = [...new Set(motos.map((m) => m.brand))]

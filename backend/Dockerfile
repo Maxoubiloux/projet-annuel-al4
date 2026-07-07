@@ -8,6 +8,7 @@ RUN npm install
 COPY tsconfig.json ./
 COPY prisma.config.ts ./
 COPY prisma ./prisma
+COPY motos.json ./motos.json
 COPY src ./src
 
 RUN npx prisma generate
