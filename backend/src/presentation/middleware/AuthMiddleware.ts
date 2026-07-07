@@ -3,6 +3,8 @@ import { createRemoteJWKSet, jwtVerify, JWTVerifyResult, JWTPayload } from 'jose
 
 const PUBLIC_PATHS = new Set(['/health'])
 
+const PUBLIC_GET_PREFIXES = ['/api/v1/motos', '/api/v2/motos']
+
 const keycloakUrl = process.env.KEYCLOAK_URL ?? 'http://localhost:8080'
 const keycloakRealm = process.env.KEYCLOAK_REALM ?? 'moto-rental'
 
@@ -19,6 +21,7 @@ interface KeycloakJWTPayload extends JWTPayload {
 
 export const authMiddleware = async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
   if (PUBLIC_PATHS.has(request.url)) return
+  if (request.method === 'GET' && PUBLIC_GET_PREFIXES.some(p => request.url.startsWith(p))) return
 
   const authHeader = request.headers.authorization
   if (!authHeader?.startsWith('Bearer ')) {
