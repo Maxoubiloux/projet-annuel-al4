@@ -112,8 +112,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      keycloak:
-        condition: service_healthy
+    restart: unless-stopped
     volumes:
       - ./backend/src:/app/src
       - backend_generated:/app/src/generated
@@ -144,6 +143,7 @@ services:
       - "3001:3000"
     depends_on:
       - backend
+    restart: unless-stopped
 
 volumes:
   postgres_data:
