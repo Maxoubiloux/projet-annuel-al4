@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Button } from '@/core/components/ui/Button';
 import {
   LayoutGrid, LayoutPanelLeft, Download,
   TrendingUp, TrendingDown, ArrowRight,
@@ -198,18 +199,9 @@ export function DashboardPage() {
               </button>
             ))}
           </div>
-          <button
-            onClick={exportDashboard}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 7,
-              height: 36, padding: '0 14px',
-              background: 'var(--brand)', color: '#fff',
-              border: 'none', borderRadius: 10,
-              fontSize: 13, fontWeight: 500, cursor: 'pointer',
-            }}
-          >
+          <Button size="md" onClick={exportDashboard}>
             <Download size={14} strokeWidth={1.6} />Export
-          </button>
+          </Button>
         </div>
       </div>
 

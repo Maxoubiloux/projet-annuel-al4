@@ -1,4 +1,5 @@
 import { AlertTriangle } from 'lucide-react';
+import { Button } from './Button';
 
 interface ConfirmDialogProps {
   title: string;
@@ -55,27 +56,12 @@ export function ConfirmDialog({
         </div>
 
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-          <button
-            onClick={onCancel}
-            style={{
-              height: 34, padding: '0 16px',
-              border: '1px solid var(--border)', background: 'var(--surface-2)',
-              borderRadius: 8, fontSize: 13, color: 'var(--ink)', cursor: 'pointer',
-            }}
-          >
+          <Button variant="secondary" size="sm" onClick={onCancel}>
             Cancel
-          </button>
-          <button
-            onClick={onConfirm}
-            style={{
-              height: 34, padding: '0 16px', border: 'none',
-              background: danger ? 'var(--cmy-red)' : 'var(--brand)',
-              color: '#fff', borderRadius: 8,
-              fontSize: 13, fontWeight: 500, cursor: 'pointer',
-            }}
-          >
+          </Button>
+          <Button variant={danger ? 'danger' : 'primary'} size="sm" onClick={onConfirm}>
             {confirmLabel}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@ import { Search, Plus, Mail, Phone, UserCheck, UserX, Ellipsis, X, ChevronLeft, 
 import { CUSTOMERS_MOCK } from '@/mocks/reservations';
 import type { Customer } from '@/domains/reservations/types';
 import { ConfirmDialog } from '@/core/components/ui/ConfirmDialog';
+import { Button } from '@/core/components/ui/Button';
 
 type StatusFilter = 'all' | 'active' | 'suspended';
 type LicenceFilter = 'all' | 'verified' | 'pending';
@@ -159,14 +160,11 @@ export function CustomerListPage() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
-          <button
+          <Button
+            variant={filtersOpen ? 'secondary' : 'outline'}
+            size="md"
             onClick={() => setFiltersOpen(o => !o)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 7, height: 36, padding: '0 13px',
-              border: '1px solid var(--border)',
-              background: filtersOpen ? 'var(--surface-2)' : 'var(--surface)',
-              borderRadius: 10, fontSize: 13, fontWeight: 500, color: 'var(--ink)', cursor: 'pointer',
-            }}
+            style={filtersOpen ? { background: 'var(--surface-2)' } : undefined}
           >
             <SlidersHorizontal size={15} strokeWidth={1.6} />Filters
             {activeFilterCount > 0 && (
@@ -177,15 +175,11 @@ export function CustomerListPage() {
                 fontSize: 9, fontFamily: "'Geist Mono',monospace",
               }}>{activeFilterCount}</span>
             )}
-          </button>
+          </Button>
           {/* TODO: open CreateCustomerModal + POST /api/customers */}
-          <button style={{
-            display: 'flex', alignItems: 'center', gap: 7, height: 36, padding: '0 14px',
-            background: 'var(--brand)', color: '#fff',
-            border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 500, cursor: 'pointer',
-          }}>
+          <Button size="md">
             <Plus size={15} strokeWidth={1.6} />New customer
-          </button>
+          </Button>
         </div>
       </div>
 

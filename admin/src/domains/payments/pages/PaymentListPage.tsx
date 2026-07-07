@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Download, Search, X, Ellipsis, SlidersHorizontal, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { ConfirmDialog } from '@/core/components/ui/ConfirmDialog';
+import { Button } from '@/core/components/ui/Button';
 
 const PAYMENTS_MOCK = [
   { id: 'p1', ref: 'RZ-4821', customer: 'Lucas Bernard', amount: 420, deposit: 1500, method: 'Card',    date: '2026-06-18', status: 'paid'    },
@@ -183,14 +184,11 @@ export function PaymentListPage() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
-          <button
+          <Button
+            variant={filtersOpen ? 'secondary' : 'outline'}
+            size="md"
             onClick={() => setFiltersOpen(o => !o)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 7, height: 36, padding: '0 13px',
-              border: '1px solid var(--border)',
-              background: filtersOpen ? 'var(--surface-2)' : 'var(--surface)',
-              borderRadius: 10, fontSize: 13, fontWeight: 500, color: 'var(--ink)', cursor: 'pointer',
-            }}
+            style={filtersOpen ? { background: 'var(--surface-2)' } : undefined}
           >
             <SlidersHorizontal size={15} strokeWidth={1.6} />Filters
             {activeFilterCount > 0 && (
@@ -201,18 +199,11 @@ export function PaymentListPage() {
                 fontSize: 9, fontFamily: "'Geist Mono',monospace",
               }}>{activeFilterCount}</span>
             )}
-          </button>
+          </Button>
           {/* Client-side CSV export on filtered data */}
-          <button
-            onClick={() => exportCSV(sorted)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 7, height: 36, padding: '0 14px',
-              border: '1px solid var(--border)', background: 'var(--surface)',
-              borderRadius: 10, fontSize: 13, fontWeight: 500, color: 'var(--ink)', cursor: 'pointer',
-            }}
-          >
+          <Button variant="outline" size="md" onClick={() => exportCSV(sorted)}>
             <Download size={15} strokeWidth={1.6} />Export CSV
-          </button>
+          </Button>
         </div>
       </div>
 
