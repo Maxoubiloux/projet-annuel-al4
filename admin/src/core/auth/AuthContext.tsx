@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import type { ReactNode } from 'react';
+import keycloak from './keycloak';
 
 interface User {
   id: string;
@@ -10,48 +11,101 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string) => void;
+  login: () => void;
   logout: () => void;
   isAuthenticated: boolean;
+  isUnauthorized: boolean;
   isLoading: boolean;
+  token: string | undefined;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function parseUser(): User | null {
+  const t = keycloak.tokenParsed;
+  if (!t) return null;
+  const roles: string[] = t.realm_access?.roles ?? [];
+  if (!roles.includes('admin')) return null;
+  return {
+    id: t.sub ?? '',
+    name: (t.name as string) ?? (t.preferred_username as string) ?? '',
+    email: (t.email as string) ?? '',
+    role: 'admin',
+  };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [isUnauthorized, setIsUnauthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [token, setToken] = useState<string | undefined>(undefined);
+  const didInit = useRef(false);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('admin_user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (e) {
-        localStorage.removeItem('admin_user');
+    if (didInit.current) return;
+    didInit.current = true;
+
+    keycloak
+      .init({
+        onLoad: 'check-sso',
+        pkceMethod: 'S256',
+        silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`,
+      })
+      .then((authenticated) => {
+        if (authenticated) {
+          const parsed = parseUser();
+          if (parsed) {
+            setUser(parsed);
+            setToken(keycloak.token);
+          } else {
+            setIsUnauthorized(true);
+          }
+        }
+        setIsLoading(false);
+      })
+      .catch(() => setIsLoading(false));
+
+    keycloak.onTokenExpired = () => {
+      keycloak
+        .updateToken(60)
+        .then(() => setToken(keycloak.token))
+        .catch(() => {
+          setUser(null);
+          setToken(undefined);
+        });
+    };
+
+    keycloak.onAuthSuccess = () => {
+      const parsed = parseUser();
+      if (parsed) {
+        setUser(parsed);
+        setToken(keycloak.token);
+        setIsUnauthorized(false);
+      } else {
+        setIsUnauthorized(true);
       }
-    }
-    setIsLoading(false);
+    };
+
+    keycloak.onAuthLogout = () => {
+      setUser(null);
+      setToken(undefined);
+      setIsUnauthorized(false);
+    };
   }, []);
 
-  const login = (email: string) => {
-    const mockUser: User = {
-      id: '1',
-      name: 'Admin System',
-      email,
-      role: 'admin',
-    };
-    setUser(mockUser);
-    localStorage.setItem('admin_user', JSON.stringify(mockUser));
-  };
+  const login = useCallback(() => {
+    keycloak.login({ redirectUri: window.location.origin + '/' });
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setUser(null);
-    localStorage.removeItem('admin_user');
-  };
+    setToken(undefined);
+    setIsUnauthorized(false);
+    keycloak.logout({ redirectUri: window.location.origin + '/login' });
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user, isLoading }}>
+    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user, isUnauthorized, isLoading, token }}>
       {children}
     </AuthContext.Provider>
   );
