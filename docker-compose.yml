@@ -11,6 +11,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -57,22 +58,30 @@ services:
     volumes:
       - pgadmin_data:/var/lib/pgadmin
 
-  # keycloak:
-  #   image: quay.io/keycloak/keycloak:23.0.0
-  #   container_name: moto-keycloak
-  #   environment:
-  #     KEYCLOAK_ADMIN: admin
-  #     KEYCLOAK_ADMIN_PASSWORD: admin
-  #     KC_DB: postgres
-  #     KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
-  #     KC_DB_USERNAME: postgres
-  #     KC_DB_PASSWORD: postgres
-  #   ports:
-  #     - "8080:8080"
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #   command: start-dev
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0.6
+    container_name: moto-keycloak
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: postgres
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./docker/keycloak-realm.json:/opt/keycloak/data/import/realm.json
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: start-dev --import-realm
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/realms/master || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
 
   backend:
     build:
@@ -92,6 +101,8 @@ services:
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
       KEYCLOAK_URL: http://keycloak:8080
       KEYCLOAK_REALM: moto-rental
+      KEYCLOAK_CLIENT_ID: moto-rental-backend
+      KEYCLOAK_CLIENT_SECRET: backend-secret-dev
       PORT: 3000
       CORS_ORIGIN: http://localhost:3001,http://localhost:5173
     ports:
@@ -100,6 +111,8 @@ services:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      keycloak:
         condition: service_healthy
     volumes:
       - ./backend/src:/app/src
