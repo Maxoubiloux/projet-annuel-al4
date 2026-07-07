@@ -3,6 +3,7 @@ import { Bike, Plus, SlidersHorizontal, ArrowUpDown, Search, Ellipsis, ChevronLe
 import { MOTOS_MOCK } from '@/mocks/motos';
 import type { Moto, MotoStatus } from '../types';
 import { ConfirmDialog } from '@/core/components/ui/ConfirmDialog';
+import { Button } from '@/core/components/ui/Button';
 
 type SortField = 'brand' | 'mileage' | 'pricePerDay' | 'status';
 type SortDir = 'asc' | 'desc';
@@ -201,14 +202,11 @@ export function MotoListPage() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
-          <button
+          <Button
+            variant={filtersOpen ? 'secondary' : 'outline'}
+            size="md"
             onClick={() => setFiltersOpen(o => !o)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 7, height: 36, padding: '0 13px',
-              border: '1px solid var(--border)',
-              background: filtersOpen ? 'var(--surface-2)' : 'var(--surface)',
-              borderRadius: 10, fontSize: 13, fontWeight: 500, color: 'var(--ink)', cursor: 'pointer',
-            }}
+            style={filtersOpen ? { background: 'var(--surface-2)' } : undefined}
           >
             <SlidersHorizontal size={15} strokeWidth={1.6} />Filters
             {(catFilter !== 'all') && (
@@ -219,15 +217,11 @@ export function MotoListPage() {
                 fontSize: 9, fontFamily: "'Geist Mono',monospace",
               }}>1</span>
             )}
-          </button>
+          </Button>
           {/* TODO: open CreateMotoModal + POST /api/motos */}
-          <button style={{
-            display: 'flex', alignItems: 'center', gap: 7, height: 36, padding: '0 14px',
-            background: 'var(--brand)', color: '#fff',
-            border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 500, cursor: 'pointer',
-          }}>
+          <Button size="md">
             <Plus size={15} strokeWidth={1.6} />Add motorcycle
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -312,10 +306,7 @@ export function MotoListPage() {
           <span style={{ color: 'var(--brand)', fontWeight: 500 }}>{selectedIds.size} selected</span>
           <div style={{ display: 'flex', gap: 8 }}>
             {/* TODO: bulk actions → API */}
-            <button onClick={() => setSelectedIds(new Set())} style={{
-              fontSize: 12, padding: '4px 10px', border: '1px solid var(--border)',
-              borderRadius: 7, background: 'var(--surface)', color: 'var(--muted)', cursor: 'pointer',
-            }}>Clear selection</button>
+            <Button variant="secondary" size="sm" onClick={() => setSelectedIds(new Set())}>Clear selection</Button>
           </div>
         </div>
       )}

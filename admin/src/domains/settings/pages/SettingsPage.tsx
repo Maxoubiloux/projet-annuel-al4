@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Save } from 'lucide-react';
 import { useLayout } from '@/core/hooks/useLayout';
+import { Button } from '@/core/components/ui/Button';
 
 function Section({ title, desc, children }: { title: string; desc: string; children: React.ReactNode }) {
   return (
@@ -93,15 +94,6 @@ export function SettingsPage() {
   /* Appearance toggles */
   const [emailNotif, setEmailNotif] = useState(true);
 
-  const saveBtn = (saved: boolean): React.CSSProperties => ({
-    display: 'inline-flex', alignItems: 'center', gap: 7, marginTop: 16,
-    height: 36, padding: '0 16px',
-    background: saved ? 'var(--cmy-green)' : 'var(--brand)', color: '#fff',
-    border: 'none', borderRadius: 9,
-    fontSize: 13, fontWeight: 500, cursor: 'pointer',
-    transition: 'background .2s',
-  });
-
   return (
     <div style={{ maxWidth: 780 }}>
       <div style={{ marginBottom: 24 }}>
@@ -139,10 +131,14 @@ export function SettingsPage() {
             </Field>
           </div>
           {/* TODO: connect onClick to PUT /api/settings/rules */}
-          <button style={saveBtn(bookingToast.saved)} onClick={bookingToast.trigger}>
+          <Button
+            size="md"
+            style={{ marginTop: 16, background: bookingToast.saved ? 'var(--cmy-green)' : undefined, transition: 'background .2s' }}
+            onClick={bookingToast.trigger}
+          >
             <Save size={14} strokeWidth={1.6} />
             {bookingToast.saved ? 'Saved!' : 'Save rules'}
-          </button>
+          </Button>
         </Section>
 
         {/* Company info */}
@@ -176,10 +172,14 @@ export function SettingsPage() {
             </div>
           </div>
           {/* TODO: connect onClick to PUT /api/settings/company */}
-          <button style={saveBtn(companyToast.saved)} onClick={companyToast.trigger}>
+          <Button
+            size="md"
+            style={{ marginTop: 16, background: companyToast.saved ? 'var(--cmy-green)' : undefined, transition: 'background .2s' }}
+            onClick={companyToast.trigger}
+          >
             <Save size={14} strokeWidth={1.6} />
             {companyToast.saved ? 'Saved!' : 'Save company info'}
-          </button>
+          </Button>
         </Section>
 
         {/* Appearance */}

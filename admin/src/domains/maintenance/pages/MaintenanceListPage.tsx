@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Plus, Wrench, X, SlidersHorizontal, Search, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { Button } from '@/core/components/ui/Button';
 
 const MAINTENANCE = [
   { id: 'm1', moto: 'Kawasaki Z900',         plate: 'CMY-072', type: 'Brake service overdue',  date: '2026-06-23', km: '18,400', cost: 280, sev: 'critical', status: 'open'       },
@@ -105,16 +106,8 @@ function DetailModal({ item, onClose }: { item: MaintenanceItem; onClose: () => 
 
         {/* TODO: actions connect to PATCH /api/maintenance/:id */}
         <div style={{ display: 'flex', gap: 8, marginTop: 20, paddingTop: 18, borderTop: '1px solid var(--border-2)' }}>
-          <button onClick={onClose} style={{
-            flex: 1, height: 36, border: '1px solid var(--border)',
-            background: 'var(--surface-2)', borderRadius: 9,
-            fontSize: 13, color: 'var(--ink)', cursor: 'pointer',
-          }}>Close</button>
-          <button onClick={onClose} style={{
-            flex: 1, height: 36, border: 'none',
-            background: 'var(--brand)', color: '#fff', borderRadius: 9,
-            fontSize: 13, fontWeight: 500, cursor: 'pointer',
-          }}>Mark as done</button>
+          <Button variant="secondary" size="md" style={{ flex: 1 }} onClick={onClose}>Close</Button>
+          <Button size="md" style={{ flex: 1 }} onClick={onClose}>Mark as done</Button>
         </div>
       </div>
     </div>
@@ -228,14 +221,11 @@ export function MaintenanceListPage() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
-          <button
+          <Button
+            variant={filtersOpen ? 'secondary' : 'outline'}
+            size="md"
             onClick={() => setFiltersOpen(o => !o)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 7, height: 36, padding: '0 13px',
-              border: '1px solid var(--border)',
-              background: filtersOpen ? 'var(--surface-2)' : 'var(--surface)',
-              borderRadius: 10, fontSize: 13, fontWeight: 500, color: 'var(--ink)', cursor: 'pointer',
-            }}
+            style={filtersOpen ? { background: 'var(--surface-2)' } : undefined}
           >
             <SlidersHorizontal size={15} strokeWidth={1.6} />Filters
             {activeFilterCount > 0 && (
@@ -246,15 +236,11 @@ export function MaintenanceListPage() {
                 fontSize: 9, fontFamily: "'Geist Mono',monospace",
               }}>{activeFilterCount}</span>
             )}
-          </button>
+          </Button>
           {/* TODO: open CreateMaintenanceJobModal + POST /api/maintenance */}
-          <button style={{
-            display: 'flex', alignItems: 'center', gap: 7, height: 36, padding: '0 14px',
-            background: 'var(--brand)', color: '#fff',
-            border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 500, cursor: 'pointer',
-          }}>
+          <Button size="md">
             <Plus size={15} strokeWidth={1.6} />New job
-          </button>
+          </Button>
         </div>
       </div>
 

@@ -8,6 +8,7 @@ import type { Moto } from '@/domains/motos/types';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ConfirmDialog } from '@/core/components/ui/ConfirmDialog';
+import { Button } from '@/core/components/ui/Button';
 
 type StatusConfig = { label: string; color: string; bg: string };
 
@@ -112,16 +113,8 @@ function DetailModal({ row, onClose }: { row: Row; onClose: () => void }) {
 
         {/* TODO: action buttons → POST /api/reservations/:id/confirm|cancel|refund */}
         <div style={{ display: 'flex', gap: 8, marginTop: 22, paddingTop: 18, borderTop: '1px solid var(--border-2)' }}>
-          <button onClick={onClose} style={{
-            flex: 1, height: 36, border: '1px solid var(--border)',
-            background: 'var(--surface-2)', borderRadius: 9,
-            fontSize: 13, color: 'var(--ink)', cursor: 'pointer',
-          }}>Close</button>
-          <button onClick={onClose} style={{
-            flex: 1, height: 36, border: 'none',
-            background: 'var(--brand)', color: '#fff', borderRadius: 9,
-            fontSize: 13, fontWeight: 500, cursor: 'pointer',
-          }}>Confirm</button>
+          <Button variant="secondary" size="md" style={{ flex: 1 }} onClick={onClose}>Close</Button>
+          <Button size="md" style={{ flex: 1 }} onClick={onClose}>Confirm</Button>
         </div>
       </div>
     </div>
@@ -331,14 +324,11 @@ export function ReservationListPage() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
-          <button
+          <Button
+            variant={filtersOpen ? 'secondary' : 'outline'}
+            size="md"
             onClick={() => setFiltersOpen(o => !o)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 7, height: 36, padding: '0 13px',
-              border: '1px solid var(--border)',
-              background: filtersOpen ? 'var(--surface-2)' : 'var(--surface)',
-              borderRadius: 10, fontSize: 13, fontWeight: 500, color: 'var(--ink)', cursor: 'pointer',
-            }}
+            style={filtersOpen ? { background: 'var(--surface-2)' } : undefined}
           >
             <SlidersHorizontal size={15} strokeWidth={1.6} />Filters
             {activeFilterCount > 0 && (
@@ -349,15 +339,11 @@ export function ReservationListPage() {
                 fontSize: 9, fontFamily: "'Geist Mono',monospace",
               }}>{activeFilterCount}</span>
             )}
-          </button>
+          </Button>
           {/* TODO: open CreateReservationModal + POST /api/reservations */}
-          <button style={{
-            display: 'flex', alignItems: 'center', gap: 7, height: 36, padding: '0 14px',
-            background: 'var(--brand)', color: '#fff',
-            border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 500, cursor: 'pointer',
-          }}>
+          <Button size="md">
             <Plus size={15} strokeWidth={1.6} />New reservation
-          </button>
+          </Button>
         </div>
       </div>
 
