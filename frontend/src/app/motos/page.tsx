@@ -84,7 +84,7 @@ export default function MotosPage() {
                   <button
                     key={s}
                     onClick={() => setSelectedStyle(s)}
-                    className={`text-[12px] tracking-[0.08em] uppercase px-[18px] py-[9px] rounded-full border transition-all ${active
+                    className={`text-[12px] tracking-[0.08em] uppercase px-[18px] py-[9px] rounded-full border transition-all cursor-pointer ${active
                       ? 'border-[#1B1A17] bg-[#1B1A17] text-[#F4F1E9]'
                       : 'border-[#E4DECF] bg-white text-[#5d5749] hover:border-[#1B1A17] hover:text-[#1B1A17]'
                       }`}
@@ -105,7 +105,7 @@ export default function MotosPage() {
                   <button
                     key={c}
                     onClick={() => setSelectedCategory(c)}
-                    className={`text-[12px] tracking-[0.08em] uppercase px-[18px] py-[9px] rounded-full border transition-all ${active
+                    className={`text-[12px] tracking-[0.08em] uppercase px-[18px] py-[9px] rounded-full border transition-all cursor-pointer ${active
                       ? 'border-[#1B1A17] bg-[#1B1A17] text-[#F4F1E9]'
                       : 'border-[#E4DECF] bg-white text-[#5d5749] hover:border-[#1B1A17] hover:text-[#1B1A17]'
                       }`}
@@ -145,7 +145,7 @@ export default function MotosPage() {
             <p className="font-serif italic text-[24px] text-[#8a7f63] mb-4">⚠️ {error}</p>
             <button
               onClick={loadMotos}
-              className="text-[13px] text-[#7E2E32] border-b border-[#7E2E32] pb-[2px] hover:opacity-70 transition-opacity"
+              className="text-[13px] text-[#7E2E32] border-b border-[#7E2E32] pb-[2px] hover:opacity-70 transition-opacity cursor-pointer"
             >
               Réessayer
             </button>
@@ -219,7 +219,7 @@ export default function MotosPage() {
                 </p>
                 <button
                   onClick={handleReset}
-                  className="text-[13px] text-[#7E2E32] border-b border-[#7E2E32] pb-[2px] hover:opacity-70 transition-opacity"
+                  className="text-[13px] text-[#7E2E32] border-b border-[#7E2E32] pb-[2px] hover:opacity-70 transition-opacity cursor-pointer"
                 >
                   Réinitialiser les filtres
                 </button>

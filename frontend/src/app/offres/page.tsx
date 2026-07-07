@@ -134,7 +134,7 @@ export default function OffresPage() {
               placeholder="vous@exemple.fr"
               className="flex-1 border border-[#E4DECF] bg-[#FBF9F3] rounded-[10px] px-4 py-3 text-[14px] text-[#1B1A17] outline-none focus:border-[#7E2E32] transition-colors"
             />
-            <button className="bg-[#1B1A17] text-[#F4F1E9] font-mono text-[12px] tracking-[0.08em] uppercase px-7 py-3 rounded-[10px] hover:bg-[#7E2E32] transition-colors whitespace-nowrap">
+            <button className="bg-[#1B1A17] text-[#F4F1E9] font-mono text-[12px] tracking-[0.08em] uppercase px-7 py-3 rounded-[10px] hover:bg-[#7E2E32] transition-colors whitespace-nowrap cursor-pointer">
               S&apos;inscrire
             </button>
           </div>

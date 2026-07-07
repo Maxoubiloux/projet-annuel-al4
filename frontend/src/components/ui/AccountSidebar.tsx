@@ -45,7 +45,7 @@ export default function AccountSidebar() {
       })}
       <button
         onClick={handleLogout}
-        className="py-4 flex text-[13.5px] text-[#7a715a] hover:text-[#7E2E32] transition-colors w-full text-left"
+        className="py-4 flex text-[13.5px] text-[#7a715a] hover:text-[#7E2E32] transition-colors w-full text-left cursor-pointer"
       >
         Déconnexion
       </button>

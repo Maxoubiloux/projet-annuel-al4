@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 
@@ -88,12 +89,9 @@ export default function LoginPage() {
               </a>
             </div>
 
-            <button
-              type="submit"
-              className="w-full bg-[#7E2E32] text-[#F4F1E9] text-[13.5px] tracking-[0.04em] py-[15px] rounded-full hover:bg-[#651f23] transition-colors mt-2"
-            >
+            <Button type="submit" variant="primary" size="lg" className="w-full mt-2">
               Se connecter
-            </button>
+            </Button>
           </form>
 
           <div className="flex items-center gap-3 my-[26px]">
