@@ -85,8 +85,8 @@ export default function MotosPage() {
                     key={s}
                     onClick={() => setSelectedStyle(s)}
                     className={`text-[12px] tracking-[0.08em] uppercase px-[18px] py-[9px] rounded-full border transition-all ${active
-                        ? 'border-[#1B1A17] bg-[#1B1A17] text-[#F4F1E9]'
-                        : 'border-[#E4DECF] bg-white text-[#5d5749] hover:border-[#1B1A17] hover:text-[#1B1A17]'
+                      ? 'border-[#1B1A17] bg-[#1B1A17] text-[#F4F1E9]'
+                      : 'border-[#E4DECF] bg-white text-[#5d5749] hover:border-[#1B1A17] hover:text-[#1B1A17]'
                       }`}
                   >
                     {s}
@@ -106,8 +106,8 @@ export default function MotosPage() {
                     key={c}
                     onClick={() => setSelectedCategory(c)}
                     className={`text-[12px] tracking-[0.08em] uppercase px-[18px] py-[9px] rounded-full border transition-all ${active
-                        ? 'border-[#1B1A17] bg-[#1B1A17] text-[#F4F1E9]'
-                        : 'border-[#E4DECF] bg-white text-[#5d5749] hover:border-[#1B1A17] hover:text-[#1B1A17]'
+                      ? 'border-[#1B1A17] bg-[#1B1A17] text-[#F4F1E9]'
+                      : 'border-[#E4DECF] bg-white text-[#5d5749] hover:border-[#1B1A17] hover:text-[#1B1A17]'
                       }`}
                   >
                     {c === 'Tous' ? 'Tous' : `Permis ${c}`}
