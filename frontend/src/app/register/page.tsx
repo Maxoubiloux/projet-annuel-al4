@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 
@@ -149,12 +150,9 @@ export default function RegisterPage() {
               </label>
             </div>
 
-            <button
-              type="submit"
-              className="w-full bg-[#7E2E32] text-[#F4F1E9] text-[13.5px] tracking-[0.04em] py-[15px] rounded-full hover:bg-[#651f23] transition-colors mt-3"
-            >
+            <Button type="submit" variant="primary" size="lg" className="w-full mt-3">
               Créer mon compte
-            </button>
+            </Button>
           </form>
 
           <p className="text-center text-[13.5px] text-[#56503f] mt-[22px]">

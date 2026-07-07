@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { Button } from '@/components/ui/Button';
 
 const SUBJECTS = [
   'Réservation',
@@ -167,12 +168,9 @@ export default function ContactPage() {
               </div>
 
               <div className="flex items-center gap-[18px] pt-1">
-                <button
-                  type="submit"
-                  className="bg-[#7E2E32] text-[#F4F1E9] font-mono text-[13.5px] tracking-[0.04em] px-8 py-[15px] rounded-full hover:bg-[#651f23] transition-colors"
-                >
+                <Button type="submit" variant="primary" size="lg">
                   Envoyer le message
-                </button>
+                </Button>
                 <span className="text-[12px] text-[#a0967f]">Réponse sous 24h ouvrées</span>
               </div>
             </form>
@@ -185,12 +183,9 @@ export default function ContactPage() {
               <p className="text-[14.5px] leading-[1.7] text-[#56503f] max-w-[380px] mx-auto mb-[26px]">
                 Merci de nous avoir écrit. Notre équipe vous répondra à l&apos;adresse indiquée sous 24 heures ouvrées.
               </p>
-              <button
-                onClick={resetContact}
-                className="inline-block border border-[#1B1A17] text-[#1B1A17] font-mono text-[13px] tracking-[0.04em] px-7 py-[13px] rounded-full hover:bg-[#1B1A17] hover:text-[#F4F1E9] transition-colors"
-              >
+              <Button variant="outline" size="md" onClick={resetContact}>
                 Envoyer un autre message
-              </button>
+              </Button>
             </div>
           )}
         </div>

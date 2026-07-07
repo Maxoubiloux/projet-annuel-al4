@@ -1,6 +1,7 @@
 'use client';
 
 import { Motorbike } from '@/types';
+import { Button } from '@/components/ui/Button';
 import { motosService } from '@/services/motos.service';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -209,12 +210,14 @@ export default function MotoDetails() {
               </div>
             </div>
 
-            <button
+            <Button
+              variant="primary"
+              size="lg"
+              className="w-full mt-5"
               disabled={!startDate || !endDate}
-              className="w-full mt-5 bg-[#7E2E32] text-[#F4F1E9] text-[13.5px] tracking-[0.04em] py-[15px] rounded-full hover:bg-[#651f23] disabled:bg-[#d9cfb8] disabled:cursor-not-allowed transition-colors"
             >
               Confirmer la réservation
-            </button>
+            </Button>
             <p className="text-center text-[11.5px] text-[#a0967f] mt-3">
               Annulation gratuite jusqu&apos;à 48h avant le départ
             </p>

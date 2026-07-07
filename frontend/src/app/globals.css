@@ -34,6 +34,10 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+button {
+  cursor: pointer;
+}
+
 ::selection {
   background: #7E2E32;
   color: #F4F1E9;

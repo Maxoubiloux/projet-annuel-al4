@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/Button';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import AccountSidebar from '@/components/ui/AccountSidebar';
@@ -187,12 +188,9 @@ export default function ProfilePage() {
                   </p>
                 </div>
                 {!profileEdit && (
-                  <button
-                    onClick={startEdit}
-                    className="shrink-0 whitespace-nowrap font-mono text-[11.5px] tracking-[0.1em] uppercase border border-[#1B1A17] text-[#1B1A17] px-[18px] py-[10px] rounded-full hover:bg-[#1B1A17] hover:text-[#F4F1E9] transition-colors"
-                  >
+                  <Button variant="outline" size="sm" className="shrink-0 whitespace-nowrap uppercase" onClick={startEdit}>
                     Modifier mes informations
-                  </button>
+                  </Button>
                 )}
               </div>
 
@@ -222,18 +220,8 @@ export default function ProfilePage() {
                     ))}
                   </div>
                   <div className="flex gap-3 mt-[22px]">
-                    <button
-                      onClick={saveProfile}
-                      className="bg-[#7E2E32] text-[#F4F1E9] font-mono text-[13px] tracking-[0.04em] px-7 py-[13px] rounded-full hover:bg-[#651f23] transition-colors"
-                    >
-                      Enregistrer
-                    </button>
-                    <button
-                      onClick={cancelEdit}
-                      className="border border-[#E4DECF] text-[#5d5749] font-mono text-[13px] tracking-[0.04em] px-[26px] py-[13px] rounded-full hover:border-[#1B1A17] hover:text-[#1B1A17] transition-colors"
-                    >
-                      Annuler
-                    </button>
+                    <Button variant="primary" size="md" onClick={saveProfile}>Enregistrer</Button>
+                    <Button variant="ghost" size="md" onClick={cancelEdit}>Annuler</Button>
                   </div>
                 </>
               )}
@@ -257,12 +245,9 @@ export default function ProfilePage() {
                     ••••••••••
                   </div>
                 </div>
-                <button
-                  onClick={togglePw}
-                  className="shrink-0 whitespace-nowrap font-mono text-[11.5px] tracking-[0.1em] uppercase border border-[#1B1A17] text-[#1B1A17] px-[18px] py-[10px] rounded-full hover:bg-[#1B1A17] hover:text-[#F4F1E9] transition-colors"
-                >
+                <Button variant="outline" size="sm" className="shrink-0 whitespace-nowrap uppercase" onClick={togglePw}>
                   Changer mon mot de passe
-                </button>
+                </Button>
               </div>
 
               {pwOpen && (
@@ -289,18 +274,8 @@ export default function ProfilePage() {
                     ))}
                   </div>
                   <div className="flex gap-3 mt-5">
-                    <button
-                      onClick={savePw}
-                      className="bg-[#7E2E32] text-[#F4F1E9] font-mono text-[13px] tracking-[0.04em] px-7 py-[13px] rounded-full hover:bg-[#651f23] transition-colors"
-                    >
-                      Mettre à jour
-                    </button>
-                    <button
-                      onClick={togglePw}
-                      className="border border-[#E4DECF] text-[#5d5749] font-mono text-[13px] tracking-[0.04em] px-[26px] py-[13px] rounded-full hover:border-[#1B1A17] hover:text-[#1B1A17] transition-colors"
-                    >
-                      Annuler
-                    </button>
+                    <Button variant="primary" size="md" onClick={savePw}>Mettre à jour</Button>
+                    <Button variant="ghost" size="md" onClick={togglePw}>Annuler</Button>
                   </div>
                 </div>
               )}
