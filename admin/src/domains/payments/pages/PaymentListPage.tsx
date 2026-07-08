@@ -4,6 +4,10 @@ import { ConfirmDialog } from '@/core/components/ui/ConfirmDialog';
 import { Button } from '@/core/components/ui/Button';
 import type { Payment, PaymentStatus } from '../types';
 import { usePayments } from '../hooks/usePayments';
+import { ReceiptModal, downloadReceipt } from '../components/ReceiptModal';
+import { useToast } from '@/core/components/ToastProvider';
+import { useAsync } from '@/core/hooks/useAsync';
+import { api } from '@/core/services/api';
 
 type PayStatusFilter = PaymentStatus | 'all';
 type SortField = 'date' | 'amount' | 'customer' | 'status';
@@ -43,7 +47,12 @@ const STATUS_FILTER_OPTIONS: { key: PayStatusFilter; label: string; color?: stri
 ];
 
 /* ── Row actions ── */
-function RowActions({ onClose, onRefund }: { onClose: () => void; onRefund: () => void }) {
+function RowActions({ onClose, onViewReceipt, onDownload, onRefund }: {
+  onClose: () => void;
+  onViewReceipt: () => void;
+  onDownload: () => void;
+  onRefund: () => void;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) onClose(); };
@@ -58,10 +67,8 @@ function RowActions({ onClose, onRefund }: { onClose: () => void; onRefund: () =
       borderRadius: 10, boxShadow: 'var(--shadow)',
       minWidth: 160, padding: 5, zIndex: 50,
     }}>
-      {/* TODO: ReceiptModal + download invoice */}
-      {['View receipt', 'Download invoice'].map(label => (
-        <button key={label} onClick={onClose} style={{ display: 'block', width: '100%', padding: '7px 10px', textAlign: 'left', fontSize: 12.5, color: 'var(--ink)', border: 'none', background: 'transparent', borderRadius: 7, cursor: 'pointer' }}>{label}</button>
-      ))}
+      <button onClick={() => { onClose(); onViewReceipt(); }} style={{ display: 'block', width: '100%', padding: '7px 10px', textAlign: 'left', fontSize: 12.5, color: 'var(--ink)', border: 'none', background: 'transparent', borderRadius: 7, cursor: 'pointer' }}>View receipt</button>
+      <button onClick={() => { onClose(); onDownload(); }} style={{ display: 'block', width: '100%', padding: '7px 10px', textAlign: 'left', fontSize: 12.5, color: 'var(--ink)', border: 'none', background: 'transparent', borderRadius: 7, cursor: 'pointer' }}>Download invoice</button>
       <div style={{ borderTop: '1px solid var(--border-2)', marginTop: 4, paddingTop: 4 }}>
         <button onClick={() => { onClose(); onRefund(); }} style={{ display: 'block', width: '100%', padding: '7px 10px', textAlign: 'left', fontSize: 12.5, color: 'var(--cmy-amber)', border: 'none', background: 'transparent', borderRadius: 7, cursor: 'pointer' }}>Refund</button>
       </div>
@@ -82,14 +89,30 @@ function exportCSV(data: Payment[]) {
 }
 
 export function PaymentListPage() {
-  const { data: payments, isLoading } = usePayments();
+  const { data: payments, isLoading, refetch } = usePayments();
+  const { success, error } = useToast();
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<PayStatusFilter>('all');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [refundTarget, setRefundTarget] = useState<Payment | null>(null);
+  const [receiptTarget, setReceiptTarget] = useState<Payment | null>(null);
   const [sort, setSort] = useState<{ field: SortField; dir: SortDir }>({ field: 'date', dir: 'desc' });
+
+  const refundAction = useAsync((id: string) => api.post(`/payments/${id}/refund`));
+
+  const handleRefund = async () => {
+    if (!refundTarget) return;
+    const result = await refundAction.execute(refundTarget.id);
+    if (result !== undefined) {
+      success('Refund issued');
+      refetch();
+      setRefundTarget(null);
+    } else {
+      error('Failed to issue refund');
+    }
+  };
 
   const filtered = payments.filter(p => {
     const matchSearch = !search ||
@@ -153,12 +176,14 @@ export function PaymentListPage() {
           title="Issue refund"
           message={`Refund €${refundTarget.amount} to ${refundTarget.customer} for booking #${refundTarget.ref}? This will initiate a payment reversal.`}
           confirmLabel="Issue refund"
-          onConfirm={() => {
-            // TODO: POST /api/payments/:id/refund + toast
-            setRefundTarget(null);
-          }}
+          isLoading={refundAction.isLoading}
+          onConfirm={handleRefund}
           onCancel={() => setRefundTarget(null)}
         />
+      )}
+
+      {receiptTarget && (
+        <ReceiptModal payment={receiptTarget} onClose={() => setReceiptTarget(null)} />
       )}
 
       {/* Header */}
@@ -262,7 +287,12 @@ export function PaymentListPage() {
                   <Ellipsis size={15} strokeWidth={1.6} />
                 </button>
                 {openMenuId === p.id && (
-                  <RowActions onClose={() => setOpenMenuId(null)} onRefund={() => setRefundTarget(p)} />
+                  <RowActions
+                    onClose={() => setOpenMenuId(null)}
+                    onViewReceipt={() => setReceiptTarget(p)}
+                    onDownload={() => downloadReceipt(p)}
+                    onRefund={() => setRefundTarget(p)}
+                  />
                 )}
               </div>
             </div>
