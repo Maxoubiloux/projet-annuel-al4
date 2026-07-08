@@ -4,6 +4,7 @@ import { Button } from '@/core/components/ui/Button';
 import {
   LayoutGrid, LayoutPanelLeft, Download,
   TrendingUp, TrendingDown, ArrowRight,
+  AlertTriangle, RefreshCw,
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip,
@@ -11,6 +12,7 @@ import {
 } from 'recharts';
 import { useAuth } from '@/core/auth/AuthContext';
 import { useDashboard } from '../hooks/useDashboard';
+import { CardSkeleton } from '@/core/components/ui/Skeleton';
 import type {
   DashboardRecentReservation,
   DashboardMaintenanceAlert,
@@ -239,12 +241,37 @@ export function DashboardPage() {
         </div>
       </div>
 
+      {dash.error && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          background: 'color-mix(in srgb,var(--cmy-red) 10%,transparent)',
+          border: '1px solid var(--border)', borderRadius: 12,
+          padding: '10px 16px', marginBottom: 16, fontSize: 12.5, color: 'var(--muted)',
+        }}>
+          <AlertTriangle size={15} strokeWidth={1.6} style={{ color: 'var(--cmy-red)', flexShrink: 0 }} />
+          <span style={{ flex: 1 }}>Live data unavailable — showing cached figures.</span>
+          <button
+            onClick={dash.refetch}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5, fontSize: 12,
+              color: 'var(--ink)', border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
+            }}
+          >
+            <RefreshCw size={12} strokeWidth={1.6} />Retry
+          </button>
+        </div>
+      )}
+
       {/* ══ PANE A: OPERATIONS ══ */}
       {pane === 'A' && (
         <div>
           {/* KPI cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 16 }}>
-            {kpis.map((k, i) => (
+            {dash.isLoading && !apiKpis ? (
+              <>
+                <CardSkeleton /><CardSkeleton /><CardSkeleton /><CardSkeleton />
+              </>
+            ) : kpis.map((k, i) => (
               <div key={i} style={{ ...card, padding: '17px 18px' }}>
                 <div style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10.5, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--faint)' }}>
                   {k.label}

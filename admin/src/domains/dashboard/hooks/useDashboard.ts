@@ -1,4 +1,5 @@
 import { useFetch } from '@/core/hooks/useFetch';
+import { REFRESH_INTERVAL_MS } from '@/core/constants';
 import type {
   DashboardKPIs,
   RevenuePoint,
@@ -8,13 +9,15 @@ import type {
 } from '../types';
 
 export function useDashboard() {
-  const kpis = useFetch<DashboardKPIs>('/dashboard/kpis');
-  const revenue = useFetch<RevenuePoint[]>('/dashboard/revenue?period=12m');
-  const rentals = useFetch<RentalsPoint[]>('/dashboard/rentals?days=14');
+  const opts = { refetchInterval: REFRESH_INTERVAL_MS };
+  const kpis = useFetch<DashboardKPIs>('/dashboard/kpis', opts);
+  const revenue = useFetch<RevenuePoint[]>('/dashboard/revenue?period=12m', opts);
+  const rentals = useFetch<RentalsPoint[]>('/dashboard/rentals?days=14', opts);
   const reservations = useFetch<DashboardRecentReservation[]>(
     '/reservations?limit=5&sort=-createdAt',
+    opts,
   );
-  const alerts = useFetch<DashboardMaintenanceAlert[]>('/maintenance/alerts');
+  const alerts = useFetch<DashboardMaintenanceAlert[]>('/maintenance/alerts', opts);
 
   return {
     kpis: kpis.data,
