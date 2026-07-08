@@ -4,7 +4,9 @@ import { useLayout } from '@/core/hooks/useLayout';
 import { Button } from '@/core/components/ui/Button';
 import { useToast } from '@/core/components/ToastProvider';
 import { useAsync } from '@/core/hooks/useAsync';
+import { useFormValidation } from '@/core/hooks/useFormValidation';
 import { api } from '@/core/services/api';
+import { bookingRulesSchema, companyInfoSchema } from '../schema';
 
 function Section({ title, desc, children }: { title: string; desc: string; children: React.ReactNode }) {
   return (
@@ -21,11 +23,12 @@ function Section({ title, desc, children }: { title: string; desc: string; child
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       <label style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--ink)' }}>{label}</label>
       {children}
+      {error && <div style={{ fontSize: 11.5, color: 'var(--cmy-red)' }}>{error}</div>}
     </div>
   );
 }
@@ -91,13 +94,20 @@ export function SettingsPage() {
   const preferencesAction = useAsync((emailNotifications: boolean) =>
     api.patch('/settings/preferences', { emailNotifications }));
 
+  const rulesValidation = useFormValidation(bookingRulesSchema, rules);
+  const companyValidation = useFormValidation(companyInfoSchema, company);
+
   const handleSaveRules = async () => {
+    rulesValidation.touch();
+    if (!rulesValidation.isValid) return;
     const result = await saveRulesAction.execute();
     if (result !== undefined) success('Booking rules saved');
     else error('Failed to save booking rules');
   };
 
   const handleSaveCompany = async () => {
+    companyValidation.touch();
+    if (!companyValidation.isValid) return;
     const result = await saveCompanyAction.execute();
     if (result !== undefined) success('Company information saved');
     else error('Failed to save company information');
@@ -123,25 +133,25 @@ export function SettingsPage() {
         {/* Booking rules */}
         <Section title="Booking rules" desc="Set constraints that apply to all rentals.">
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-            <Field label="Minimum rental duration (days)">
+            <Field label="Minimum rental duration (days)" error={rulesValidation.errors.minDays}>
               <input
                 type="number" value={rules.minDays} style={inputStyle}
                 onChange={e => setRules(r => ({ ...r, minDays: +e.target.value }))}
               />
             </Field>
-            <Field label="Maximum rental duration (days)">
+            <Field label="Maximum rental duration (days)" error={rulesValidation.errors.maxDays}>
               <input
                 type="number" value={rules.maxDays} style={inputStyle}
                 onChange={e => setRules(r => ({ ...r, maxDays: +e.target.value }))}
               />
             </Field>
-            <Field label="Minimum driver age">
+            <Field label="Minimum driver age" error={rulesValidation.errors.minAge}>
               <input
                 type="number" value={rules.minAge} style={inputStyle}
                 onChange={e => setRules(r => ({ ...r, minAge: +e.target.value }))}
               />
             </Field>
-            <Field label="Free cancellation window (hours)">
+            <Field label="Free cancellation window (hours)" error={rulesValidation.errors.freeCancelHours}>
               <input
                 type="number" value={rules.freeCancelHours} style={inputStyle}
                 onChange={e => setRules(r => ({ ...r, freeCancelHours: +e.target.value }))}
@@ -162,26 +172,26 @@ export function SettingsPage() {
         {/* Company info */}
         <Section title="Company information" desc="Shown on invoices and rental contracts.">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <Field label="Company name">
+            <Field label="Company name" error={companyValidation.errors.name}>
               <input
                 value={company.name} style={inputStyle}
                 onChange={e => setCompany(c => ({ ...c, name: e.target.value }))}
               />
             </Field>
-            <Field label="Address">
+            <Field label="Address" error={companyValidation.errors.address}>
               <input
                 value={company.address} style={inputStyle}
                 onChange={e => setCompany(c => ({ ...c, address: e.target.value }))}
               />
             </Field>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-              <Field label="Contact email">
+              <Field label="Contact email" error={companyValidation.errors.email}>
                 <input
                   type="email" value={company.email} style={inputStyle}
                   onChange={e => setCompany(c => ({ ...c, email: e.target.value }))}
                 />
               </Field>
-              <Field label="Phone">
+              <Field label="Phone" error={companyValidation.errors.phone}>
                 <input
                   value={company.phone} style={inputStyle}
                   onChange={e => setCompany(c => ({ ...c, phone: e.target.value }))}
