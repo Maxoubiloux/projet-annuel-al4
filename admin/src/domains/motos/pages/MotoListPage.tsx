@@ -6,6 +6,8 @@ import { ConfirmDialog } from '@/core/components/ui/ConfirmDialog';
 import { Button } from '@/core/components/ui/Button';
 import { CreateMotoModal } from '../components/CreateMotoModal';
 import { EditMotoModal } from '../components/EditMotoModal';
+import { TableSkeleton } from '@/core/components/ui/Skeleton';
+import { ErrorState } from '@/core/components/ui/ErrorState';
 
 type SortField = 'brand' | 'mileage' | 'pricePerDay' | 'status';
 type SortDir = 'asc' | 'desc';
@@ -87,7 +89,8 @@ function RowActionsMenu({ onClose, onDelete, onEdit }: { onClose: () => void; on
 }
 
 export function MotoListPage() {
-  const { data: motos, isLoading, refetch } = useMotos();
+  const [page, setPage] = useState(1);
+  const { data: motos, isLoading, error: fetchError, refetch } = useMotos({ page, limit: PAGE_SIZE });
 
   const [tab, setTab] = useState<MotoStatus | 'all'>('all');
   const [search, setSearch] = useState('');
@@ -96,7 +99,6 @@ export function MotoListPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [page, setPage] = useState(1);
   const [deleteTarget, setDeleteTarget] = useState<Moto | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Moto | null>(null);
@@ -370,9 +372,9 @@ export function MotoListPage() {
         </div>
 
         {isLoading ? (
-          <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--faint)', fontSize: 13 }}>
-            Loading fleet…
-          </div>
+          <TableSkeleton gridTemplateColumns="34px 2.4fr 1fr 1.15fr 1fr 1.1fr 1.2fr .7fr 36px" columns={9} />
+        ) : fetchError ? (
+          <ErrorState message="Impossible de charger la flotte." onRetry={refetch} />
         ) : paginated.length === 0 ? (
           <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--faint)', fontSize: 13 }}>
             No motorcycles found.

@@ -5,7 +5,9 @@ import { fieldInputStyle, fieldTextareaStyle } from '@/core/utils/formStyles';
 import { Button } from '@/core/components/ui/Button';
 import { useToast } from '@/core/components/ToastProvider';
 import { useAsync } from '@/core/hooks/useAsync';
+import { useFormValidation } from '@/core/hooks/useFormValidation';
 import { api } from '@/core/services/api';
+import { motoSchema } from '../schema';
 import type { Moto, MotoStatus } from '../types';
 
 const STATUS_OPTIONS: { key: MotoStatus; label: string }[] = [
@@ -31,10 +33,10 @@ export function CreateMotoModal({ onClose, onCreated }: { onClose: () => void; o
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm(f => ({ ...f, [key]: value }));
 
-  const isValid = form.brand.trim() && form.model.trim() && form.plate.trim() &&
-    form.category.trim() && form.location.trim() && form.description.trim();
+  const { isValid, errors, touch } = useFormValidation(motoSchema, form);
 
   const handleSubmit = async () => {
+    touch();
     if (!isValid) return;
     const result = await execute();
     if (result !== undefined) {
@@ -63,12 +65,12 @@ export function CreateMotoModal({ onClose, onCreated }: { onClose: () => void; o
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ flex: 1 }}>
-            <FormField label="Brand">
+            <FormField label="Brand" error={errors.brand}>
               <input style={fieldInputStyle} value={form.brand} onChange={e => set('brand', e.target.value)} placeholder="Honda" />
             </FormField>
           </div>
           <div style={{ flex: 1 }}>
-            <FormField label="Model">
+            <FormField label="Model" error={errors.model}>
               <input style={fieldInputStyle} value={form.model} onChange={e => set('model', e.target.value)} placeholder="CB500X" />
             </FormField>
           </div>
@@ -76,12 +78,12 @@ export function CreateMotoModal({ onClose, onCreated }: { onClose: () => void; o
 
         <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ flex: 1 }}>
-            <FormField label="Plate">
+            <FormField label="Plate" error={errors.plate}>
               <input style={fieldInputStyle} value={form.plate} onChange={e => set('plate', e.target.value)} placeholder="AB-123-CD" />
             </FormField>
           </div>
           <div style={{ width: 110 }}>
-            <FormField label="Year">
+            <FormField label="Year" error={errors.year}>
               <input type="number" style={fieldInputStyle} value={form.year} onChange={e => set('year', Number(e.target.value))} />
             </FormField>
           </div>
@@ -89,7 +91,7 @@ export function CreateMotoModal({ onClose, onCreated }: { onClose: () => void; o
 
         <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ flex: 1 }}>
-            <FormField label="Category">
+            <FormField label="Category" error={errors.category}>
               <input style={fieldInputStyle} value={form.category} onChange={e => set('category', e.target.value)} placeholder="Adventure" />
             </FormField>
           </div>
@@ -104,17 +106,17 @@ export function CreateMotoModal({ onClose, onCreated }: { onClose: () => void; o
 
         <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ flex: 1 }}>
-            <FormField label="Mileage (km)">
+            <FormField label="Mileage (km)" error={errors.mileage}>
               <input type="number" min={0} style={fieldInputStyle} value={form.mileage} onChange={e => set('mileage', Number(e.target.value))} />
             </FormField>
           </div>
           <div style={{ flex: 1 }}>
-            <FormField label="Price / day (€)">
+            <FormField label="Price / day (€)" error={errors.pricePerDay}>
               <input type="number" min={0} style={fieldInputStyle} value={form.pricePerDay} onChange={e => set('pricePerDay', Number(e.target.value))} />
             </FormField>
           </div>
           <div style={{ flex: 1 }}>
-            <FormField label="Deposit (€)">
+            <FormField label="Deposit (€)" error={errors.deposit}>
               <input type="number" min={0} style={fieldInputStyle} value={form.deposit} onChange={e => set('deposit', Number(e.target.value))} />
             </FormField>
           </div>
@@ -122,7 +124,7 @@ export function CreateMotoModal({ onClose, onCreated }: { onClose: () => void; o
 
         <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ flex: 1 }}>
-            <FormField label="Location">
+            <FormField label="Location" error={errors.location}>
               <input style={fieldInputStyle} value={form.location} onChange={e => set('location', e.target.value)} placeholder="Paris — Bastille" />
             </FormField>
           </div>
@@ -137,7 +139,7 @@ export function CreateMotoModal({ onClose, onCreated }: { onClose: () => void; o
           <input style={fieldInputStyle} value={form.imageUrl ?? ''} onChange={e => set('imageUrl', e.target.value)} placeholder="https://…" />
         </FormField>
 
-        <FormField label="Description">
+        <FormField label="Description" error={errors.description}>
           <textarea style={fieldTextareaStyle} value={form.description} onChange={e => set('description', e.target.value)} placeholder="Notes about condition, equipment…" />
         </FormField>
       </div>
