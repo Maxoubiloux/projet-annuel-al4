@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Wrench, X, SlidersHorizontal, Search, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { Plus, Wrench, X, SlidersHorizontal, Search, ArrowUp, ArrowDown, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/core/components/ui/Button';
 import type { MaintenanceJob, MaintenanceSeverity, MaintenanceStatus } from '../types';
 import { useMaintenance } from '../hooks/useMaintenance';
@@ -7,6 +7,8 @@ import { CreateMaintenanceModal } from '../components/CreateMaintenanceModal';
 import { useToast } from '@/core/components/ToastProvider';
 import { useAsync } from '@/core/hooks/useAsync';
 import { api } from '@/core/services/api';
+import { TableSkeleton } from '@/core/components/ui/Skeleton';
+import { ErrorState } from '@/core/components/ui/ErrorState';
 
 type SortField = 'moto' | 'date' | 'cost' | 'status' | 'sev';
 type SortDir = 'asc' | 'desc';
@@ -165,8 +167,11 @@ const SEV_FILTERS: { key: MaintenanceSeverity | 'all'; label: string; color?: st
   { key: 'ok',       label: 'OK',       color: 'var(--cmy-green)' },
 ];
 
+const PAGE_SIZE = 10;
+
 export function MaintenanceListPage() {
-  const { data: jobs, isLoading, refetch } = useMaintenance();
+  const [page, setPage] = useState(1);
+  const { data: jobs, isLoading, error: fetchError, refetch } = useMaintenance({ page, limit: PAGE_SIZE });
 
   const [statTab, setStatTab] = useState<MaintenanceStatus | 'all'>('all');
   const [sevFilter, setSevFilter] = useState<MaintenanceSeverity | 'all'>('all');
@@ -206,10 +211,14 @@ export function MaintenanceListPage() {
   const open = jobs.filter(m => m.status === 'open').length;
   const activeFilterCount = sevFilter !== 'all' ? 1 : 0;
 
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const paginated = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   const toggleSort = (field: SortField) => {
     setSort(s => s.field === field
       ? { field, dir: s.dir === 'asc' ? 'desc' : 'asc' }
       : { field, dir: 'asc' });
+    setPage(1);
   };
 
   const SortIcon = ({ field }: { field: SortField }) => {
@@ -286,12 +295,12 @@ export function MaintenanceListPage() {
             <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Severity</div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {SEV_FILTERS.map(f => (
-                <button key={f.key} onClick={() => setSevFilter(f.key)} style={chipBtn(sevFilter === f.key, f.color)}>{f.label}</button>
+                <button key={f.key} onClick={() => { setSevFilter(f.key); setPage(1); }} style={chipBtn(sevFilter === f.key, f.color)}>{f.label}</button>
               ))}
             </div>
           </div>
           {sevFilter !== 'all' && (
-            <button onClick={() => setSevFilter('all')} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--faint)', border: 'none', background: 'transparent', cursor: 'pointer' }}>
+            <button onClick={() => { setSevFilter('all'); setPage(1); }} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--faint)', border: 'none', background: 'transparent', cursor: 'pointer' }}>
               <X size={13} />Clear filters
             </button>
           )}
@@ -302,7 +311,7 @@ export function MaintenanceListPage() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
         <div style={{ display: 'flex', gap: 3, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 4 }}>
           {STATUS_TABS.map(t => (
-            <button key={t.key} onClick={() => setStatTab(t.key)} style={{ fontSize: 12.5, fontWeight: 500, padding: '6px 11px', borderRadius: 7, border: 'none', cursor: 'pointer', background: statTab === t.key ? 'var(--ink)' : 'transparent', color: statTab === t.key ? 'var(--bg)' : 'var(--muted)' }}>
+            <button key={t.key} onClick={() => { setStatTab(t.key); setPage(1); }} style={{ fontSize: 12.5, fontWeight: 500, padding: '6px 11px', borderRadius: 7, border: 'none', cursor: 'pointer', background: statTab === t.key ? 'var(--ink)' : 'transparent', color: statTab === t.key ? 'var(--bg)' : 'var(--muted)' }}>
               {t.label}{' '}
               <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10, opacity: 0.65 }}>{statCounts[t.key] ?? 0}</span>
             </button>
@@ -311,9 +320,9 @@ export function MaintenanceListPage() {
         <div style={{ marginLeft: 'auto' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 36, padding: '0 12px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--faint)', minWidth: 240 }}>
             <Search size={14} strokeWidth={1.6} />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by motorcycle, plate, job…" style={{ fontSize: 13, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink)', width: '100%' }} />
+            <input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} placeholder="Search by motorcycle, plate, job…" style={{ fontSize: 13, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink)', width: '100%' }} />
             {search && (
-              <button onClick={() => setSearch('')} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--faint)', display: 'flex' }}><X size={13} /></button>
+              <button onClick={() => { setSearch(''); setPage(1); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--faint)', display: 'flex' }}><X size={13} /></button>
             )}
           </div>
         </div>
@@ -333,11 +342,13 @@ export function MaintenanceListPage() {
         </div>
 
         {isLoading ? (
-          <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--faint)', fontSize: 13 }}>Loading maintenance records…</div>
-        ) : sorted.length === 0 ? (
+          <TableSkeleton gridTemplateColumns="12px 2fr 1.4fr 1fr 80px 80px 100px 70px" columns={8} />
+        ) : fetchError ? (
+          <ErrorState message="Impossible de charger les interventions." onRetry={refetch} />
+        ) : paginated.length === 0 ? (
           <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--faint)', fontSize: 13 }}>No maintenance records found.</div>
         ) : (
-          sorted.map(m => (
+          paginated.map(m => (
             <div
               key={m.id}
               onClick={() => setDetailItem(m)}
@@ -361,6 +372,19 @@ export function MaintenanceListPage() {
               <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 11, color: 'var(--faint)' }}>Details →</span>
             </div>
           ))
+        )}
+
+        {/* Pagination */}
+        {!isLoading && !fetchError && totalPages > 1 && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderTop: '1px solid var(--border-2)', background: 'var(--surface-2)' }}>
+            <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 11, color: 'var(--faint)' }}>
+              {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, sorted.length)} of {sorted.length}
+            </span>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: page === 1 ? 'var(--border)' : 'var(--ink)', cursor: page === 1 ? 'default' : 'pointer' }}><ChevronLeft size={14} /></button>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: page === totalPages ? 'var(--border)' : 'var(--ink)', cursor: page === totalPages ? 'default' : 'pointer' }}><ChevronRight size={14} /></button>
+            </div>
+          </div>
         )}
       </div>
     </div>

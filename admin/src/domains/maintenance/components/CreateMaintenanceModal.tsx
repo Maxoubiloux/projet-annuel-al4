@@ -5,8 +5,10 @@ import { fieldInputStyle, fieldTextareaStyle } from '@/core/utils/formStyles';
 import { Button } from '@/core/components/ui/Button';
 import { useToast } from '@/core/components/ToastProvider';
 import { useAsync } from '@/core/hooks/useAsync';
+import { useFormValidation } from '@/core/hooks/useFormValidation';
 import { api } from '@/core/services/api';
 import { useMotos } from '@/domains/motos/hooks/useMotos';
+import { maintenanceJobSchema } from '../schema';
 import type { MaintenanceSeverity, MaintenanceStatus } from '../types';
 
 const SEV_OPTIONS: { key: MaintenanceSeverity; label: string }[] = [
@@ -59,9 +61,10 @@ export function CreateMaintenanceModal({ onClose, onCreated }: { onClose: () => 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm(f => ({ ...f, [key]: value }));
 
-  const isValid = form.motoId && form.type.trim() && form.date && form.km.trim();
+  const { isValid, errors, touch } = useFormValidation(maintenanceJobSchema, form);
 
   const handleSubmit = async () => {
+    touch();
     if (!isValid) return;
     const result = await execute();
     if (result !== undefined) {
@@ -88,7 +91,7 @@ export function CreateMaintenanceModal({ onClose, onCreated }: { onClose: () => 
       }
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <FormField label="Motorcycle">
+        <FormField label="Motorcycle" error={errors.motoId}>
           <select style={fieldInputStyle} value={form.motoId} onChange={e => set('motoId', e.target.value)}>
             <option value="">Select a motorcycle…</option>
             {motos.map(m => (
@@ -97,18 +100,18 @@ export function CreateMaintenanceModal({ onClose, onCreated }: { onClose: () => 
           </select>
         </FormField>
 
-        <FormField label="Job type">
+        <FormField label="Job type" error={errors.type}>
           <input style={fieldInputStyle} value={form.type} onChange={e => set('type', e.target.value)} placeholder="Oil change" />
         </FormField>
 
         <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ flex: 1 }}>
-            <FormField label="Due date">
+            <FormField label="Due date" error={errors.date}>
               <input type="date" style={fieldInputStyle} value={form.date} onChange={e => set('date', e.target.value)} />
             </FormField>
           </div>
           <div style={{ flex: 1 }}>
-            <FormField label="Mileage (km)">
+            <FormField label="Mileage (km)" error={errors.km}>
               <input style={fieldInputStyle} value={form.km} onChange={e => set('km', e.target.value)} placeholder="12500" />
             </FormField>
           </div>
@@ -116,7 +119,7 @@ export function CreateMaintenanceModal({ onClose, onCreated }: { onClose: () => 
 
         <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ flex: 1 }}>
-            <FormField label="Estimated cost (€)">
+            <FormField label="Estimated cost (€)" error={errors.cost}>
               <input type="number" min={0} style={fieldInputStyle} value={form.cost} onChange={e => set('cost', Number(e.target.value))} />
             </FormField>
           </div>
