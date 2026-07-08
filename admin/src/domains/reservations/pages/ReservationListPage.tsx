@@ -1,10 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Search, Plus, SlidersHorizontal, Eye, Ellipsis, X, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
-import { RESERVATIONS_MOCK, CUSTOMERS_MOCK } from '@/mocks/reservations';
-import { MOTOS_MOCK } from '@/mocks/motos';
-import type { ReservationStatus, PaymentStatus, Reservation } from '../types';
-import type { Customer } from '../types';
-import type { Moto } from '@/domains/motos/types';
+import type { ReservationStatus, PaymentStatus, ReservationRow } from '../types';
+import { useReservations } from '../hooks/useReservations';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ConfirmDialog } from '@/core/components/ui/ConfirmDialog';
@@ -42,7 +39,6 @@ function Pill({ config }: { config: StatusConfig }) {
   );
 }
 
-type Row = Reservation & { moto?: Moto; customer?: Customer };
 type SortField = 'startDate' | 'totalAmount' | 'status';
 type SortDir = 'asc' | 'desc';
 
@@ -66,7 +62,7 @@ const PAY_FILTERS: { key: PaymentStatus | 'all'; label: string; color?: string }
 ];
 
 /* ── Detail modal ── */
-function DetailModal({ row, onClose }: { row: Row; onClose: () => void }) {
+function DetailModal({ row, onClose }: { row: ReservationRow; onClose: () => void }) {
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 200,
@@ -91,14 +87,14 @@ function DetailModal({ row, onClose }: { row: Row; onClose: () => void }) {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <Row2 label="Customer" value={`${row.customer?.firstName} ${row.customer?.lastName}`} sub={row.customer?.phone} />
-          <Row2 label="Motorcycle" value={`${row.moto?.brand} ${row.moto?.model}`} sub={row.moto?.plate} />
-          <Row2
+          <InfoRow label="Customer" value={`${row.customer?.firstName} ${row.customer?.lastName}`} sub={row.customer?.phone} />
+          <InfoRow label="Motorcycle" value={`${row.moto?.brand} ${row.moto?.model}`} sub={row.moto?.plate} />
+          <InfoRow
             label="Period"
             value={`${format(parseISO(row.startDate), 'dd MMM yyyy', { locale: fr })} → ${format(parseISO(row.endDate), 'dd MMM yyyy', { locale: fr })}`}
           />
-          <Row2 label="Amount" value={`${row.totalAmount} €`} />
-          <Row2 label="Deposit" value={`${row.depositAmount} €`} />
+          <InfoRow label="Amount" value={`${row.totalAmount} €`} />
+          <InfoRow label="Deposit" value={`${row.depositAmount} €`} />
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 11, color: 'var(--faint)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: "'Geist Mono',monospace" }}>Status</div>
@@ -111,7 +107,7 @@ function DetailModal({ row, onClose }: { row: Row; onClose: () => void }) {
           </div>
         </div>
 
-        {/* TODO: action buttons → POST /api/reservations/:id/confirm|cancel|refund */}
+        {/* TODO: POST /api/reservations/:id/confirm|cancel|refund */}
         <div style={{ display: 'flex', gap: 8, marginTop: 22, paddingTop: 18, borderTop: '1px solid var(--border-2)' }}>
           <Button variant="secondary" size="md" style={{ flex: 1 }} onClick={onClose}>Close</Button>
           <Button size="md" style={{ flex: 1 }} onClick={onClose}>Confirm</Button>
@@ -121,7 +117,7 @@ function DetailModal({ row, onClose }: { row: Row; onClose: () => void }) {
   );
 }
 
-function Row2({ label, value, sub }: { label: string; value: string; sub?: string }) {
+function InfoRow({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div>
       <div style={{ fontSize: 11, color: 'var(--faint)', marginBottom: 3, textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: "'Geist Mono',monospace" }}>{label}</div>
@@ -133,12 +129,8 @@ function Row2({ label, value, sub }: { label: string; value: string; sub?: strin
 
 /* ── Row actions dropdown ── */
 function RowActions({
-  row,
-  onView,
-  onCancel,
-  onRefund,
+  onView, onCancel, onRefund,
 }: {
-  row: Row;
   onView: () => void;
   onCancel: () => void;
   onRefund: () => void;
@@ -167,22 +159,10 @@ function RowActions({
             borderRadius: 10, boxShadow: 'var(--shadow)',
             minWidth: 150, padding: 5, zIndex: 50,
           }}>
-            {/* TODO: connect to POST /api/reservations/:id/confirm */}
-            <button onClick={() => setOpen(false)} style={{
-              display: 'block', width: '100%', padding: '7px 10px',
-              textAlign: 'left', fontSize: 12.5, color: 'var(--ink)',
-              border: 'none', background: 'transparent', borderRadius: 7, cursor: 'pointer',
-            }}>Confirm</button>
-            <button onClick={() => { setOpen(false); onCancel(); }} style={{
-              display: 'block', width: '100%', padding: '7px 10px',
-              textAlign: 'left', fontSize: 12.5, color: 'var(--cmy-red)',
-              border: 'none', background: 'transparent', borderRadius: 7, cursor: 'pointer',
-            }}>Cancel</button>
-            <button onClick={() => { setOpen(false); onRefund(); }} style={{
-              display: 'block', width: '100%', padding: '7px 10px',
-              textAlign: 'left', fontSize: 12.5, color: 'var(--cmy-amber)',
-              border: 'none', background: 'transparent', borderRadius: 7, cursor: 'pointer',
-            }}>Refund</button>
+            {/* TODO: POST /api/reservations/:id/confirm */}
+            <button onClick={() => setOpen(false)} style={{ display: 'block', width: '100%', padding: '7px 10px', textAlign: 'left', fontSize: 12.5, color: 'var(--ink)', border: 'none', background: 'transparent', borderRadius: 7, cursor: 'pointer' }}>Confirm</button>
+            <button onClick={() => { setOpen(false); onCancel(); }} style={{ display: 'block', width: '100%', padding: '7px 10px', textAlign: 'left', fontSize: 12.5, color: 'var(--cmy-red)', border: 'none', background: 'transparent', borderRadius: 7, cursor: 'pointer' }}>Cancel</button>
+            <button onClick={() => { setOpen(false); onRefund(); }} style={{ display: 'block', width: '100%', padding: '7px 10px', textAlign: 'left', fontSize: 12.5, color: 'var(--cmy-amber)', border: 'none', background: 'transparent', borderRadius: 7, cursor: 'pointer' }}>Refund</button>
           </div>
         )}
       </div>
@@ -191,6 +171,8 @@ function RowActions({
 }
 
 export function ReservationListPage() {
+  const { data: allRows, isLoading } = useReservations();
+
   const [search, setSearch] = useState('');
   const [tabFilter, setTabFilter] = useState<ReservationStatus | 'all'>('all');
   const [payFilter, setPayFilter] = useState<PaymentStatus | 'all'>('all');
@@ -201,24 +183,12 @@ export function ReservationListPage() {
   const [maxAmount, setMaxAmount] = useState('');
   const [sort, setSort] = useState<{ field: SortField; dir: SortDir }>({ field: 'startDate', dir: 'desc' });
   const [page, setPage] = useState(1);
-  const [detailRow, setDetailRow] = useState<Row | null>(null);
-  const [cancelTarget, setCancelTarget] = useState<Row | null>(null);
-  const [refundTarget, setRefundTarget] = useState<Row | null>(null);
-
-  const allRows: Row[] = RESERVATIONS_MOCK.map(r => ({
-    ...r,
-    moto: MOTOS_MOCK.find(m => m.id === r.motoId),
-    customer: CUSTOMERS_MOCK.find(c => c.id === r.customerId),
-  }));
+  const [detailRow, setDetailRow] = useState<ReservationRow | null>(null);
+  const [cancelTarget, setCancelTarget] = useState<ReservationRow | null>(null);
+  const [refundTarget, setRefundTarget] = useState<ReservationRow | null>(null);
 
   const pendingCount = allRows.filter(r => r.status === 'pending').length;
-  const activeFilterCount = [
-    payFilter !== 'all',
-    !!dateFrom,
-    !!dateTo,
-    !!minAmount,
-    !!maxAmount,
-  ].filter(Boolean).length;
+  const activeFilterCount = [payFilter !== 'all', !!dateFrom, !!dateTo, !!minAmount, !!maxAmount].filter(Boolean).length;
 
   const tabCounts = STATUS_TABS.reduce((acc, t) => {
     acc[t.key] = t.key === 'all' ? allRows.length : allRows.filter(r => r.status === t.key).length;
@@ -292,7 +262,7 @@ export function ReservationListPage() {
           confirmLabel="Cancel reservation"
           danger
           onConfirm={() => {
-            // TODO: POST /api/reservations/:id/cancel
+            // TODO: POST /api/reservations/:id/cancel + toast
             setCancelTarget(null);
           }}
           onCancel={() => setCancelTarget(null)}
@@ -305,7 +275,7 @@ export function ReservationListPage() {
           message={`Issue a refund of €${refundTarget.totalAmount} for reservation #${refundTarget.id.toUpperCase().slice(0, 6)}? This action will trigger a payment refund.`}
           confirmLabel="Issue refund"
           onConfirm={() => {
-            // TODO: POST /api/reservations/:id/refund
+            // TODO: POST /api/reservations/:id/refund + toast
             setRefundTarget(null);
           }}
           onCancel={() => setRefundTarget(null)}
@@ -317,10 +287,16 @@ export function ReservationListPage() {
         <div>
           <h1 style={{ margin: 0, fontFamily: "'Cormorant Garamond',serif", fontSize: 30, fontWeight: 600, letterSpacing: '.01em', lineHeight: 1.05, color: 'var(--ink)' }}>Reservations</h1>
           <p style={{ margin: '5px 0 0', fontSize: 13.5, color: 'var(--muted)' }}>
-            {allRows.length} bookings ·{' '}
-            <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 12, color: 'var(--brand)' }}>
-              {pendingCount} pending action
-            </span>
+            {isLoading ? (
+              <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 12, color: 'var(--faint)' }}>Loading…</span>
+            ) : (
+              <>
+                {allRows.length} bookings ·{' '}
+                <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 12, color: 'var(--brand)' }}>
+                  {pendingCount} pending action
+                </span>
+              </>
+            )}
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
@@ -332,15 +308,10 @@ export function ReservationListPage() {
           >
             <SlidersHorizontal size={15} strokeWidth={1.6} />Filters
             {activeFilterCount > 0 && (
-              <span style={{
-                background: 'var(--brand)', color: '#fff',
-                borderRadius: 999, width: 16, height: 16,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 9, fontFamily: "'Geist Mono',monospace",
-              }}>{activeFilterCount}</span>
+              <span style={{ background: 'var(--brand)', color: '#fff', borderRadius: 999, width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontFamily: "'Geist Mono',monospace" }}>{activeFilterCount}</span>
             )}
           </Button>
-          {/* TODO: open CreateReservationModal + POST /api/reservations */}
+          {/* TODO: CreateReservationModal + POST /api/reservations */}
           <Button size="md">
             <Plus size={15} strokeWidth={1.6} />New reservation
           </Button>
@@ -349,147 +320,57 @@ export function ReservationListPage() {
 
       {/* Filters panel */}
       {filtersOpen && (
-        <div style={{
-          background: 'var(--surface)', border: '1px solid var(--border)',
-          borderRadius: 12, padding: '16px 18px', marginBottom: 14,
-          display: 'flex', flexDirection: 'column', gap: 16,
-        }}>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px 18px', marginBottom: 14, display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-            {/* Payment status */}
             <div>
               <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Payment</div>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {PAY_FILTERS.map(f => (
-                  <button key={f.key} onClick={() => { setPayFilter(f.key); setPage(1); }} style={chipBtn(payFilter === f.key, f.color)}>
-                    {f.label}
-                  </button>
+                  <button key={f.key} onClick={() => { setPayFilter(f.key); setPage(1); }} style={chipBtn(payFilter === f.key, f.color)}>{f.label}</button>
                 ))}
               </div>
             </div>
-
-            {/* Date range */}
             <div>
               <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Start date</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input
-                  type="date"
-                  value={dateFrom}
-                  onChange={e => { setDateFrom(e.target.value); setPage(1); }}
-                  style={{
-                    height: 32, padding: '0 8px', borderRadius: 7, fontSize: 12,
-                    border: '1px solid var(--border)', background: 'var(--surface-2)',
-                    color: 'var(--ink)', outline: 'none',
-                  }}
-                />
+                <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPage(1); }} style={{ height: 32, padding: '0 8px', borderRadius: 7, fontSize: 12, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--ink)', outline: 'none' }} />
                 <span style={{ fontSize: 12, color: 'var(--faint)' }}>→</span>
-                <input
-                  type="date"
-                  value={dateTo}
-                  min={dateFrom || undefined}
-                  onChange={e => { setDateTo(e.target.value); setPage(1); }}
-                  style={{
-                    height: 32, padding: '0 8px', borderRadius: 7, fontSize: 12,
-                    border: '1px solid var(--border)', background: 'var(--surface-2)',
-                    color: 'var(--ink)', outline: 'none',
-                  }}
-                />
+                <input type="date" value={dateTo} min={dateFrom || undefined} onChange={e => { setDateTo(e.target.value); setPage(1); }} style={{ height: 32, padding: '0 8px', borderRadius: 7, fontSize: 12, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--ink)', outline: 'none' }} />
               </div>
             </div>
-
-            {/* Amount range */}
             <div>
               <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Amount (€)</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input
-                  type="number"
-                  min={0}
-                  placeholder="Min"
-                  value={minAmount}
-                  onChange={e => { setMinAmount(e.target.value); setPage(1); }}
-                  style={{
-                    height: 32, width: 80, padding: '0 8px', borderRadius: 7, fontSize: 12,
-                    border: '1px solid var(--border)', background: 'var(--surface-2)',
-                    color: 'var(--ink)', outline: 'none',
-                  }}
-                />
+                <input type="number" min={0} placeholder="Min" value={minAmount} onChange={e => { setMinAmount(e.target.value); setPage(1); }} style={{ height: 32, width: 80, padding: '0 8px', borderRadius: 7, fontSize: 12, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--ink)', outline: 'none' }} />
                 <span style={{ fontSize: 12, color: 'var(--faint)' }}>–</span>
-                <input
-                  type="number"
-                  min={0}
-                  placeholder="Max"
-                  value={maxAmount}
-                  onChange={e => { setMaxAmount(e.target.value); setPage(1); }}
-                  style={{
-                    height: 32, width: 80, padding: '0 8px', borderRadius: 7, fontSize: 12,
-                    border: '1px solid var(--border)', background: 'var(--surface-2)',
-                    color: 'var(--ink)', outline: 'none',
-                  }}
-                />
+                <input type="number" min={0} placeholder="Max" value={maxAmount} onChange={e => { setMaxAmount(e.target.value); setPage(1); }} style={{ height: 32, width: 80, padding: '0 8px', borderRadius: 7, fontSize: 12, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--ink)', outline: 'none' }} />
               </div>
             </div>
           </div>
-
           {activeFilterCount > 0 && (
-            <div>
-              <button
-                onClick={() => {
-                  setPayFilter('all');
-                  setDateFrom(''); setDateTo('');
-                  setMinAmount(''); setMaxAmount('');
-                  setPage(1);
-                }}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 5,
-                  fontSize: 12, color: 'var(--faint)', border: 'none',
-                  background: 'transparent', cursor: 'pointer', padding: 0,
-                }}
-              >
-                <X size={13} />Clear all filters
-              </button>
-            </div>
+            <button onClick={() => { setPayFilter('all'); setDateFrom(''); setDateTo(''); setMinAmount(''); setMaxAmount(''); setPage(1); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--faint)', border: 'none', background: 'transparent', cursor: 'pointer', padding: 0 }}>
+              <X size={13} />Clear all filters
+            </button>
           )}
         </div>
       )}
 
       {/* Status tabs + Search */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
-        <div style={{
-          display: 'flex', gap: 3,
-          background: 'var(--surface)', border: '1px solid var(--border)',
-          borderRadius: 10, padding: 4,
-        }}>
+        <div style={{ display: 'flex', gap: 3, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 4 }}>
           {STATUS_TABS.map(t => (
-            <button key={t.key} onClick={() => { setTabFilter(t.key); setPage(1); }} style={{
-              fontSize: 12.5, fontWeight: 500, padding: '6px 11px', borderRadius: 7,
-              border: 'none', cursor: 'pointer',
-              background: tabFilter === t.key ? 'var(--ink)' : 'transparent',
-              color: tabFilter === t.key ? 'var(--bg)' : 'var(--muted)',
-            }}>
+            <button key={t.key} onClick={() => { setTabFilter(t.key); setPage(1); }} style={{ fontSize: 12.5, fontWeight: 500, padding: '6px 11px', borderRadius: 7, border: 'none', cursor: 'pointer', background: tabFilter === t.key ? 'var(--ink)' : 'transparent', color: tabFilter === t.key ? 'var(--bg)' : 'var(--muted)' }}>
               {t.label}{' '}
-              <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10, opacity: 0.65 }}>
-                {tabCounts[t.key] ?? 0}
-              </span>
+              <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10, opacity: 0.65 }}>{tabCounts[t.key] ?? 0}</span>
             </button>
           ))}
         </div>
-
-        {/* Search */}
         <div style={{ marginLeft: 'auto' }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8, height: 36, padding: '0 12px',
-            background: 'var(--surface)', border: '1px solid var(--border)',
-            borderRadius: 10, color: 'var(--faint)', minWidth: 280,
-          }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 36, padding: '0 12px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--faint)', minWidth: 280 }}>
             <Search size={14} strokeWidth={1.6} />
-            <input
-              value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
-              placeholder="Search by customer, bike, ID…"
-              style={{ fontSize: 13, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink)', width: '100%' }}
-            />
+            <input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} placeholder="Search by customer, bike, ID…" style={{ fontSize: 13, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink)', width: '100%' }} />
             {search && (
-              <button onClick={() => { setSearch(''); setPage(1); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--faint)', display: 'flex' }}>
-                <X size={13} />
-              </button>
+              <button onClick={() => { setSearch(''); setPage(1); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--faint)', display: 'flex' }}><X size={13} /></button>
             )}
           </div>
         </div>
@@ -497,71 +378,41 @@ export function ReservationListPage() {
 
       <div style={card}>
         {/* Table header */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '90px 1.4fr 1.2fr 1fr 80px 100px 90px 60px',
-          gap: 12, alignItems: 'center', padding: '11px 20px',
-          background: 'var(--surface-2)',
-          borderBottom: '1px solid var(--border-2)',
-        }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '90px 1.4fr 1.2fr 1fr 80px 100px 90px 60px', gap: 12, alignItems: 'center', padding: '11px 20px', background: 'var(--surface-2)', borderBottom: '1px solid var(--border-2)' }}>
           <span style={{ ...colBtn, cursor: 'default' }}>ID</span>
           <span style={{ ...colBtn, cursor: 'default' }}>Customer</span>
           <span style={{ ...colBtn, cursor: 'default' }}>Motorcycle</span>
-          <button style={colBtn} onClick={() => toggleSort('startDate')}>
-            Dates <SortIcon field="startDate" />
-          </button>
-          <button style={colBtn} onClick={() => toggleSort('totalAmount')}>
-            Amount <SortIcon field="totalAmount" />
-          </button>
-          <button style={colBtn} onClick={() => toggleSort('status')}>
-            Status <SortIcon field="status" />
-          </button>
+          <button style={colBtn} onClick={() => toggleSort('startDate')}>Dates <SortIcon field="startDate" /></button>
+          <button style={colBtn} onClick={() => toggleSort('totalAmount')}>Amount <SortIcon field="totalAmount" /></button>
+          <button style={colBtn} onClick={() => toggleSort('status')}>Status <SortIcon field="status" /></button>
           <span style={{ ...colBtn, cursor: 'default' }}>Payment</span>
           <span />
         </div>
 
-        {paginated.length === 0 ? (
-          <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--faint)', fontSize: 13 }}>
-            No reservations found.
-          </div>
+        {isLoading ? (
+          <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--faint)', fontSize: 13 }}>Loading reservations…</div>
+        ) : paginated.length === 0 ? (
+          <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--faint)', fontSize: 13 }}>No reservations found.</div>
         ) : (
           paginated.map((r) => (
-            <div key={r.id} style={{
-              display: 'grid',
-              gridTemplateColumns: '90px 1.4fr 1.2fr 1fr 80px 100px 90px 60px',
-              gap: 12, alignItems: 'center', padding: '12px 20px',
-              borderTop: '1px solid var(--border-2)', fontSize: 12.5,
-            }}>
-              <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10.5, color: 'var(--faint)' }}>
-                #{r.id.toUpperCase().slice(0, 6)}
-              </span>
+            <div key={r.id} style={{ display: 'grid', gridTemplateColumns: '90px 1.4fr 1.2fr 1fr 80px 100px 90px 60px', gap: 12, alignItems: 'center', padding: '12px 20px', borderTop: '1px solid var(--border-2)', fontSize: 12.5 }}>
+              <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10.5, color: 'var(--faint)' }}>#{r.id.toUpperCase().slice(0, 6)}</span>
               <div>
-                <div style={{ fontWeight: 500, color: 'var(--ink)' }}>
-                  {r.customer?.firstName} {r.customer?.lastName}
-                </div>
-                <div style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10.5, color: 'var(--faint)' }}>
-                  {r.customer?.phone}
-                </div>
+                <div style={{ fontWeight: 500, color: 'var(--ink)' }}>{r.customer?.firstName} {r.customer?.lastName}</div>
+                <div style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10.5, color: 'var(--faint)' }}>{r.customer?.phone}</div>
               </div>
               <div>
                 <div style={{ fontWeight: 500, color: 'var(--ink)' }}>{r.moto?.brand}</div>
                 <div style={{ fontSize: 11, color: 'var(--faint)' }}>{r.moto?.model}</div>
               </div>
               <div>
-                <div style={{ fontSize: 12, color: 'var(--ink)' }}>
-                  {format(parseISO(r.startDate), 'dd MMM', { locale: fr })}
-                </div>
-                <div style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10.5, color: 'var(--faint)' }}>
-                  → {format(parseISO(r.endDate), 'dd MMM yyyy', { locale: fr })}
-                </div>
+                <div style={{ fontSize: 12, color: 'var(--ink)' }}>{format(parseISO(r.startDate), 'dd MMM', { locale: fr })}</div>
+                <div style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10.5, color: 'var(--faint)' }}>→ {format(parseISO(r.endDate), 'dd MMM yyyy', { locale: fr })}</div>
               </div>
-              <span style={{ fontFamily: "'Geist Mono',monospace", fontWeight: 500, color: 'var(--ink)' }}>
-                {r.totalAmount} €
-              </span>
+              <span style={{ fontFamily: "'Geist Mono',monospace", fontWeight: 500, color: 'var(--ink)' }}>{r.totalAmount} €</span>
               <Pill config={resCfg[r.status]} />
               <Pill config={payCfg[r.paymentStatus]} />
               <RowActions
-                row={r}
                 onView={() => setDetailRow(r)}
                 onCancel={() => setCancelTarget(r)}
                 onRefund={() => setRefundTarget(r)}
@@ -571,28 +422,14 @@ export function ReservationListPage() {
         )}
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '12px 20px', borderTop: '1px solid var(--border-2)',
-            background: 'var(--surface-2)',
-          }}>
+        {!isLoading && totalPages > 1 && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderTop: '1px solid var(--border-2)', background: 'var(--surface-2)' }}>
             <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 11, color: 'var(--faint)' }}>
               {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
             </span>
             <div style={{ display: 'flex', gap: 6 }}>
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                width: 30, height: 30, borderRadius: 8,
-                border: '1px solid var(--border)', background: 'var(--surface)',
-                color: page === 1 ? 'var(--border)' : 'var(--ink)', cursor: page === 1 ? 'default' : 'pointer',
-              }}><ChevronLeft size={14} /></button>
-              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                width: 30, height: 30, borderRadius: 8,
-                border: '1px solid var(--border)', background: 'var(--surface)',
-                color: page === totalPages ? 'var(--border)' : 'var(--ink)', cursor: page === totalPages ? 'default' : 'pointer',
-              }}><ChevronRight size={14} /></button>
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: page === 1 ? 'var(--border)' : 'var(--ink)', cursor: page === 1 ? 'default' : 'pointer' }}><ChevronLeft size={14} /></button>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: page === totalPages ? 'var(--border)' : 'var(--ink)', cursor: page === totalPages ? 'default' : 'pointer' }}><ChevronRight size={14} /></button>
             </div>
           </div>
         )}

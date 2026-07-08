@@ -1,6 +1,7 @@
 export type ReservationStatus = 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
 
+
 export interface Customer {
   id: string;
   firstName: string;
@@ -27,3 +28,6 @@ export interface Reservation {
   paymentStatus: PaymentStatus;
   createdAt: string;
 }
+
+import type { Moto } from '@/domains/motos/types';
+export type ReservationRow = Reservation & { moto?: Moto; customer?: Customer };
