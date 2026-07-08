@@ -6,6 +6,10 @@ import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ConfirmDialog } from '@/core/components/ui/ConfirmDialog';
 import { Button } from '@/core/components/ui/Button';
+import { CreateReservationModal } from '../components/CreateReservationModal';
+import { useToast } from '@/core/components/ToastProvider';
+import { useAsync } from '@/core/hooks/useAsync';
+import { api } from '@/core/services/api';
 
 type StatusConfig = { label: string; color: string; bg: string };
 
@@ -62,7 +66,7 @@ const PAY_FILTERS: { key: PaymentStatus | 'all'; label: string; color?: string }
 ];
 
 /* ── Detail modal ── */
-function DetailModal({ row, onClose }: { row: ReservationRow; onClose: () => void }) {
+function DetailModal({ row, onClose, onConfirm, confirming }: { row: ReservationRow; onClose: () => void; onConfirm: () => void; confirming: boolean }) {
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 200,
@@ -107,10 +111,13 @@ function DetailModal({ row, onClose }: { row: ReservationRow; onClose: () => voi
           </div>
         </div>
 
-        {/* TODO: POST /api/reservations/:id/confirm|cancel|refund */}
         <div style={{ display: 'flex', gap: 8, marginTop: 22, paddingTop: 18, borderTop: '1px solid var(--border-2)' }}>
           <Button variant="secondary" size="md" style={{ flex: 1 }} onClick={onClose}>Close</Button>
-          <Button size="md" style={{ flex: 1 }} onClick={onClose}>Confirm</Button>
+          {row.status === 'pending' && (
+            <Button size="md" style={{ flex: 1 }} disabled={confirming} onClick={onConfirm}>
+              {confirming ? 'Confirming…' : 'Confirm'}
+            </Button>
+          )}
         </div>
       </div>
     </div>
@@ -129,9 +136,11 @@ function InfoRow({ label, value, sub }: { label: string; value: string; sub?: st
 
 /* ── Row actions dropdown ── */
 function RowActions({
-  onView, onCancel, onRefund,
+  status, onView, onConfirm, onCancel, onRefund,
 }: {
+  status: ReservationStatus;
   onView: () => void;
+  onConfirm: () => void;
   onCancel: () => void;
   onRefund: () => void;
 }) {
@@ -159,9 +168,12 @@ function RowActions({
             borderRadius: 10, boxShadow: 'var(--shadow)',
             minWidth: 150, padding: 5, zIndex: 50,
           }}>
-            {/* TODO: POST /api/reservations/:id/confirm */}
-            <button onClick={() => setOpen(false)} style={{ display: 'block', width: '100%', padding: '7px 10px', textAlign: 'left', fontSize: 12.5, color: 'var(--ink)', border: 'none', background: 'transparent', borderRadius: 7, cursor: 'pointer' }}>Confirm</button>
-            <button onClick={() => { setOpen(false); onCancel(); }} style={{ display: 'block', width: '100%', padding: '7px 10px', textAlign: 'left', fontSize: 12.5, color: 'var(--cmy-red)', border: 'none', background: 'transparent', borderRadius: 7, cursor: 'pointer' }}>Cancel</button>
+            {status === 'pending' && (
+              <button onClick={() => { setOpen(false); onConfirm(); }} style={{ display: 'block', width: '100%', padding: '7px 10px', textAlign: 'left', fontSize: 12.5, color: 'var(--ink)', border: 'none', background: 'transparent', borderRadius: 7, cursor: 'pointer' }}>Confirm</button>
+            )}
+            {status !== 'cancelled' && status !== 'completed' && (
+              <button onClick={() => { setOpen(false); onCancel(); }} style={{ display: 'block', width: '100%', padding: '7px 10px', textAlign: 'left', fontSize: 12.5, color: 'var(--cmy-red)', border: 'none', background: 'transparent', borderRadius: 7, cursor: 'pointer' }}>Cancel</button>
+            )}
             <button onClick={() => { setOpen(false); onRefund(); }} style={{ display: 'block', width: '100%', padding: '7px 10px', textAlign: 'left', fontSize: 12.5, color: 'var(--cmy-amber)', border: 'none', background: 'transparent', borderRadius: 7, cursor: 'pointer' }}>Refund</button>
           </div>
         )}
@@ -171,7 +183,8 @@ function RowActions({
 }
 
 export function ReservationListPage() {
-  const { data: allRows, isLoading } = useReservations();
+  const { data: allRows, isLoading, refetch } = useReservations();
+  const { success, error } = useToast();
 
   const [search, setSearch] = useState('');
   const [tabFilter, setTabFilter] = useState<ReservationStatus | 'all'>('all');
@@ -186,6 +199,46 @@ export function ReservationListPage() {
   const [detailRow, setDetailRow] = useState<ReservationRow | null>(null);
   const [cancelTarget, setCancelTarget] = useState<ReservationRow | null>(null);
   const [refundTarget, setRefundTarget] = useState<ReservationRow | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+
+  const confirmAction = useAsync((id: string) => api.post(`/reservations/${id}/confirm`));
+  const cancelAction = useAsync((id: string) => api.post(`/reservations/${id}/cancel`));
+  const refundAction = useAsync((id: string) => api.post(`/reservations/${id}/refund`));
+
+  const handleConfirm = async (row: ReservationRow) => {
+    const result = await confirmAction.execute(row.id);
+    if (result !== undefined) {
+      success('Reservation confirmed');
+      refetch();
+      setDetailRow(null);
+    } else {
+      error('Failed to confirm reservation');
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!cancelTarget) return;
+    const result = await cancelAction.execute(cancelTarget.id);
+    if (result !== undefined) {
+      success('Reservation cancelled');
+      refetch();
+      setCancelTarget(null);
+    } else {
+      error('Failed to cancel reservation');
+    }
+  };
+
+  const handleRefund = async () => {
+    if (!refundTarget) return;
+    const result = await refundAction.execute(refundTarget.id);
+    if (result !== undefined) {
+      success('Refund issued');
+      refetch();
+      setRefundTarget(null);
+    } else {
+      error('Failed to issue refund');
+    }
+  };
 
   const pendingCount = allRows.filter(r => r.status === 'pending').length;
   const activeFilterCount = [payFilter !== 'all', !!dateFrom, !!dateTo, !!minAmount, !!maxAmount].filter(Boolean).length;
@@ -253,7 +306,18 @@ export function ReservationListPage() {
 
   return (
     <div>
-      {detailRow && <DetailModal row={detailRow} onClose={() => setDetailRow(null)} />}
+      {detailRow && (
+        <DetailModal
+          row={detailRow}
+          onClose={() => setDetailRow(null)}
+          onConfirm={() => handleConfirm(detailRow)}
+          confirming={confirmAction.isLoading}
+        />
+      )}
+
+      {createOpen && (
+        <CreateReservationModal onClose={() => setCreateOpen(false)} onCreated={refetch} />
+      )}
 
       {cancelTarget && (
         <ConfirmDialog
@@ -261,10 +325,8 @@ export function ReservationListPage() {
           message={`Cancel reservation #${cancelTarget.id.toUpperCase().slice(0, 6)} for ${cancelTarget.customer?.firstName} ${cancelTarget.customer?.lastName}? This cannot be undone.`}
           confirmLabel="Cancel reservation"
           danger
-          onConfirm={() => {
-            // TODO: POST /api/reservations/:id/cancel + toast
-            setCancelTarget(null);
-          }}
+          isLoading={cancelAction.isLoading}
+          onConfirm={handleCancel}
           onCancel={() => setCancelTarget(null)}
         />
       )}
@@ -274,10 +336,8 @@ export function ReservationListPage() {
           title="Refund reservation"
           message={`Issue a refund of €${refundTarget.totalAmount} for reservation #${refundTarget.id.toUpperCase().slice(0, 6)}? This action will trigger a payment refund.`}
           confirmLabel="Issue refund"
-          onConfirm={() => {
-            // TODO: POST /api/reservations/:id/refund + toast
-            setRefundTarget(null);
-          }}
+          isLoading={refundAction.isLoading}
+          onConfirm={handleRefund}
           onCancel={() => setRefundTarget(null)}
         />
       )}
@@ -311,8 +371,7 @@ export function ReservationListPage() {
               <span style={{ background: 'var(--brand)', color: '#fff', borderRadius: 999, width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontFamily: "'Geist Mono',monospace" }}>{activeFilterCount}</span>
             )}
           </Button>
-          {/* TODO: CreateReservationModal + POST /api/reservations */}
-          <Button size="md">
+          <Button size="md" onClick={() => setCreateOpen(true)}>
             <Plus size={15} strokeWidth={1.6} />New reservation
           </Button>
         </div>
@@ -413,7 +472,9 @@ export function ReservationListPage() {
               <Pill config={resCfg[r.status]} />
               <Pill config={payCfg[r.paymentStatus]} />
               <RowActions
+                status={r.status}
                 onView={() => setDetailRow(r)}
+                onConfirm={() => handleConfirm(r)}
                 onCancel={() => setCancelTarget(r)}
                 onRefund={() => setRefundTarget(r)}
               />
