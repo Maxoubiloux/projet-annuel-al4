@@ -3,13 +3,14 @@ import keycloak from '@/core/auth/keycloak';
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api';
 
 export class ApiError extends Error {
-  constructor(
-    public readonly status: number,
-    public readonly statusText: string,
-    message: string,
-  ) {
+  readonly status: number;
+  readonly statusText: string;
+
+  constructor(status: number, statusText: string, message: string) {
     super(message);
     this.name = 'ApiError';
+    this.status = status;
+    this.statusText = statusText;
   }
 }
 
@@ -35,10 +36,9 @@ async function handleResponse<T>(res: Response): Promise<T> {
     let message = res.statusText;
     try {
       const body = await res.json();
-      message = body?.message ?? body?.error ?? message;
-    } catch {
-      // body non-JSON, on garde statusText
-    }
+      const bodyError = typeof body?.error === 'string' ? body.error : body?.error?.message;
+      message = body?.message ?? bodyError ?? message;
+    } catch { }
     throw new ApiError(res.status, res.statusText, message);
   }
 

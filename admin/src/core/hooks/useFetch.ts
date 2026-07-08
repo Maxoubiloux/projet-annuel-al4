@@ -1,8 +1,26 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '@/core/services/api';
 
+export interface FetchMeta {
+  total?: number;
+  page?: number;
+  limit?: number;
+}
+
+/** Envelope shape returned by the backend: { success, data, meta }. */
+interface ApiEnvelope<T> {
+  success: boolean;
+  data: T;
+  meta?: FetchMeta;
+}
+
+function isEnvelope<T>(raw: unknown): raw is ApiEnvelope<T> {
+  return !!raw && typeof raw === 'object' && 'success' in raw && 'data' in raw;
+}
+
 interface FetchState<T> {
   data: T | undefined;
+  meta: FetchMeta | undefined;
   error: Error | undefined;
   isLoading: boolean;
 }
@@ -24,6 +42,7 @@ export function useFetch<T>(
 
   const [state, setState] = useState<FetchState<T>>({
     data: undefined,
+    meta: undefined,
     error: undefined,
     isLoading: !!(path && enabled),
   });
@@ -43,10 +62,13 @@ export function useFetch<T>(
     setState((s) => ({ ...s, isLoading: true, error: undefined }));
 
     api
-      .get<T>(currentPath, ctrl.signal)
-      .then((data) => {
-        if (!ctrl.signal.aborted) {
-          setState({ data, error: undefined, isLoading: false });
+      .get<T | ApiEnvelope<T>>(currentPath, ctrl.signal)
+      .then((raw) => {
+        if (ctrl.signal.aborted) return;
+        if (isEnvelope<T>(raw)) {
+          setState({ data: raw.data, meta: raw.meta, error: undefined, isLoading: false });
+        } else {
+          setState({ data: raw as T, meta: undefined, error: undefined, isLoading: false });
         }
       })
       .catch((err: Error) => {
@@ -58,7 +80,7 @@ export function useFetch<T>(
 
   useEffect(() => {
     if (!path || !enabled) {
-      setState({ data: undefined, error: undefined, isLoading: false });
+      setState({ data: undefined, meta: undefined, error: undefined, isLoading: false });
       return;
     }
     fetch_();
