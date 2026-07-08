@@ -6,6 +6,7 @@ interface ConfirmDialogProps {
   message: string;
   confirmLabel?: string;
   danger?: boolean;
+  isLoading?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -15,6 +16,7 @@ export function ConfirmDialog({
   message,
   confirmLabel = 'Confirm',
   danger = false,
+  isLoading = false,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -56,11 +58,11 @@ export function ConfirmDialog({
         </div>
 
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-          <Button variant="secondary" size="sm" onClick={onCancel}>
+          <Button variant="secondary" size="sm" onClick={onCancel} disabled={isLoading}>
             Cancel
           </Button>
-          <Button variant={danger ? 'danger' : 'primary'} size="sm" onClick={onConfirm}>
-            {confirmLabel}
+          <Button variant={danger ? 'danger' : 'primary'} size="sm" onClick={onConfirm} disabled={isLoading}>
+            {isLoading ? 'Please wait…' : confirmLabel}
           </Button>
         </div>
       </div>
