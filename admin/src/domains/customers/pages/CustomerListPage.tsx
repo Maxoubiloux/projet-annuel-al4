@@ -4,6 +4,11 @@ import type { Customer } from '@/domains/reservations/types';
 import { useCustomers } from '../hooks/useCustomers';
 import { ConfirmDialog } from '@/core/components/ui/ConfirmDialog';
 import { Button } from '@/core/components/ui/Button';
+import { CreateCustomerModal } from '../components/CreateCustomerModal';
+import { EditCustomerModal } from '../components/EditCustomerModal';
+import { useToast } from '@/core/components/ToastProvider';
+import { useAsync } from '@/core/hooks/useAsync';
+import { api } from '@/core/services/api';
 
 type StatusFilter = 'all' | 'active' | 'suspended';
 type LicenceFilter = 'all' | 'verified' | 'pending';
@@ -12,13 +17,20 @@ type SortDir = 'asc' | 'desc';
 
 const PAGE_SIZE = 10;
 
-function RowActionsMenu({ customer, onClose, onSuspend }: { customer: Customer; onClose: () => void; onSuspend: () => void }) {
+function RowActionsMenu({ customer, onClose, onSuspend, onEdit }: { customer: Customer; onClose: () => void; onSuspend: () => void; onEdit: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) onClose(); };
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
   }, [onClose]);
+
+  // TODO: "View profile" / "View bookings" modals — out of Day 3 scope
+  const actions = [
+    { label: 'View profile', onClick: onClose },
+    { label: 'Edit', onClick: () => { onClose(); onEdit(); } },
+    { label: 'View bookings', onClick: onClose },
+  ];
 
   return (
     <div ref={ref} style={{
@@ -27,13 +39,12 @@ function RowActionsMenu({ customer, onClose, onSuspend }: { customer: Customer; 
       borderRadius: 10, boxShadow: 'var(--shadow)',
       minWidth: 170, padding: 5, zIndex: 50,
     }}>
-      {/* TODO: View profile / Edit / View bookings modals */}
-      {['View profile', 'Edit', 'View bookings'].map(label => (
-        <button key={label} onClick={onClose} style={{
+      {actions.map(a => (
+        <button key={a.label} onClick={a.onClick} style={{
           display: 'block', width: '100%', padding: '7px 10px',
           textAlign: 'left', fontSize: 12.5, color: 'var(--ink)',
           border: 'none', background: 'transparent', borderRadius: 7, cursor: 'pointer',
-        }}>{label}</button>
+        }}>{a.label}</button>
       ))}
       <div style={{ borderTop: '1px solid var(--border-2)', marginTop: 4, paddingTop: 4 }}>
         <button onClick={() => { onClose(); onSuspend(); }} style={{
@@ -61,7 +72,8 @@ const LICENCE_OPTIONS: { key: LicenceFilter; label: string; color?: string }[] =
 ];
 
 export function CustomerListPage() {
-  const { data: customers, isLoading } = useCustomers();
+  const { data: customers, isLoading, refetch } = useCustomers();
+  const { success, error } = useToast();
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -71,6 +83,23 @@ export function CustomerListPage() {
   const [page, setPage] = useState(1);
   const [suspendTarget, setSuspendTarget] = useState<Customer | null>(null);
   const [sort, setSort] = useState<{ field: SortField; dir: SortDir }>({ field: 'name', dir: 'asc' });
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<Customer | null>(null);
+
+  const suspendAction = useAsync((id: string, status: Customer['status']) => api.patch(`/customers/${id}/status`, { status }));
+
+  const handleSuspendToggle = async () => {
+    if (!suspendTarget) return;
+    const nextStatus: Customer['status'] = suspendTarget.status === 'active' ? 'suspended' : 'active';
+    const result = await suspendAction.execute(suspendTarget.id, nextStatus);
+    if (result !== undefined) {
+      success(nextStatus === 'suspended' ? 'Customer suspended' : 'Customer reactivated');
+      refetch();
+      setSuspendTarget(null);
+    } else {
+      error(`Failed to ${nextStatus === 'suspended' ? 'suspend' : 'reactivate'} customer`);
+    }
+  };
 
   const filtered = customers.filter(c => {
     const matchSearch = !search ||
@@ -136,6 +165,14 @@ export function CustomerListPage() {
 
   return (
     <div>
+      {createOpen && (
+        <CreateCustomerModal onClose={() => setCreateOpen(false)} onCreated={refetch} />
+      )}
+
+      {editTarget && (
+        <EditCustomerModal customer={editTarget} onClose={() => setEditTarget(null)} onUpdated={refetch} />
+      )}
+
       {suspendTarget && (
         <ConfirmDialog
           title={suspendTarget.status === 'active' ? 'Suspend customer' : 'Reactivate customer'}
@@ -146,10 +183,8 @@ export function CustomerListPage() {
           }
           confirmLabel={suspendTarget.status === 'active' ? 'Suspend' : 'Reactivate'}
           danger={suspendTarget.status === 'active'}
-          onConfirm={() => {
-            // TODO: PATCH /api/customers/:id/status + toast
-            setSuspendTarget(null);
-          }}
+          isLoading={suspendAction.isLoading}
+          onConfirm={handleSuspendToggle}
           onCancel={() => setSuspendTarget(null)}
         />
       )}
@@ -178,8 +213,7 @@ export function CustomerListPage() {
               <span style={{ background: 'var(--brand)', color: '#fff', borderRadius: 999, width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontFamily: "'Geist Mono',monospace" }}>{activeFilterCount}</span>
             )}
           </Button>
-          {/* TODO: CreateCustomerModal + POST /api/customers */}
-          <Button size="md">
+          <Button size="md" onClick={() => setCreateOpen(true)}>
             <Plus size={15} strokeWidth={1.6} />New customer
           </Button>
         </div>
@@ -295,7 +329,7 @@ export function CustomerListPage() {
                     <Ellipsis size={15} strokeWidth={1.6} />
                   </button>
                   {openMenuId === c.id && (
-                    <RowActionsMenu customer={c} onClose={() => setOpenMenuId(null)} onSuspend={() => setSuspendTarget(c)} />
+                    <RowActionsMenu customer={c} onClose={() => setOpenMenuId(null)} onSuspend={() => setSuspendTarget(c)} onEdit={() => setEditTarget(c)} />
                   )}
                 </div>
               </div>
