@@ -5,7 +5,9 @@ import { fieldInputStyle } from '@/core/utils/formStyles';
 import { Button } from '@/core/components/ui/Button';
 import { useToast } from '@/core/components/ToastProvider';
 import { useAsync } from '@/core/hooks/useAsync';
+import { useFormValidation } from '@/core/hooks/useFormValidation';
 import { api } from '@/core/services/api';
+import { customerSchema } from '../schema';
 import type { Customer } from '@/domains/reservations/types';
 
 type FormState = Pick<Customer, 'firstName' | 'lastName' | 'email' | 'phone' | 'licenseNumber' | 'licenseVerified' | 'status'>;
@@ -23,10 +25,10 @@ export function CreateCustomerModal({ onClose, onCreated }: { onClose: () => voi
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm(f => ({ ...f, [key]: value }));
 
-  const isValid = form.firstName.trim() && form.lastName.trim() &&
-    /\S+@\S+\.\S+/.test(form.email) && form.phone.trim() && form.licenseNumber.trim();
+  const { isValid, errors, touch } = useFormValidation(customerSchema, form);
 
   const handleSubmit = async () => {
+    touch();
     if (!isValid) return;
     const result = await execute();
     if (result !== undefined) {
@@ -55,26 +57,26 @@ export function CreateCustomerModal({ onClose, onCreated }: { onClose: () => voi
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ flex: 1 }}>
-            <FormField label="First name">
+            <FormField label="First name" error={errors.firstName}>
               <input style={fieldInputStyle} value={form.firstName} onChange={e => set('firstName', e.target.value)} />
             </FormField>
           </div>
           <div style={{ flex: 1 }}>
-            <FormField label="Last name">
+            <FormField label="Last name" error={errors.lastName}>
               <input style={fieldInputStyle} value={form.lastName} onChange={e => set('lastName', e.target.value)} />
             </FormField>
           </div>
         </div>
 
-        <FormField label="Email">
+        <FormField label="Email" error={errors.email}>
           <input type="email" style={fieldInputStyle} value={form.email} onChange={e => set('email', e.target.value)} placeholder="jane.doe@example.com" />
         </FormField>
 
-        <FormField label="Phone">
+        <FormField label="Phone" error={errors.phone}>
           <input type="tel" style={fieldInputStyle} value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="+33 6 12 34 56 78" />
         </FormField>
 
-        <FormField label="Licence number">
+        <FormField label="Licence number" error={errors.licenseNumber}>
           <input style={fieldInputStyle} value={form.licenseNumber} onChange={e => set('licenseNumber', e.target.value)} />
         </FormField>
 

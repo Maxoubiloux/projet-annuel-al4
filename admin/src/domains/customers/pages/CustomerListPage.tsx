@@ -9,6 +9,8 @@ import { EditCustomerModal } from '../components/EditCustomerModal';
 import { useToast } from '@/core/components/ToastProvider';
 import { useAsync } from '@/core/hooks/useAsync';
 import { api } from '@/core/services/api';
+import { TableSkeleton } from '@/core/components/ui/Skeleton';
+import { ErrorState } from '@/core/components/ui/ErrorState';
 
 type StatusFilter = 'all' | 'active' | 'suspended';
 type LicenceFilter = 'all' | 'verified' | 'pending';
@@ -72,7 +74,8 @@ const LICENCE_OPTIONS: { key: LicenceFilter; label: string; color?: string }[] =
 ];
 
 export function CustomerListPage() {
-  const { data: customers, isLoading, refetch } = useCustomers();
+  const [page, setPage] = useState(1);
+  const { data: customers, isLoading, error: fetchError, refetch } = useCustomers({ page, limit: PAGE_SIZE });
   const { success, error } = useToast();
 
   const [search, setSearch] = useState('');
@@ -80,7 +83,6 @@ export function CustomerListPage() {
   const [licenceFilter, setLicenceFilter] = useState<LicenceFilter>('all');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
   const [suspendTarget, setSuspendTarget] = useState<Customer | null>(null);
   const [sort, setSort] = useState<{ field: SortField; dir: SortDir }>({ field: 'name', dir: 'asc' });
   const [createOpen, setCreateOpen] = useState(false);
@@ -272,7 +274,9 @@ export function CustomerListPage() {
         </div>
 
         {isLoading ? (
-          <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--faint)', fontSize: 13 }}>Loading customers…</div>
+          <TableSkeleton gridTemplateColumns="2fr 1.8fr 1fr 90px 44px" columns={5} />
+        ) : fetchError ? (
+          <ErrorState message="Impossible de charger les clients." onRetry={refetch} />
         ) : paginated.length === 0 ? (
           <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--faint)', fontSize: 13 }}>No customers found.</div>
         ) : (
