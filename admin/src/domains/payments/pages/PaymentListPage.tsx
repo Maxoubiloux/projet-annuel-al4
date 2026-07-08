@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Download, Search, X, Ellipsis, SlidersHorizontal, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { Download, Search, X, Ellipsis, SlidersHorizontal, ArrowUp, ArrowDown, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ConfirmDialog } from '@/core/components/ui/ConfirmDialog';
 import { Button } from '@/core/components/ui/Button';
 import type { Payment, PaymentStatus } from '../types';
@@ -8,10 +8,14 @@ import { ReceiptModal, downloadReceipt } from '../components/ReceiptModal';
 import { useToast } from '@/core/components/ToastProvider';
 import { useAsync } from '@/core/hooks/useAsync';
 import { api } from '@/core/services/api';
+import { TableSkeleton, CardSkeleton } from '@/core/components/ui/Skeleton';
+import { ErrorState } from '@/core/components/ui/ErrorState';
 
 type PayStatusFilter = PaymentStatus | 'all';
 type SortField = 'date' | 'amount' | 'customer' | 'status';
 type SortDir = 'asc' | 'desc';
+
+const PAGE_SIZE = 10;
 
 const STATUS_ORDER: Record<PaymentStatus, number> = { paid: 0, pending: 1, refunded: 2, failed: 3 };
 
@@ -89,7 +93,8 @@ function exportCSV(data: Payment[]) {
 }
 
 export function PaymentListPage() {
-  const { data: payments, isLoading, refetch } = usePayments();
+  const [page, setPage] = useState(1);
+  const { data: payments, isLoading, error: fetchError, refetch } = usePayments({ page, limit: PAGE_SIZE });
   const { success, error } = useToast();
 
   const [search, setSearch] = useState('');
@@ -137,10 +142,14 @@ export function PaymentListPage() {
   const pendingCount = sorted.filter(p => p.status === 'pending').length;
   const activeFilterCount = statusFilter !== 'all' ? 1 : 0;
 
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const paginated = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   const toggleSort = (field: SortField) => {
     setSort(s => s.field === field
       ? { field, dir: s.dir === 'asc' ? 'desc' : 'asc' }
       : { field, dir: 'asc' });
+    setPage(1);
   };
 
   const SortIcon = ({ field }: { field: SortField }) => {
@@ -212,17 +221,23 @@ export function PaymentListPage() {
 
       {/* Summary cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14, marginBottom: 16 }}>
-        {[
-          { label: 'Collected MTD',  value: `€${collectedMTD.toLocaleString()}`,   sub: 'gross rental income',    color: 'var(--ink)'       },
-          { label: 'Deposits held',  value: `€${depositsHeld.toLocaleString()}`,    sub: 'across active bookings', color: 'var(--ink)'       },
-          { label: 'Pending',        value: `€${pendingAmount}`,                    sub: `${pendingCount} awaiting payment`, color: 'var(--cmy-amber)' },
-        ].map(s => (
-          <div key={s.label} style={{ ...card, padding: '17px 18px' }}>
-            <div style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10.5, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--faint)' }}>{s.label}</div>
-            <div style={{ fontFamily: "'Geist Mono',monospace", fontSize: 26, fontWeight: 500, letterSpacing: '-.02em', color: s.color, marginTop: 10 }}>{s.value}</div>
-            <div style={{ fontSize: 12, color: 'var(--faint)', marginTop: 4 }}>{s.sub}</div>
-          </div>
-        ))}
+        {isLoading ? (
+          <>
+            <CardSkeleton /><CardSkeleton /><CardSkeleton />
+          </>
+        ) : (
+          [
+            { label: 'Collected MTD',  value: `€${collectedMTD.toLocaleString()}`,   sub: 'gross rental income',    color: 'var(--ink)'       },
+            { label: 'Deposits held',  value: `€${depositsHeld.toLocaleString()}`,    sub: 'across active bookings', color: 'var(--ink)'       },
+            { label: 'Pending',        value: `€${pendingAmount}`,                    sub: `${pendingCount} awaiting payment`, color: 'var(--cmy-amber)' },
+          ].map(s => (
+            <div key={s.label} style={{ ...card, padding: '17px 18px' }}>
+              <div style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10.5, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--faint)' }}>{s.label}</div>
+              <div style={{ fontFamily: "'Geist Mono',monospace", fontSize: 26, fontWeight: 500, letterSpacing: '-.02em', color: s.color, marginTop: 10 }}>{s.value}</div>
+              <div style={{ fontSize: 12, color: 'var(--faint)', marginTop: 4 }}>{s.sub}</div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Filters panel */}
@@ -232,12 +247,12 @@ export function PaymentListPage() {
             <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Status</div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {STATUS_FILTER_OPTIONS.map(f => (
-                <button key={f.key} onClick={() => setStatusFilter(f.key)} style={chipBtn(statusFilter === f.key, f.color)}>{f.label}</button>
+                <button key={f.key} onClick={() => { setStatusFilter(f.key); setPage(1); }} style={chipBtn(statusFilter === f.key, f.color)}>{f.label}</button>
               ))}
             </div>
           </div>
           {statusFilter !== 'all' && (
-            <button onClick={() => setStatusFilter('all')} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--faint)', border: 'none', background: 'transparent', cursor: 'pointer' }}>
+            <button onClick={() => { setStatusFilter('all'); setPage(1); }} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--faint)', border: 'none', background: 'transparent', cursor: 'pointer' }}>
               <X size={13} />Clear filters
             </button>
           )}
@@ -248,9 +263,9 @@ export function PaymentListPage() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 36, padding: '0 12px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--faint)', minWidth: 240 }}>
           <Search size={14} strokeWidth={1.6} />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by booking or customer…" style={{ fontSize: 13, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink)', width: '100%' }} />
+          <input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} placeholder="Search by booking or customer…" style={{ fontSize: 13, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink)', width: '100%' }} />
           {search && (
-            <button onClick={() => setSearch('')} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--faint)', display: 'flex' }}><X size={13} /></button>
+            <button onClick={() => { setSearch(''); setPage(1); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--faint)', display: 'flex' }}><X size={13} /></button>
           )}
         </div>
       </div>
@@ -269,11 +284,13 @@ export function PaymentListPage() {
         </div>
 
         {isLoading ? (
-          <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--faint)', fontSize: 13 }}>Loading payments…</div>
-        ) : sorted.length === 0 ? (
+          <TableSkeleton gridTemplateColumns="100px 1.4fr 1.2fr 90px 90px 90px 100px 44px" columns={8} />
+        ) : fetchError ? (
+          <ErrorState message="Impossible de charger les paiements." onRetry={refetch} />
+        ) : paginated.length === 0 ? (
           <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--faint)', fontSize: 13 }}>No payments found.</div>
         ) : (
-          sorted.map(p => (
+          paginated.map(p => (
             <div key={p.id} style={{ display: 'grid', gridTemplateColumns: '100px 1.4fr 1.2fr 90px 90px 90px 100px 44px', gap: 12, alignItems: 'center', padding: '12px 20px', borderTop: '1px solid var(--border-2)', fontSize: 12.5 }}>
               <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 11, color: 'var(--faint)' }}>{p.date}</span>
               <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 11, color: 'var(--muted)' }}>#{p.ref}</span>
@@ -297,6 +314,19 @@ export function PaymentListPage() {
               </div>
             </div>
           ))
+        )}
+
+        {/* Pagination */}
+        {!isLoading && !fetchError && totalPages > 1 && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderTop: '1px solid var(--border-2)', background: 'var(--surface-2)' }}>
+            <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 11, color: 'var(--faint)' }}>
+              {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, sorted.length)} of {sorted.length}
+            </span>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: page === 1 ? 'var(--border)' : 'var(--ink)', cursor: page === 1 ? 'default' : 'pointer' }}><ChevronLeft size={14} /></button>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: page === totalPages ? 'var(--border)' : 'var(--ink)', cursor: page === totalPages ? 'default' : 'pointer' }}><ChevronRight size={14} /></button>
+            </div>
+          </div>
         )}
       </div>
     </div>
