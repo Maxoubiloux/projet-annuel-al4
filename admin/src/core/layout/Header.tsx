@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { PanelLeft, Sun, Moon, Bell, ChevronDown, ChevronRight, LogOut, Settings, User, Bike, CalendarCheck, Wrench, X } from 'lucide-react';
+import { PanelLeft, Sun, Moon, Bell, ChevronDown, ChevronRight, LogOut, Settings, Bike, CalendarCheck, Wrench, X } from 'lucide-react';
 import { useLayout } from '@/core/hooks/useLayout';
 import { useAuth } from '@/core/auth/AuthContext';
 import { CommandPalette } from '@/core/components/ui/CommandPalette';
@@ -363,8 +363,7 @@ export function Header() {
                   <div style={{ fontSize: 11.5, color: 'var(--faint)', marginTop: 1 }}>{user?.email}</div>
                 </div>
                 {[
-                  { icon: User,     label: 'View profile', onClick: () => setUserMenuOpen(false) },
-                  { icon: Settings, label: 'Settings',     onClick: () => { setUserMenuOpen(false); navigate('/settings'); } },
+                  { icon: Settings, label: 'Settings', onClick: () => { setUserMenuOpen(false); navigate('/settings'); } },
                 ].map(({ icon: Icon, label, onClick }) => (
                   <button key={label} onClick={onClick} style={{
                     display: 'flex', alignItems: 'center', gap: 9,

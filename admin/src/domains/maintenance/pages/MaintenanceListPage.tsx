@@ -49,9 +49,12 @@ function DetailModal({ item, onClose, onUpdated }: { item: MaintenanceJob; onClo
   const { success, error } = useToast();
   const [notes, setNotes] = useState(item.notes ?? '');
   const notesDirty = notes !== (item.notes ?? '');
+  const [cost, setCost] = useState(String(item.cost));
+  const costDirty = cost !== String(item.cost) && cost !== '' && !Number.isNaN(Number(cost));
 
   const markDoneAction = useAsync(() => api.patch(`/maintenance/${item.id}`, { status: 'completed' }));
   const saveNotesAction = useAsync(() => api.patch(`/maintenance/${item.id}`, { notes }));
+  const saveCostAction = useAsync(() => api.patch(`/maintenance/${item.id}`, { cost: Number(cost) }));
 
   const handleMarkDone = async () => {
     const result = await markDoneAction.execute();
@@ -71,6 +74,16 @@ function DetailModal({ item, onClose, onUpdated }: { item: MaintenanceJob; onClo
       onUpdated();
     } else {
       error('Failed to save notes');
+    }
+  };
+
+  const handleSaveCost = async () => {
+    const result = await saveCostAction.execute();
+    if (result !== undefined) {
+      success('Cost saved');
+      onUpdated();
+    } else {
+      error('Failed to save cost');
     }
   };
 
@@ -99,7 +112,36 @@ function DetailModal({ item, onClose, onUpdated }: { item: MaintenanceJob; onClo
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <InfoRow label="Due date" value={item.date} />
           <InfoRow label="Mileage" value={`${item.km} km`} />
-          <InfoRow label="Estimated cost" value={`€${item.cost}`} />
+          <div>
+            <div style={{ fontSize: 11, color: 'var(--faint)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: "'Geist Mono',monospace" }}>Estimated cost</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, flex: 1 }}>
+                <span style={{ fontSize: 13, color: 'var(--faint)' }}>€</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={cost}
+                  onChange={e => setCost(e.target.value)}
+                  style={{
+                    width: '100%', padding: '7px 10px',
+                    background: 'var(--surface-2)', border: '1px solid var(--border)',
+                    borderRadius: 8, fontSize: 13, color: 'var(--ink)',
+                    outline: 'none', boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+              {costDirty && (
+                <Button
+                  variant="secondary" size="sm"
+                  disabled={saveCostAction.isLoading}
+                  onClick={handleSaveCost}
+                >
+                  {saveCostAction.isLoading ? 'Saving…' : 'Save'}
+                </Button>
+              )}
+            </div>
+          </div>
           <div>
             <div style={{ fontSize: 11, color: 'var(--faint)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: "'Geist Mono',monospace" }}>Status</div>
             <Pill stat={item.status} />

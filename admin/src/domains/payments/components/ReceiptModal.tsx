@@ -46,7 +46,7 @@ export function ReceiptModal({ payment, onClose }: { payment: Payment; onClose: 
         <>
           <Button variant="secondary" size="md" style={{ flex: 1 }} onClick={onClose}>Close</Button>
           <Button size="md" style={{ flex: 1 }} onClick={() => downloadReceipt(payment)}>
-            <Download size={14} strokeWidth={1.6} />Download
+            <Download size={14} strokeWidth={1.6} />Export receipt (.txt)
           </Button>
         </>
       }

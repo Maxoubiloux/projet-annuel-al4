@@ -8,6 +8,9 @@ import { CreateMotoModal } from '../components/CreateMotoModal';
 import { EditMotoModal } from '../components/EditMotoModal';
 import { TableSkeleton } from '@/core/components/ui/Skeleton';
 import { ErrorState } from '@/core/components/ui/ErrorState';
+import { useToast } from '@/core/components/ToastProvider';
+import { useAsync } from '@/core/hooks/useAsync';
+import { api } from '@/core/services/api';
 
 type SortField = 'brand' | 'mileage' | 'pricePerDay' | 'status';
 type SortDir = 'asc' | 'desc';
@@ -91,6 +94,7 @@ function RowActionsMenu({ onClose, onDelete, onEdit }: { onClose: () => void; on
 export function MotoListPage() {
   const [page, setPage] = useState(1);
   const { data: motos, isLoading, error: fetchError, refetch } = useMotos({ page, limit: PAGE_SIZE });
+  const { success, error } = useToast();
 
   const [tab, setTab] = useState<MotoStatus | 'all'>('all');
   const [search, setSearch] = useState('');
@@ -102,6 +106,20 @@ export function MotoListPage() {
   const [deleteTarget, setDeleteTarget] = useState<Moto | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Moto | null>(null);
+
+  const deleteAction = useAsync((id: string) => api.delete(`/motos/${id}`));
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    const result = await deleteAction.execute(deleteTarget.id);
+    if (result !== undefined) {
+      success('Motorcycle deleted');
+      refetch();
+      setDeleteTarget(null);
+    } else {
+      error('Failed to delete motorcycle');
+    }
+  };
 
   const categories = Array.from(new Set(motos.map(m => m.category)));
 
@@ -196,10 +214,8 @@ export function MotoListPage() {
           message={`Are you sure you want to permanently delete ${deleteTarget.brand} ${deleteTarget.model} (${deleteTarget.plate})? This action cannot be undone.`}
           confirmLabel="Delete"
           danger
-          onConfirm={() => {
-            // TODO: DELETE /api/motos/:id + toast
-            setDeleteTarget(null);
-          }}
+          isLoading={deleteAction.isLoading}
+          onConfirm={handleDelete}
           onCancel={() => setDeleteTarget(null)}
         />
       )}
