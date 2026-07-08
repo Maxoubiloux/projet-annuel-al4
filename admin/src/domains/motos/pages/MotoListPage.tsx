@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Bike, Plus, SlidersHorizontal, ArrowUpDown, Search, Ellipsis, ChevronLeft, ChevronRight, X, ArrowUp, ArrowDown } from 'lucide-react';
-import { MOTOS_MOCK } from '@/mocks/motos';
 import type { Moto, MotoStatus } from '../types';
+import { useMotos } from '../hooks/useMotos';
 import { ConfirmDialog } from '@/core/components/ui/ConfirmDialog';
 import { Button } from '@/core/components/ui/Button';
 
@@ -16,7 +16,6 @@ const STATUS_TABS: { key: MotoStatus | 'all'; label: string }[] = [
   { key: 'inactive',    label: 'Inactive'    },
 ];
 
-const CATEGORIES = Array.from(new Set(MOTOS_MOCK.map(m => m.category)));
 const PAGE_SIZE = 10;
 
 const statusCfg: Record<MotoStatus, { label: string; color: string; bg: string }> = {
@@ -86,6 +85,8 @@ function RowActionsMenu({ moto, onClose, onDelete }: { moto: Moto; onClose: () =
 }
 
 export function MotoListPage() {
+  const { data: motos, isLoading } = useMotos();
+
   const [tab, setTab] = useState<MotoStatus | 'all'>('all');
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState<string>('all');
@@ -96,14 +97,16 @@ export function MotoListPage() {
   const [page, setPage] = useState(1);
   const [deleteTarget, setDeleteTarget] = useState<Moto | null>(null);
 
+  const categories = Array.from(new Set(motos.map(m => m.category)));
+
   const counts = STATUS_TABS.reduce((acc, t) => {
     acc[t.key] = t.key === 'all'
-      ? MOTOS_MOCK.length
-      : MOTOS_MOCK.filter(m => m.status === t.key).length;
+      ? motos.length
+      : motos.filter(m => m.status === t.key).length;
     return acc;
   }, {} as Record<string, number>);
 
-  const filtered = MOTOS_MOCK
+  const filtered = motos
     .filter(m => {
       const matchTab = tab === 'all' || m.status === tab;
       const matchCat = catFilter === 'all' || m.category === catFilter;
@@ -180,7 +183,7 @@ export function MotoListPage() {
           confirmLabel="Delete"
           danger
           onConfirm={() => {
-            // TODO: DELETE /api/motos/:id
+            // TODO: DELETE /api/motos/:id + toast
             setDeleteTarget(null);
           }}
           onCancel={() => setDeleteTarget(null)}
@@ -192,13 +195,19 @@ export function MotoListPage() {
         <div>
           <h1 style={{ margin: 0, fontFamily: "'Cormorant Garamond',serif", fontSize: 30, fontWeight: 600, letterSpacing: '.01em', lineHeight: 1.05, color: 'var(--ink)' }}>Fleet</h1>
           <p style={{ margin: '5px 0 0', fontSize: 13.5, color: 'var(--muted)' }}>
-            {MOTOS_MOCK.length} motorcycles ·{' '}
-            <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 12 }}>
-              {counts['available'] ?? 0} available
-            </span> ·{' '}
-            <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 12, color: 'var(--cmy-amber)' }}>
-              {counts['maintenance'] ?? 0} in service
-            </span>
+            {isLoading ? (
+              <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 12, color: 'var(--faint)' }}>Loading…</span>
+            ) : (
+              <>
+                {motos.length} motorcycles ·{' '}
+                <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 12 }}>
+                  {counts['available'] ?? 0} available
+                </span> ·{' '}
+                <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 12, color: 'var(--cmy-amber)' }}>
+                  {counts['maintenance'] ?? 0} in service
+                </span>
+              </>
+            )}
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
@@ -218,7 +227,7 @@ export function MotoListPage() {
               }}>1</span>
             )}
           </Button>
-          {/* TODO: open CreateMotoModal + POST /api/motos */}
+          {/* TODO: open CreateMotoModal */}
           <Button size="md">
             <Plus size={15} strokeWidth={1.6} />Add motorcycle
           </Button>
@@ -235,7 +244,7 @@ export function MotoListPage() {
           <div>
             <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Category</div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {['all', ...CATEGORIES].map(c => (
+              {['all', ...categories].map(c => (
                 <button key={c} onClick={() => { setCatFilter(c); setPage(1); }} style={{
                   padding: '4px 10px', borderRadius: 7, fontSize: 12,
                   border: '1px solid var(--border)',
@@ -248,15 +257,18 @@ export function MotoListPage() {
               ))}
             </div>
           </div>
-          {catFilter !== 'all' && (
-            <button onClick={() => { setCatFilter('all'); setPage(1); }} style={{
+          <button
+            disabled={catFilter === 'all'}
+            onClick={() => { setCatFilter('all'); setPage(1); }}
+            style={{
               display: 'flex', alignItems: 'center', gap: 5,
               fontSize: 12, color: 'var(--faint)', border: 'none',
-              background: 'transparent', cursor: 'pointer',
-            }}>
-              <X size={13} />Clear filters
-            </button>
-          )}
+              background: 'transparent', cursor: catFilter === 'all' ? 'default' : 'pointer',
+              opacity: catFilter === 'all' ? 0.4 : 1,
+            }}
+          >
+            <X size={13} />Clear filters
+          </button>
         </div>
       )}
 
@@ -305,7 +317,7 @@ export function MotoListPage() {
         }}>
           <span style={{ color: 'var(--brand)', fontWeight: 500 }}>{selectedIds.size} selected</span>
           <div style={{ display: 'flex', gap: 8 }}>
-            {/* TODO: bulk actions → API */}
+            {/* TODO: bulk delete + bulk status change */}
             <Button variant="secondary" size="sm" onClick={() => setSelectedIds(new Set())}>Clear selection</Button>
           </div>
         </div>
@@ -346,7 +358,11 @@ export function MotoListPage() {
           <span />
         </div>
 
-        {paginated.length === 0 ? (
+        {isLoading ? (
+          <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--faint)', fontSize: 13 }}>
+            Loading fleet…
+          </div>
+        ) : paginated.length === 0 ? (
           <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--faint)', fontSize: 13 }}>
             No motorcycles found.
           </div>
@@ -419,7 +435,7 @@ export function MotoListPage() {
         )}
 
         {/* Pagination */}
-        {totalPages > 1 && (
+        {!isLoading && totalPages > 1 && (
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             padding: '12px 18px', borderTop: '1px solid var(--border-2)',
