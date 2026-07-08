@@ -4,6 +4,8 @@ import type { Moto, MotoStatus } from '../types';
 import { useMotos } from '../hooks/useMotos';
 import { ConfirmDialog } from '@/core/components/ui/ConfirmDialog';
 import { Button } from '@/core/components/ui/Button';
+import { CreateMotoModal } from '../components/CreateMotoModal';
+import { EditMotoModal } from '../components/EditMotoModal';
 
 type SortField = 'brand' | 'mileage' | 'pricePerDay' | 'status';
 type SortDir = 'asc' | 'desc';
@@ -41,7 +43,7 @@ function StatusPill({ status }: { status: MotoStatus }) {
   );
 }
 
-function RowActionsMenu({ moto, onClose, onDelete }: { moto: Moto; onClose: () => void; onDelete: () => void }) {
+function RowActionsMenu({ onClose, onDelete, onEdit }: { onClose: () => void; onDelete: () => void; onEdit: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -53,7 +55,7 @@ function RowActionsMenu({ moto, onClose, onDelete }: { moto: Moto; onClose: () =
 
   const actions = [
     { label: 'View details', onClick: onClose },
-    { label: 'Edit', onClick: onClose },
+    { label: 'Edit', onClick: () => { onClose(); onEdit(); } },
     { label: 'Change status', onClick: onClose },
   ];
 
@@ -85,7 +87,7 @@ function RowActionsMenu({ moto, onClose, onDelete }: { moto: Moto; onClose: () =
 }
 
 export function MotoListPage() {
-  const { data: motos, isLoading } = useMotos();
+  const { data: motos, isLoading, refetch } = useMotos();
 
   const [tab, setTab] = useState<MotoStatus | 'all'>('all');
   const [search, setSearch] = useState('');
@@ -96,6 +98,8 @@ export function MotoListPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [deleteTarget, setDeleteTarget] = useState<Moto | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<Moto | null>(null);
 
   const categories = Array.from(new Set(motos.map(m => m.category)));
 
@@ -176,6 +180,14 @@ export function MotoListPage() {
 
   return (
     <div>
+      {createOpen && (
+        <CreateMotoModal onClose={() => setCreateOpen(false)} onCreated={refetch} />
+      )}
+
+      {editTarget && (
+        <EditMotoModal moto={editTarget} onClose={() => setEditTarget(null)} onUpdated={refetch} />
+      )}
+
       {deleteTarget && (
         <ConfirmDialog
           title="Delete motorcycle"
@@ -227,8 +239,7 @@ export function MotoListPage() {
               }}>1</span>
             )}
           </Button>
-          {/* TODO: open CreateMotoModal */}
-          <Button size="md">
+          <Button size="md" onClick={() => setCreateOpen(true)}>
             <Plus size={15} strokeWidth={1.6} />Add motorcycle
           </Button>
         </div>
@@ -424,9 +435,9 @@ export function MotoListPage() {
                 </button>
                 {openMenuId === moto.id && (
                   <RowActionsMenu
-                    moto={moto}
                     onClose={() => setOpenMenuId(null)}
                     onDelete={() => setDeleteTarget(moto)}
+                    onEdit={() => setEditTarget(moto)}
                   />
                 )}
               </div>
