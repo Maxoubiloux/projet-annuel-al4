@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Search, Plus, Mail, Phone, UserCheck, UserX, Ellipsis, X, ChevronLeft, ChevronRight, SlidersHorizontal, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
-import { CUSTOMERS_MOCK } from '@/mocks/reservations';
 import type { Customer } from '@/domains/reservations/types';
+import { useCustomers } from '../hooks/useCustomers';
 import { ConfirmDialog } from '@/core/components/ui/ConfirmDialog';
 import { Button } from '@/core/components/ui/Button';
 
@@ -27,6 +27,7 @@ function RowActionsMenu({ customer, onClose, onSuspend }: { customer: Customer; 
       borderRadius: 10, boxShadow: 'var(--shadow)',
       minWidth: 170, padding: 5, zIndex: 50,
     }}>
+      {/* TODO: View profile / Edit / View bookings modals */}
       {['View profile', 'Edit', 'View bookings'].map(label => (
         <button key={label} onClick={onClose} style={{
           display: 'block', width: '100%', padding: '7px 10px',
@@ -60,6 +61,8 @@ const LICENCE_OPTIONS: { key: LicenceFilter; label: string; color?: string }[] =
 ];
 
 export function CustomerListPage() {
+  const { data: customers, isLoading } = useCustomers();
+
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [licenceFilter, setLicenceFilter] = useState<LicenceFilter>('all');
@@ -69,7 +72,7 @@ export function CustomerListPage() {
   const [suspendTarget, setSuspendTarget] = useState<Customer | null>(null);
   const [sort, setSort] = useState<{ field: SortField; dir: SortDir }>({ field: 'name', dir: 'asc' });
 
-  const filtered = CUSTOMERS_MOCK.filter(c => {
+  const filtered = customers.filter(c => {
     const matchSearch = !search ||
       c.firstName.toLowerCase().includes(search.toLowerCase()) ||
       c.lastName.toLowerCase().includes(search.toLowerCase()) ||
@@ -144,7 +147,7 @@ export function CustomerListPage() {
           confirmLabel={suspendTarget.status === 'active' ? 'Suspend' : 'Reactivate'}
           danger={suspendTarget.status === 'active'}
           onConfirm={() => {
-            // TODO: PATCH /api/customers/:id with { status: ... }
+            // TODO: PATCH /api/customers/:id/status + toast
             setSuspendTarget(null);
           }}
           onCancel={() => setSuspendTarget(null)}
@@ -156,7 +159,11 @@ export function CustomerListPage() {
         <div>
           <h1 style={{ margin: 0, fontFamily: "'Cormorant Garamond',serif", fontSize: 30, fontWeight: 600, letterSpacing: '.01em', lineHeight: 1.05, color: 'var(--ink)' }}>Customers</h1>
           <p style={{ margin: '5px 0 0', fontSize: 13.5, color: 'var(--muted)' }}>
-            {CUSTOMERS_MOCK.length} registered customers
+            {isLoading ? (
+              <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 12, color: 'var(--faint)' }}>Loading…</span>
+            ) : (
+              <>{customers.length} registered customers</>
+            )}
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
@@ -168,15 +175,10 @@ export function CustomerListPage() {
           >
             <SlidersHorizontal size={15} strokeWidth={1.6} />Filters
             {activeFilterCount > 0 && (
-              <span style={{
-                background: 'var(--brand)', color: '#fff',
-                borderRadius: 999, width: 16, height: 16,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 9, fontFamily: "'Geist Mono',monospace",
-              }}>{activeFilterCount}</span>
+              <span style={{ background: 'var(--brand)', color: '#fff', borderRadius: 999, width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontFamily: "'Geist Mono',monospace" }}>{activeFilterCount}</span>
             )}
           </Button>
-          {/* TODO: open CreateCustomerModal + POST /api/customers */}
+          {/* TODO: CreateCustomerModal + POST /api/customers */}
           <Button size="md">
             <Plus size={15} strokeWidth={1.6} />New customer
           </Button>
@@ -185,18 +187,12 @@ export function CustomerListPage() {
 
       {/* Filters panel */}
       {filtersOpen && (
-        <div style={{
-          background: 'var(--surface)', border: '1px solid var(--border)',
-          borderRadius: 12, padding: '16px 18px', marginBottom: 14,
-          display: 'flex', alignItems: 'flex-start', gap: 28, flexWrap: 'wrap',
-        }}>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px 18px', marginBottom: 14, display: 'flex', alignItems: 'flex-start', gap: 28, flexWrap: 'wrap' }}>
           <div>
             <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Status</div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {STATUS_OPTIONS.map(o => (
-                <button key={o.key} onClick={() => { setStatusFilter(o.key); setPage(1); }} style={chipBtn(statusFilter === o.key, o.color)}>
-                  {o.label}
-                </button>
+                <button key={o.key} onClick={() => { setStatusFilter(o.key); setPage(1); }} style={chipBtn(statusFilter === o.key, o.color)}>{o.label}</button>
               ))}
             </div>
           </div>
@@ -204,18 +200,12 @@ export function CustomerListPage() {
             <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Licence</div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {LICENCE_OPTIONS.map(o => (
-                <button key={o.key} onClick={() => { setLicenceFilter(o.key); setPage(1); }} style={chipBtn(licenceFilter === o.key, o.color)}>
-                  {o.label}
-                </button>
+                <button key={o.key} onClick={() => { setLicenceFilter(o.key); setPage(1); }} style={chipBtn(licenceFilter === o.key, o.color)}>{o.label}</button>
               ))}
             </div>
           </div>
           {activeFilterCount > 0 && (
-            <button onClick={() => { setStatusFilter('all'); setLicenceFilter('all'); setPage(1); }} style={{
-              display: 'flex', alignItems: 'center', gap: 5, alignSelf: 'flex-end',
-              fontSize: 12, color: 'var(--faint)', border: 'none',
-              background: 'transparent', cursor: 'pointer',
-            }}>
+            <button onClick={() => { setStatusFilter('all'); setLicenceFilter('all'); setPage(1); }} style={{ display: 'flex', alignItems: 'center', gap: 5, alignSelf: 'flex-end', fontSize: 12, color: 'var(--faint)', border: 'none', background: 'transparent', cursor: 'pointer' }}>
               <X size={13} />Clear filters
             </button>
           )}
@@ -224,11 +214,7 @@ export function CustomerListPage() {
 
       {/* Search row */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: 8, height: 36, padding: '0 12px',
-          background: 'var(--surface)', border: '1px solid var(--border)',
-          borderRadius: 10, color: 'var(--faint)', minWidth: 260,
-        }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 36, padding: '0 12px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--faint)', minWidth: 260 }}>
           <Search size={14} strokeWidth={1.6} />
           <input
             value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
@@ -236,54 +222,32 @@ export function CustomerListPage() {
             style={{ fontSize: 13, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink)', width: '100%' }}
           />
           {search && (
-            <button onClick={() => { setSearch(''); setPage(1); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--faint)', display: 'flex' }}>
-              <X size={13} />
-            </button>
+            <button onClick={() => { setSearch(''); setPage(1); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--faint)', display: 'flex' }}><X size={13} /></button>
           )}
         </div>
       </div>
 
       <div style={card}>
         {/* Table header */}
-        <div style={{
-          display: 'grid', gridTemplateColumns: '2fr 1.8fr 1fr 90px 44px',
-          gap: 12, alignItems: 'center', padding: '11px 20px',
-          background: 'var(--surface-2)',
-          borderBottom: '1px solid var(--border-2)',
-        }}>
-          <button style={colBtn} onClick={() => toggleSort('name')}>
-            Customer <SortIcon field="name" />
-          </button>
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.8fr 1fr 90px 44px', gap: 12, alignItems: 'center', padding: '11px 20px', background: 'var(--surface-2)', borderBottom: '1px solid var(--border-2)' }}>
+          <button style={colBtn} onClick={() => toggleSort('name')}>Customer <SortIcon field="name" /></button>
           <span style={{ ...colBtn, cursor: 'default' }}>Contact</span>
-          <button style={colBtn} onClick={() => toggleSort('licenseVerified')}>
-            Licence <SortIcon field="licenseVerified" />
-          </button>
-          <button style={colBtn} onClick={() => toggleSort('status')}>
-            Status <SortIcon field="status" />
-          </button>
+          <button style={colBtn} onClick={() => toggleSort('licenseVerified')}>Licence <SortIcon field="licenseVerified" /></button>
+          <button style={colBtn} onClick={() => toggleSort('status')}>Status <SortIcon field="status" /></button>
           <span />
         </div>
 
-        {paginated.length === 0 ? (
-          <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--faint)', fontSize: 13 }}>
-            No customers found.
-          </div>
+        {isLoading ? (
+          <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--faint)', fontSize: 13 }}>Loading customers…</div>
+        ) : paginated.length === 0 ? (
+          <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--faint)', fontSize: 13 }}>No customers found.</div>
         ) : (
           paginated.map(c => {
             const initials = `${c.firstName[0]}${c.lastName[0]}`.toUpperCase();
             return (
-              <div key={c.id} style={{
-                display: 'grid', gridTemplateColumns: '2fr 1.8fr 1fr 90px 44px',
-                gap: 12, alignItems: 'center', padding: '12px 20px',
-                borderTop: '1px solid var(--border-2)', fontSize: 12.5,
-              }}>
+              <div key={c.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1.8fr 1fr 90px 44px', gap: 12, alignItems: 'center', padding: '12px 20px', borderTop: '1px solid var(--border-2)', fontSize: 12.5 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-                  <div style={{
-                    width: 34, height: 34, borderRadius: 8,
-                    background: 'var(--brand-tint)', color: 'var(--brand)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontFamily: "'Geist Mono',monospace", fontSize: 11, fontWeight: 600, flexShrink: 0,
-                  }}>{initials}</div>
+                  <div style={{ width: 34, height: 34, borderRadius: 8, background: 'var(--brand-tint)', color: 'var(--brand)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Geist Mono',monospace", fontSize: 11, fontWeight: 600, flexShrink: 0 }}>{initials}</div>
                   <div>
                     <div style={{ fontWeight: 500, color: 'var(--ink)' }}>{c.firstName} {c.lastName}</div>
                     <div style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10.5, color: 'var(--faint)' }}>
@@ -296,82 +260,42 @@ export function CustomerListPage() {
                 </div>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--muted)', marginBottom: 3 }}>
-                    <Mail size={11} strokeWidth={1.6} />{c.email}
+                    <Mail size={11} strokeWidth={1.6} />
+                    <a href={`mailto:${c.email}`} style={{ color: 'inherit', textDecoration: 'none' }}>{c.email}</a>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--muted)' }}>
-                    <Phone size={11} strokeWidth={1.6} />{c.phone}
+                    <Phone size={11} strokeWidth={1.6} />
+                    <a href={`tel:${c.phone}`} style={{ color: 'inherit', textDecoration: 'none' }}>{c.phone}</a>
                   </div>
                 </div>
                 <div>
                   {c.licenseVerified ? (
-                    <span style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 5,
-                      fontFamily: "'Geist Mono',monospace", fontSize: 9.5,
-                      textTransform: 'uppercase', letterSpacing: '.04em',
-                      padding: '3px 7px', borderRadius: 999,
-                      color: 'var(--cmy-green)',
-                      background: 'color-mix(in srgb,var(--cmy-green) 13%,transparent)',
-                    }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: "'Geist Mono',monospace", fontSize: 9.5, textTransform: 'uppercase', letterSpacing: '.04em', padding: '3px 7px', borderRadius: 999, color: 'var(--cmy-green)', background: 'color-mix(in srgb,var(--cmy-green) 13%,transparent)' }}>
                       <UserCheck size={11} />Verified
                     </span>
                   ) : (
-                    <span style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 5,
-                      fontFamily: "'Geist Mono',monospace", fontSize: 9.5,
-                      textTransform: 'uppercase', letterSpacing: '.04em',
-                      padding: '3px 7px', borderRadius: 999,
-                      color: 'var(--cmy-amber)',
-                      background: 'color-mix(in srgb,var(--cmy-amber) 15%,transparent)',
-                    }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: "'Geist Mono',monospace", fontSize: 9.5, textTransform: 'uppercase', letterSpacing: '.04em', padding: '3px 7px', borderRadius: 999, color: 'var(--cmy-amber)', background: 'color-mix(in srgb,var(--cmy-amber) 15%,transparent)' }}>
                       <UserX size={11} />Pending
                     </span>
                   )}
                 </div>
                 <div>
                   {c.status === 'active' ? (
-                    <span style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 5,
-                      fontFamily: "'Geist Mono',monospace", fontSize: 9.5,
-                      textTransform: 'uppercase', letterSpacing: '.04em',
-                      padding: '3px 7px', borderRadius: 999,
-                      color: 'var(--cmy-green)',
-                      background: 'color-mix(in srgb,var(--cmy-green) 13%,transparent)',
-                    }}>
-                      <span style={{ width: 5, height: 5, borderRadius: 999, background: 'var(--cmy-green)' }} />
-                      Active
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: "'Geist Mono',monospace", fontSize: 9.5, textTransform: 'uppercase', letterSpacing: '.04em', padding: '3px 7px', borderRadius: 999, color: 'var(--cmy-green)', background: 'color-mix(in srgb,var(--cmy-green) 13%,transparent)' }}>
+                      <span style={{ width: 5, height: 5, borderRadius: 999, background: 'var(--cmy-green)' }} />Active
                     </span>
                   ) : (
-                    <span style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 5,
-                      fontFamily: "'Geist Mono',monospace", fontSize: 9.5,
-                      textTransform: 'uppercase', letterSpacing: '.04em',
-                      padding: '3px 7px', borderRadius: 999,
-                      color: 'var(--cmy-red)',
-                      background: 'color-mix(in srgb,var(--cmy-red) 14%,transparent)',
-                    }}>
-                      <span style={{ width: 5, height: 5, borderRadius: 999, background: 'var(--cmy-red)' }} />
-                      Suspended
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: "'Geist Mono',monospace", fontSize: 9.5, textTransform: 'uppercase', letterSpacing: '.04em', padding: '3px 7px', borderRadius: 999, color: 'var(--cmy-red)', background: 'color-mix(in srgb,var(--cmy-red) 14%,transparent)' }}>
+                      <span style={{ width: 5, height: 5, borderRadius: 999, background: 'var(--cmy-red)' }} />Suspended
                     </span>
                   )}
                 </div>
                 <div style={{ position: 'relative' }}>
-                  <button
-                    onClick={() => setOpenMenuId(openMenuId === c.id ? null : c.id)}
-                    aria-label="Customer actions"
-                    style={{
-                      width: 28, height: 28, border: 'none', background: 'transparent',
-                      borderRadius: 7, color: 'var(--faint)', cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}
-                  >
+                  <button onClick={() => setOpenMenuId(openMenuId === c.id ? null : c.id)} aria-label="Customer actions" style={{ width: 28, height: 28, border: 'none', background: 'transparent', borderRadius: 7, color: 'var(--faint)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Ellipsis size={15} strokeWidth={1.6} />
                   </button>
                   {openMenuId === c.id && (
-                    <RowActionsMenu
-                      customer={c}
-                      onClose={() => setOpenMenuId(null)}
-                      onSuspend={() => setSuspendTarget(c)}
-                    />
+                    <RowActionsMenu customer={c} onClose={() => setOpenMenuId(null)} onSuspend={() => setSuspendTarget(c)} />
                   )}
                 </div>
               </div>
@@ -380,28 +304,14 @@ export function CustomerListPage() {
         )}
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '12px 20px', borderTop: '1px solid var(--border-2)',
-            background: 'var(--surface-2)',
-          }}>
+        {!isLoading && totalPages > 1 && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderTop: '1px solid var(--border-2)', background: 'var(--surface-2)' }}>
             <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 11, color: 'var(--faint)' }}>
               {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, sorted.length)} of {sorted.length}
             </span>
             <div style={{ display: 'flex', gap: 6 }}>
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                width: 30, height: 30, borderRadius: 8,
-                border: '1px solid var(--border)', background: 'var(--surface)',
-                color: page === 1 ? 'var(--border)' : 'var(--ink)', cursor: page === 1 ? 'default' : 'pointer',
-              }}><ChevronLeft size={14} /></button>
-              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                width: 30, height: 30, borderRadius: 8,
-                border: '1px solid var(--border)', background: 'var(--surface)',
-                color: page === totalPages ? 'var(--border)' : 'var(--ink)', cursor: page === totalPages ? 'default' : 'pointer',
-              }}><ChevronRight size={14} /></button>
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: page === 1 ? 'var(--border)' : 'var(--ink)', cursor: page === 1 ? 'default' : 'pointer' }}><ChevronLeft size={14} /></button>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: page === totalPages ? 'var(--border)' : 'var(--ink)', cursor: page === totalPages ? 'default' : 'pointer' }}><ChevronRight size={14} /></button>
             </div>
           </div>
         )}
