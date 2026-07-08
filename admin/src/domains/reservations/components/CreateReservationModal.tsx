@@ -5,9 +5,11 @@ import { fieldInputStyle } from '@/core/utils/formStyles';
 import { Button } from '@/core/components/ui/Button';
 import { useToast } from '@/core/components/ToastProvider';
 import { useAsync } from '@/core/hooks/useAsync';
+import { useFormValidation } from '@/core/hooks/useFormValidation';
 import { api } from '@/core/services/api';
 import { useMotos } from '@/domains/motos/hooks/useMotos';
 import { useCustomers } from '@/domains/customers/hooks/useCustomers';
+import { reservationSchema } from '../schema';
 import type { PaymentStatus, Reservation, ReservationStatus } from '../types';
 
 const STATUS_OPTIONS: { key: ReservationStatus; label: string }[] = [
@@ -42,10 +44,10 @@ export function CreateReservationModal({ onClose, onCreated }: { onClose: () => 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm(f => ({ ...f, [key]: value }));
 
-  const isValid = form.motoId && form.customerId && form.startDate && form.endDate &&
-    form.endDate >= form.startDate && form.totalAmount > 0;
+  const { isValid, errors, touch } = useFormValidation(reservationSchema, form);
 
   const handleSubmit = async () => {
+    touch();
     if (!isValid) return;
     const result = await execute();
     if (result !== undefined) {
@@ -72,7 +74,7 @@ export function CreateReservationModal({ onClose, onCreated }: { onClose: () => 
       }
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <FormField label="Customer">
+        <FormField label="Customer" error={errors.customerId}>
           <select style={fieldInputStyle} value={form.customerId} onChange={e => set('customerId', e.target.value)}>
             <option value="">Select a customer…</option>
             {customers.map(c => (
@@ -81,7 +83,7 @@ export function CreateReservationModal({ onClose, onCreated }: { onClose: () => 
           </select>
         </FormField>
 
-        <FormField label="Motorcycle">
+        <FormField label="Motorcycle" error={errors.motoId}>
           <select style={fieldInputStyle} value={form.motoId} onChange={e => set('motoId', e.target.value)}>
             <option value="">Select a motorcycle…</option>
             {motos.map(m => (
@@ -92,12 +94,12 @@ export function CreateReservationModal({ onClose, onCreated }: { onClose: () => 
 
         <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ flex: 1 }}>
-            <FormField label="Start date">
+            <FormField label="Start date" error={errors.startDate}>
               <input type="date" style={fieldInputStyle} value={form.startDate} onChange={e => set('startDate', e.target.value)} />
             </FormField>
           </div>
           <div style={{ flex: 1 }}>
-            <FormField label="End date">
+            <FormField label="End date" error={errors.endDate}>
               <input type="date" style={fieldInputStyle} min={form.startDate || undefined} value={form.endDate} onChange={e => set('endDate', e.target.value)} />
             </FormField>
           </div>
@@ -105,12 +107,12 @@ export function CreateReservationModal({ onClose, onCreated }: { onClose: () => 
 
         <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ flex: 1 }}>
-            <FormField label="Total amount (€)">
+            <FormField label="Total amount (€)" error={errors.totalAmount}>
               <input type="number" min={0} style={fieldInputStyle} value={form.totalAmount} onChange={e => set('totalAmount', Number(e.target.value))} />
             </FormField>
           </div>
           <div style={{ flex: 1 }}>
-            <FormField label="Deposit (€)">
+            <FormField label="Deposit (€)" error={errors.depositAmount}>
               <input type="number" min={0} style={fieldInputStyle} value={form.depositAmount} onChange={e => set('depositAmount', Number(e.target.value))} />
             </FormField>
           </div>

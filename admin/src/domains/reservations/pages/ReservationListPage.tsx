@@ -10,6 +10,8 @@ import { CreateReservationModal } from '../components/CreateReservationModal';
 import { useToast } from '@/core/components/ToastProvider';
 import { useAsync } from '@/core/hooks/useAsync';
 import { api } from '@/core/services/api';
+import { TableSkeleton } from '@/core/components/ui/Skeleton';
+import { ErrorState } from '@/core/components/ui/ErrorState';
 
 type StatusConfig = { label: string; color: string; bg: string };
 
@@ -183,7 +185,8 @@ function RowActions({
 }
 
 export function ReservationListPage() {
-  const { data: allRows, isLoading, refetch } = useReservations();
+  const [page, setPage] = useState(1);
+  const { data: allRows, isLoading, error: fetchError, refetch } = useReservations({ page, limit: PAGE_SIZE });
   const { success, error } = useToast();
 
   const [search, setSearch] = useState('');
@@ -195,7 +198,6 @@ export function ReservationListPage() {
   const [minAmount, setMinAmount] = useState('');
   const [maxAmount, setMaxAmount] = useState('');
   const [sort, setSort] = useState<{ field: SortField; dir: SortDir }>({ field: 'startDate', dir: 'desc' });
-  const [page, setPage] = useState(1);
   const [detailRow, setDetailRow] = useState<ReservationRow | null>(null);
   const [cancelTarget, setCancelTarget] = useState<ReservationRow | null>(null);
   const [refundTarget, setRefundTarget] = useState<ReservationRow | null>(null);
@@ -449,7 +451,9 @@ export function ReservationListPage() {
         </div>
 
         {isLoading ? (
-          <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--faint)', fontSize: 13 }}>Loading reservations…</div>
+          <TableSkeleton gridTemplateColumns="90px 1.4fr 1.2fr 1fr 80px 100px 90px 60px" columns={8} />
+        ) : fetchError ? (
+          <ErrorState message="Impossible de charger les réservations." onRetry={refetch} />
         ) : paginated.length === 0 ? (
           <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--faint)', fontSize: 13 }}>No reservations found.</div>
         ) : (
