@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { Save } from 'lucide-react';
 import { useLayout } from '@/core/hooks/useLayout';
 import { Button } from '@/core/components/ui/Button';
+import { useToast } from '@/core/components/ToastProvider';
+import { useAsync } from '@/core/hooks/useAsync';
+import { api } from '@/core/services/api';
 
 function Section({ title, desc, children }: { title: string; desc: string; children: React.ReactNode }) {
   return (
@@ -65,20 +68,9 @@ function Toggle({ label, desc, on, onChange }: { label: string; desc: string; on
   );
 }
 
-/* ── Save feedback toast (local only — TODO: connect to PUT /api/settings) ── */
-function useSaveToast() {
-  const [saved, setSaved] = useState(false);
-  const trigger = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
-  return { saved, trigger };
-}
-
 export function SettingsPage() {
   const { theme, toggleTheme, collapsed, toggleCollapsed } = useLayout();
-  const bookingToast = useSaveToast();
-  const companyToast = useSaveToast();
+  const { success, error } = useToast();
 
   /* Booking rules — controlled inputs */
   const [rules, setRules] = useState({ minDays: 1, maxDays: 30, minAge: 21, freeCancelHours: 48 });
@@ -93,6 +85,32 @@ export function SettingsPage() {
 
   /* Appearance toggles */
   const [emailNotif, setEmailNotif] = useState(true);
+
+  const saveRulesAction = useAsync(() => api.put('/settings/rules', rules));
+  const saveCompanyAction = useAsync(() => api.put('/settings/company', company));
+  const preferencesAction = useAsync((emailNotifications: boolean) =>
+    api.patch('/settings/preferences', { emailNotifications }));
+
+  const handleSaveRules = async () => {
+    const result = await saveRulesAction.execute();
+    if (result !== undefined) success('Booking rules saved');
+    else error('Failed to save booking rules');
+  };
+
+  const handleSaveCompany = async () => {
+    const result = await saveCompanyAction.execute();
+    if (result !== undefined) success('Company information saved');
+    else error('Failed to save company information');
+  };
+
+  const handleEmailNotifChange = async (value: boolean) => {
+    setEmailNotif(value);
+    const result = await preferencesAction.execute(value);
+    if (result === undefined) {
+      setEmailNotif(!value);
+      error('Failed to update preference');
+    }
+  };
 
   return (
     <div style={{ maxWidth: 780 }}>
@@ -130,14 +148,14 @@ export function SettingsPage() {
               />
             </Field>
           </div>
-          {/* TODO: connect onClick to PUT /api/settings/rules */}
           <Button
             size="md"
-            style={{ marginTop: 16, background: bookingToast.saved ? 'var(--cmy-green)' : undefined, transition: 'background .2s' }}
-            onClick={bookingToast.trigger}
+            style={{ marginTop: 16 }}
+            disabled={saveRulesAction.isLoading}
+            onClick={handleSaveRules}
           >
             <Save size={14} strokeWidth={1.6} />
-            {bookingToast.saved ? 'Saved!' : 'Save rules'}
+            {saveRulesAction.isLoading ? 'Saving…' : 'Save rules'}
           </Button>
         </Section>
 
@@ -171,14 +189,14 @@ export function SettingsPage() {
               </Field>
             </div>
           </div>
-          {/* TODO: connect onClick to PUT /api/settings/company */}
           <Button
             size="md"
-            style={{ marginTop: 16, background: companyToast.saved ? 'var(--cmy-green)' : undefined, transition: 'background .2s' }}
-            onClick={companyToast.trigger}
+            style={{ marginTop: 16 }}
+            disabled={saveCompanyAction.isLoading}
+            onClick={handleSaveCompany}
           >
             <Save size={14} strokeWidth={1.6} />
-            {companyToast.saved ? 'Saved!' : 'Save company info'}
+            {saveCompanyAction.isLoading ? 'Saving…' : 'Save company info'}
           </Button>
         </Section>
 
@@ -218,12 +236,11 @@ export function SettingsPage() {
               on={collapsed}
               onChange={toggleCollapsed}
             />
-            {/* Email notifications — local preference (TODO: persist via PUT /api/settings/preferences) */}
             <Toggle
               label="Email notifications"
               desc="Receive an email for new reservations and overdue returns"
               on={emailNotif}
-              onChange={setEmailNotif}
+              onChange={handleEmailNotifChange}
             />
           </div>
         </Section>
