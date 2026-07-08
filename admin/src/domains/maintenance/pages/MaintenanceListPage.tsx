@@ -3,6 +3,10 @@ import { Plus, Wrench, X, SlidersHorizontal, Search, ArrowUp, ArrowDown, ArrowUp
 import { Button } from '@/core/components/ui/Button';
 import type { MaintenanceJob, MaintenanceSeverity, MaintenanceStatus } from '../types';
 import { useMaintenance } from '../hooks/useMaintenance';
+import { CreateMaintenanceModal } from '../components/CreateMaintenanceModal';
+import { useToast } from '@/core/components/ToastProvider';
+import { useAsync } from '@/core/hooks/useAsync';
+import { api } from '@/core/services/api';
 
 type SortField = 'moto' | 'date' | 'cost' | 'status' | 'sev';
 type SortDir = 'asc' | 'desc';
@@ -39,7 +43,35 @@ function Pill({ stat }: { stat: MaintenanceStatus }) {
 }
 
 /* ── Detail modal ── */
-function DetailModal({ item, onClose }: { item: MaintenanceJob; onClose: () => void }) {
+function DetailModal({ item, onClose, onUpdated }: { item: MaintenanceJob; onClose: () => void; onUpdated: () => void }) {
+  const { success, error } = useToast();
+  const [notes, setNotes] = useState(item.notes ?? '');
+  const notesDirty = notes !== (item.notes ?? '');
+
+  const markDoneAction = useAsync(() => api.patch(`/maintenance/${item.id}`, { status: 'completed' }));
+  const saveNotesAction = useAsync(() => api.patch(`/maintenance/${item.id}`, { notes }));
+
+  const handleMarkDone = async () => {
+    const result = await markDoneAction.execute();
+    if (result !== undefined) {
+      success('Job marked as done');
+      onUpdated();
+      onClose();
+    } else {
+      error('Failed to update job');
+    }
+  };
+
+  const handleSaveNotes = async () => {
+    const result = await saveNotesAction.execute();
+    if (result !== undefined) {
+      success('Notes saved');
+      onUpdated();
+    } else {
+      error('Failed to save notes');
+    }
+  };
+
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 200,
@@ -70,12 +102,12 @@ function DetailModal({ item, onClose }: { item: MaintenanceJob; onClose: () => v
             <div style={{ fontSize: 11, color: 'var(--faint)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: "'Geist Mono',monospace" }}>Status</div>
             <Pill stat={item.status} />
           </div>
-          {/* TODO: notes → PATCH /api/maintenance/:id */}
           <div>
             <div style={{ fontSize: 11, color: 'var(--faint)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: "'Geist Mono',monospace" }}>Notes</div>
             <textarea
               placeholder="Add notes about this job…"
-              defaultValue={item.notes ?? ''}
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
               style={{
                 width: '100%', minHeight: 70, padding: '8px 10px',
                 background: 'var(--surface-2)', border: '1px solid var(--border)',
@@ -85,13 +117,25 @@ function DetailModal({ item, onClose }: { item: MaintenanceJob; onClose: () => v
                 boxSizing: 'border-box',
               }}
             />
+            {notesDirty && (
+              <Button
+                variant="secondary" size="sm" style={{ marginTop: 8 }}
+                disabled={saveNotesAction.isLoading}
+                onClick={handleSaveNotes}
+              >
+                {saveNotesAction.isLoading ? 'Saving…' : 'Save notes'}
+              </Button>
+            )}
           </div>
         </div>
 
-        {/* TODO: PATCH /api/maintenance/:id/status */}
         <div style={{ display: 'flex', gap: 8, marginTop: 20, paddingTop: 18, borderTop: '1px solid var(--border-2)' }}>
           <Button variant="secondary" size="md" style={{ flex: 1 }} onClick={onClose}>Close</Button>
-          <Button size="md" style={{ flex: 1 }} onClick={onClose}>Mark as done</Button>
+          {item.status !== 'completed' && (
+            <Button size="md" style={{ flex: 1 }} disabled={markDoneAction.isLoading} onClick={handleMarkDone}>
+              {markDoneAction.isLoading ? 'Updating…' : 'Mark as done'}
+            </Button>
+          )}
         </div>
       </div>
     </div>
@@ -122,7 +166,7 @@ const SEV_FILTERS: { key: MaintenanceSeverity | 'all'; label: string; color?: st
 ];
 
 export function MaintenanceListPage() {
-  const { data: jobs, isLoading } = useMaintenance();
+  const { data: jobs, isLoading, refetch } = useMaintenance();
 
   const [statTab, setStatTab] = useState<MaintenanceStatus | 'all'>('all');
   const [sevFilter, setSevFilter] = useState<MaintenanceSeverity | 'all'>('all');
@@ -130,6 +174,7 @@ export function MaintenanceListPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<{ field: SortField; dir: SortDir }>({ field: 'date', dir: 'asc' });
+  const [createOpen, setCreateOpen] = useState(false);
 
   const statCounts = STATUS_TABS.reduce((acc, t) => {
     acc[t.key] = t.key === 'all'
@@ -195,7 +240,11 @@ export function MaintenanceListPage() {
 
   return (
     <div>
-      {detailItem && <DetailModal item={detailItem} onClose={() => setDetailItem(null)} />}
+      {detailItem && <DetailModal item={detailItem} onClose={() => setDetailItem(null)} onUpdated={refetch} />}
+
+      {createOpen && (
+        <CreateMaintenanceModal onClose={() => setCreateOpen(false)} onCreated={refetch} />
+      )}
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', marginBottom: 20 }}>
@@ -224,8 +273,7 @@ export function MaintenanceListPage() {
               <span style={{ background: 'var(--brand)', color: '#fff', borderRadius: 999, width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontFamily: "'Geist Mono',monospace" }}>{activeFilterCount}</span>
             )}
           </Button>
-          {/* TODO: CreateMaintenanceModal + POST /api/maintenance */}
-          <Button size="md">
+          <Button size="md" onClick={() => setCreateOpen(true)}>
             <Plus size={15} strokeWidth={1.6} />New job
           </Button>
         </div>
