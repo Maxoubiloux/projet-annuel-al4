@@ -10,18 +10,25 @@ import {
   ResponsiveContainer, BarChart, Bar,
 } from 'recharts';
 import { useAuth } from '@/core/auth/AuthContext';
+import { useDashboard } from '../hooks/useDashboard';
+import type {
+  DashboardRecentReservation,
+  DashboardMaintenanceAlert,
+  RevenuePoint,
+  RentalsPoint,
+} from '../types';
 
-/* ── data ─────────────────────────────────────────────────── */
-const revenueData = [
+/* ── static fallbacks (used while API loads or unavailable) ── */
+const STATIC_REVENUE: RevenuePoint[] = [
   { m: 'Jul', v: 48 }, { m: 'Aug', v: 52 }, { m: 'Sep', v: 45 },
   { m: 'Oct', v: 50 }, { m: 'Nov', v: 42 }, { m: 'Dec', v: 55 },
   { m: 'Jan', v: 58 }, { m: 'Feb', v: 62 }, { m: 'Mar', v: 68 },
   { m: 'Apr', v: 72 }, { m: 'May', v: 82 }, { m: 'Jun', v: 90 },
 ];
 
-const barsData = [22,19,28,31,25,24,30,33,27,29,26,34,31,28].map((v, i) => ({ i, v }));
+const STATIC_RENTALS: RentalsPoint[] = [22,19,28,31,25,24,30,33,27,29,26,34,31,28].map((v, i) => ({ i, v }));
 
-const reservations = [
+const STATIC_RESERVATIONS: DashboardRecentReservation[] = [
   { id: '#RZ-4821', customer: 'Lucas Bernard', moto: 'Ducati Monster',       period: '18–22 Jun', days: 4, amount: '€420', status: 'active'  },
   { id: '#RZ-4820', customer: 'Sofia Rossi',   moto: 'BMW R nineT',          period: '20–27 Jun', days: 7, amount: '€615', status: 'pending' },
   { id: '#RZ-4818', customer: 'Marco Conti',   moto: 'Triumph Bonneville',   period: '19–21 Jun', days: 2, amount: '€380', status: 'active'  },
@@ -29,11 +36,11 @@ const reservations = [
   { id: '#RZ-4811', customer: 'Tom Dubois',    moto: 'Harley Iron 883',      period: '11–16 Jun', days: 5, amount: '€540', status: 'overdue' },
 ];
 
-const alerts = [
-  { sev: 'critical', title: 'Brake service overdue', moto: 'Kawasaki Z900',     id: 'CMY-072', km: '18,400 km', due: '23 Jun' },
-  { sev: 'warning',  title: 'Oil change due',         moto: 'Ducati Monster',   id: 'CMY-038', km: '12,050 km', due: '28 Jun' },
-  { sev: 'warning',  title: 'Tire wear inspection',   moto: 'BMW R nineT',      id: 'CMY-119', km: '9,800 km',  due: '30 Jun' },
-  { sev: 'ok',       title: 'Chain lubrication',      moto: 'Triumph Street',   id: 'CMY-051', km: '15,600 km', due: '04 Jul' },
+const STATIC_ALERTS: DashboardMaintenanceAlert[] = [
+  { sev: 'critical', title: 'Brake service overdue', moto: 'Kawasaki Z900',   id: 'CMY-072', km: '18,400 km', due: '23 Jun' },
+  { sev: 'warning',  title: 'Oil change due',         moto: 'Ducati Monster', id: 'CMY-038', km: '12,050 km', due: '28 Jun' },
+  { sev: 'warning',  title: 'Tire wear inspection',   moto: 'BMW R nineT',    id: 'CMY-119', km: '9,800 km',  due: '30 Jun' },
+  { sev: 'ok',       title: 'Chain lubrication',      moto: 'Triumph Street', id: 'CMY-051', km: '15,600 km', due: '04 Jul' },
 ];
 
 const yardTiles = (() => {
@@ -50,7 +57,7 @@ const occupancy = [
   { name: 'Kawasaki Z900',    l: '0%',  w: '100%', c: 'var(--cmy-amber)', dashed: true, dim: 0.35 },
 ];
 
-/* ── sub-components ───────────────────────────────────────── */
+/* ── sub-components ── */
 function Sparkline({ data, color }: { data: number[]; color: string }) {
   const W = 120, H = 40;
   const min = Math.min(...data), rng = Math.max(...data) - min || 1;
@@ -88,81 +95,102 @@ function Pill({ status }: { status: string }) {
   );
 }
 
-/* ── CSV export ───────────────────────────────────────────── */
-function exportDashboard() {
-  const date = new Date().toISOString().slice(0, 10);
-  const lines: string[] = [
-    `MotoManager — Dashboard export · ${date}`,
-    '',
-    'KPIs',
-    'Metric,Value,Delta,vs',
-    'Fleet utilization,87.4%,+4.2,vs 83.2%',
-    'Active rentals,142,+12,vs 130',
-    'Revenue MTD,€90.2k,+9.8%,vs €82.1k',
-    'Maintenance due,7,−2,vs 9',
-    '',
-    'Recent reservations',
-    'ID,Customer,Motorcycle,Period,Days,Amount,Status',
-    ...reservations.map(r =>
-      [r.id, r.customer, r.moto, r.period, r.days, r.amount, r.status].join(',')
-    ),
-    '',
-    'Maintenance alerts',
-    'Severity,Title,Motorcycle,ID,Mileage,Due',
-    ...alerts.map(a =>
-      [a.sev, a.title, a.moto, a.id, a.km, a.due].join(',')
-    ),
-  ];
-  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `dashboard-${date}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-/* ── main component ───────────────────────────────────────── */
+/* ── main component ── */
 export function DashboardPage() {
   const [pane, setPane] = useState<'A' | 'B'>('A');
   const { user } = useAuth();
-  const firstName = user?.name?.split(' ')[0] || 'Adèle';
+  const firstName = user?.name?.split(' ')[0] || 'Admin';
+
+  const dash = useDashboard();
+
+  const revenueData = dash.revenueData ?? STATIC_REVENUE;
+  const rentalsData = dash.rentalsData ?? STATIC_RENTALS;
+  const reservations = dash.recentReservations ?? STATIC_RESERVATIONS;
+  const alerts = dash.maintenanceAlerts ?? STATIC_ALERTS;
+
+  const apiKpis = dash.kpis;
+  const kpis = [
+    {
+      label: 'Fleet utilization',
+      value: apiKpis ? `${apiKpis.fleetUtilization.toFixed(1)}%` : '87.4%',
+      Icon: TrendingUp, delta: apiKpis ? `+${(apiKpis.fleetUtilization - 83).toFixed(1)}` : '+4.2',
+      deltaColor: 'var(--cmy-green)', vs: apiKpis ? `vs ${apiKpis.availableCount} avail.` : 'vs 83.2%',
+      sparkData: [60,65,70,68,72,75,78,74,80,82,85, apiKpis?.fleetUtilization ?? 87.4],
+      sparkColor: 'var(--brand)',
+      footL: apiKpis ? `${apiKpis.onRoad} / ${apiKpis.totalFleet} on road` : '142 / 163 on road',
+      footR: 'target 85%', footRColor: 'var(--faint)',
+    },
+    {
+      label: 'Active rentals',
+      value: apiKpis ? String(apiKpis.activeRentals) : '142',
+      Icon: TrendingUp, delta: '+12', deltaColor: 'var(--cmy-green)', vs: 'vs 130',
+      sparkData: [100,108,112,115,118,122,125,128,130,132,138, apiKpis?.activeRentals ?? 142],
+      sparkColor: 'var(--brand)',
+      footL: apiKpis ? `${apiKpis.dueTodayCount} due back today` : '38 due back today',
+      footR: apiKpis ? `${apiKpis.overdueCount} overdue` : '6 overdue', footRColor: 'var(--cmy-red)',
+    },
+    {
+      label: 'Revenue · MTD',
+      value: apiKpis ? `€${(apiKpis.revenueMTD / 1000).toFixed(1)}k` : '€90.2k',
+      Icon: TrendingUp,
+      delta: apiKpis && apiKpis.revenuePrevMonth > 0
+        ? `+${(((apiKpis.revenueMTD - apiKpis.revenuePrevMonth) / apiKpis.revenuePrevMonth) * 100).toFixed(1)}%`
+        : '+9.8%',
+      deltaColor: 'var(--cmy-green)', vs: apiKpis ? `vs €${(apiKpis.revenuePrevMonth / 1000).toFixed(1)}k` : 'vs €82.1k',
+      sparkData: [55,62,65,60,68,72,75,78,80,83,85, apiKpis ? apiKpis.revenueMTD / 1000 : 90.2],
+      sparkColor: 'var(--brand)',
+      footL: apiKpis ? `€${(apiKpis.dailyAvgRevenue / 1000).toFixed(1)}k/day avg` : '€3.0k/day avg',
+      footR: apiKpis ? `fcst €${(apiKpis.forecastRevenue / 1000).toFixed(0)}k` : 'fcst €112k', footRColor: 'var(--faint)',
+    },
+    {
+      label: 'Maintenance due',
+      value: apiKpis ? String(apiKpis.maintenanceDue) : '7',
+      Icon: TrendingDown, delta: '−2', deltaColor: 'var(--cmy-green)', vs: 'vs 9',
+      sparkData: [12,11,10,11,9,10,9,8,9,7,8, apiKpis?.maintenanceDue ?? 7],
+      sparkColor: 'var(--cmy-amber)',
+      footL: apiKpis ? `${apiKpis.maintenanceCritical} critical` : '2 critical', footLColor: 'var(--cmy-red)',
+      footR: apiKpis ? `${apiKpis.maintenanceScheduled} scheduled` : '5 scheduled', footRColor: 'var(--faint)',
+    },
+  ] as const;
+
+  function exportDashboard() {
+    const date = new Date().toISOString().slice(0, 10);
+    const lines: string[] = [
+      `MotoManager — Dashboard export · ${date}`,
+      '',
+      'KPIs',
+      'Metric,Value',
+      ...kpis.map(k => `${k.label},${k.value}`),
+      '',
+      'Recent reservations',
+      'ID,Customer,Motorcycle,Period,Days,Amount,Status',
+      ...reservations.map(r =>
+        [r.id, r.customer, r.moto, r.period, r.days, r.amount, r.status].join(',')
+      ),
+      '',
+      'Maintenance alerts',
+      'Severity,Title,Motorcycle,ID,Mileage,Due',
+      ...alerts.map(a =>
+        [a.sev, a.title, a.moto, a.id, a.km, a.due].join(',')
+      ),
+    ];
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `dashboard-${date}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   const card: React.CSSProperties = {
     background: 'var(--surface)', border: '1px solid var(--border)',
     borderRadius: 16, boxShadow: 'var(--shadow)',
   };
 
-  const kpis = [
-    {
-      label: 'Fleet utilization', value: '87.4%',
-      Icon: TrendingUp, delta: '+4.2', deltaColor: 'var(--cmy-green)',
-      vs: 'vs 83.2%', sparkData: [60,65,70,68,72,75,78,74,80,82,85,87.4],
-      sparkColor: 'var(--brand)', footL: '142 / 163 on road', footR: 'target 85%', footRColor: 'var(--faint)',
-    },
-    {
-      label: 'Active rentals', value: '142',
-      Icon: TrendingUp, delta: '+12', deltaColor: 'var(--cmy-green)',
-      vs: 'vs 130', sparkData: [100,108,112,115,118,122,125,128,130,132,138,142],
-      sparkColor: 'var(--brand)', footL: '38 due back today', footR: '6 overdue', footRColor: 'var(--cmy-red)',
-    },
-    {
-      label: 'Revenue · MTD', value: '€90.2k',
-      Icon: TrendingUp, delta: '+9.8%', deltaColor: 'var(--cmy-green)',
-      vs: 'vs €82.1k', sparkData: [55,62,65,60,68,72,75,78,80,83,85,90.2],
-      sparkColor: 'var(--brand)', footL: '€3.0k/day avg', footR: 'fcst €112k', footRColor: 'var(--faint)',
-    },
-    {
-      label: 'Maintenance due', value: '7',
-      Icon: TrendingDown, delta: '−2', deltaColor: 'var(--cmy-green)',
-      vs: 'vs 9', sparkData: [12,11,10,11,9,10,9,8,9,7,8,7],
-      sparkColor: 'var(--cmy-amber)', footL: '2 critical', footLColor: 'var(--cmy-red)', footR: '5 scheduled', footRColor: 'var(--faint)',
-    },
-  ] as const;
-
   return (
     <div>
-      {/* ── page header ── */}
+      {/* page header */}
       <div style={{
         display: 'flex', alignItems: 'flex-end',
         justifyContent: 'space-between', gap: 16,
@@ -176,11 +204,17 @@ export function DashboardPage() {
           }}>Good morning, {firstName}</h1>
           <p style={{ margin: '5px 0 0', fontSize: 13.5, color: 'var(--muted)' }}>
             Here's how the yard is running —{' '}
-            <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 12 }}>{new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
+            <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 12 }}>
+              {new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+            </span>
+            {dash.isLoading && (
+              <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--faint)', fontFamily: "'Geist Mono',monospace" }}>
+                · loading…
+              </span>
+            )}
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {/* Pane toggle */}
           <div style={{
             display: 'flex', background: 'var(--surface)',
             border: '1px solid var(--border)', borderRadius: 10, padding: 3,
@@ -205,7 +239,7 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* ══════════════ PANE A: OPERATIONS ══════════════ */}
+      {/* ══ PANE A: OPERATIONS ══ */}
       {pane === 'A' && (
         <div>
           {/* KPI cards */}
@@ -249,13 +283,17 @@ export function DashboardPage() {
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, margin: '14px 0 8px' }}>
-                <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 25, fontWeight: 500, letterSpacing: '-.02em', color: 'var(--ink)' }}>€90.2k</span>
+                <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 25, fontWeight: 500, letterSpacing: '-.02em', color: 'var(--ink)' }}>
+                  {kpis[2].value}
+                </span>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11.5, color: 'var(--cmy-green)' }}>
-                  <TrendingUp size={11} />9.8% vs May
+                  <TrendingUp size={11} />{kpis[2].delta}
                 </span>
-                <span style={{ marginLeft: 'auto', fontFamily: "'Geist Mono',monospace", fontSize: 10.5, color: 'var(--faint)' }}>
-                  12-mo total <span style={{ color: 'var(--muted)' }}>€782k</span>
-                </span>
+                {apiKpis && (
+                  <span style={{ marginLeft: 'auto', fontFamily: "'Geist Mono',monospace", fontSize: 10.5, color: 'var(--faint)' }}>
+                    12-mo total <span style={{ color: 'var(--muted)' }}>€{(apiKpis.revenueTotal12m / 1000).toFixed(0)}k</span>
+                  </span>
+                )}
               </div>
               <div style={{ height: 220 }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -289,7 +327,9 @@ export function DashboardPage() {
             {/* Fleet status donut */}
             <div style={{ ...card, padding: 20, display: 'flex', flexDirection: 'column' }}>
               <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)' }}>Fleet status</div>
-              <div style={{ fontSize: 12, color: 'var(--faint)', marginTop: 2 }}>163 motorcycles</div>
+              <div style={{ fontSize: 12, color: 'var(--faint)', marginTop: 2 }}>
+                {apiKpis ? `${apiKpis.totalFleet} motorcycles` : '163 motorcycles'}
+              </div>
               <div style={{ display: 'flex', justifyContent: 'center', margin: '16px 0' }}>
                 <div style={{
                   position: 'relative', width: 150, height: 150, borderRadius: 999,
@@ -301,17 +341,19 @@ export function DashboardPage() {
                     display: 'flex', flexDirection: 'column',
                     alignItems: 'center', justifyContent: 'center',
                   }}>
-                    <div style={{ fontFamily: "'Geist Mono',monospace", fontSize: 24, fontWeight: 500, lineHeight: 1, color: 'var(--ink)' }}>93</div>
+                    <div style={{ fontFamily: "'Geist Mono',monospace", fontSize: 24, fontWeight: 500, lineHeight: 1, color: 'var(--ink)' }}>
+                      {apiKpis?.availableCount ?? 93}
+                    </div>
                     <div style={{ fontSize: 10.5, color: 'var(--faint)' }}>available</div>
                   </div>
                 </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
                 {[
-                  { dot: 'var(--cmy-green)', label: 'Available',   n: '93',  pct: '57%' },
-                  { dot: 'var(--brand)',     label: 'On rent',     n: '44',  pct: '27%' },
-                  { dot: 'var(--cmy-amber)', label: 'Maintenance', n: '15',  pct: '9%'  },
-                  { dot: 'var(--faint)',     label: 'Reserved',    n: '11',  pct: '7%'  },
+                  { dot: 'var(--cmy-green)', label: 'Available',   n: String(apiKpis?.availableCount ?? 93),  pct: '57%' },
+                  { dot: 'var(--brand)',     label: 'On rent',     n: String(apiKpis?.onRoad ?? 44),          pct: '27%' },
+                  { dot: 'var(--cmy-amber)', label: 'Maintenance', n: String(apiKpis?.maintenanceDue ?? 15),  pct: '9%'  },
+                  { dot: 'var(--faint)',     label: 'Reserved',    n: '11',                                   pct: '7%'  },
                 ].map(item => (
                   <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 12.5, color: 'var(--ink)' }}>
                     <span style={{ width: 8, height: 8, borderRadius: 3, background: item.dot, flexShrink: 0 }} />
@@ -372,7 +414,7 @@ export function DashboardPage() {
                   color: 'var(--cmy-amber)',
                   background: 'color-mix(in srgb,var(--cmy-amber) 15%,transparent)',
                   padding: '3px 7px', borderRadius: 999,
-                }}>7 open</span>
+                }}>{apiKpis?.maintenanceDue ?? alerts.length} open</span>
               </div>
               {alerts.map((a, i) => {
                 const dotColor = a.sev === 'critical' ? 'var(--cmy-red)' : a.sev === 'warning' ? 'var(--cmy-amber)' : 'var(--cmy-green)';
@@ -400,18 +442,17 @@ export function DashboardPage() {
         </div>
       )}
 
-      {/* ══════════════ PANE B: YARD VIEW ══════════════ */}
+      {/* ══ PANE B: YARD VIEW ══ */}
       {pane === 'B' && (
         <div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.25fr', gap: 16, marginBottom: 16 }}>
-            {/* Hero */}
             <div style={{ ...card, borderRadius: 18, padding: 24, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <div>
                 <div style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10.5, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--faint)' }}>
                   Today at the yard
                 </div>
                 <h2 style={{ margin: '14px 0 0', fontFamily: "'Cormorant Garamond',serif", fontSize: 64, lineHeight: 0.92, fontWeight: 600, color: 'var(--ink)' }}>
-                  93<span style={{ color: 'var(--faint)', fontSize: 30 }}> / 163</span>
+                  {apiKpis?.availableCount ?? 93}<span style={{ color: 'var(--faint)', fontSize: 30 }}> / {apiKpis?.totalFleet ?? 163}</span>
                 </h2>
                 <p style={{ margin: '8px 0 0', fontSize: 13.5, color: 'var(--muted)', maxWidth: '34ch' }}>
                   motorcycles ready to ride. The rest are out on rent, reserved, or in the workshop.
@@ -419,10 +460,10 @@ export function DashboardPage() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 26, paddingTop: 22, borderTop: '1px solid var(--border-2)' }}>
                 {[
-                  { value: '€90.2k', label: 'revenue this month' },
-                  { value: '142',    label: 'active rentals' },
-                  { value: '4.9★',  label: 'avg. customer rating' },
-                  { value: '7',      label: 'need service', color: 'var(--cmy-amber)' },
+                  { value: kpis[2].value, label: 'revenue this month' },
+                  { value: String(apiKpis?.activeRentals ?? 142), label: 'active rentals' },
+                  { value: '4.9★', label: 'avg. customer rating' },
+                  { value: String(apiKpis?.maintenanceDue ?? 7), label: 'need service', color: 'var(--cmy-amber)' },
                 ].map((s, i) => (
                   <div key={i}>
                     <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 34, fontWeight: 600, lineHeight: 1, color: s.color || 'var(--ink)' }}>
@@ -510,12 +551,15 @@ export function DashboardPage() {
                   <div style={{ fontSize: 12, color: 'var(--faint)', marginTop: 2 }}>Last 14 days</div>
                 </div>
                 <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 30, fontWeight: 600, lineHeight: 1, color: 'var(--ink)' }}>
-                  28<span style={{ fontSize: 14, color: 'var(--faint)' }}> avg</span>
+                  {rentalsData.length > 0
+                    ? Math.round(rentalsData.reduce((s, r) => s + r.v, 0) / rentalsData.length)
+                    : 28}
+                  <span style={{ fontSize: 14, color: 'var(--faint)' }}> avg</span>
                 </span>
               </div>
               <div style={{ height: 150 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={barsData} margin={{ top: 0, right: 0, left: -32, bottom: 0 }} barSize={14}>
+                  <BarChart data={rentalsData} margin={{ top: 0, right: 0, left: -32, bottom: 0 }} barSize={14}>
                     <Bar dataKey="v" fill="var(--brand)" radius={[4, 4, 2, 2]} opacity={0.85} />
                     <XAxis hide />
                     <YAxis hide />
@@ -523,7 +567,7 @@ export function DashboardPage() {
                 </ResponsiveContainer>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10, fontFamily: "'Geist Mono',monospace", fontSize: 10, color: 'var(--faint)' }}>
-                <span>Jun 08</span><span>Jun 14</span><span>Jun 21</span>
+                <span>14 days ago</span><span>today</span>
               </div>
             </div>
           </div>
