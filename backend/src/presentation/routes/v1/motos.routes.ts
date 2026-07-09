@@ -24,12 +24,10 @@ export async function motoroutesV1(app: FastifyInstance, opts: { motoRepository:
   const updateMotoController = new UpdateMotoController(new UpdateMotoUseCase(repo))
   const deleteMotoController = new DeleteMotoController(new DeleteMotoUseCase(repo))
 
-  // GET /motos
   app.get('/motos', async (request: FastifyRequest, reply: FastifyReply) => {
     await getAllMotosController.handle(request, reply)
   })
 
-  // GET /motos/:id
   app.get('/motos/:id', async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
     const { error } = idParamSchema.validate(request.params)
     if (error) {
@@ -42,7 +40,6 @@ export async function motoroutesV1(app: FastifyInstance, opts: { motoRepository:
     await getMotoByIdController.handle(request, reply)
   })
 
-  // POST /motos
   app.post('/motos', async (request: FastifyRequest<{ Body: CreateMotoParams }>, reply: FastifyReply) => {
     const { error } = createMotoSchema.validate(request.body, { abortEarly: false })
     if (error) {
@@ -55,7 +52,6 @@ export async function motoroutesV1(app: FastifyInstance, opts: { motoRepository:
     await createMotoController.handle(request, reply)
   })
 
-  // PUT /motos/:id
   app.put('/motos/:id', async (request: FastifyRequest<{ Params: { id: string }; Body: UpdateMotoParams }>, reply: FastifyReply) => {
     const paramValidation = idParamSchema.validate(request.params)
     if (paramValidation.error) {
@@ -78,7 +74,6 @@ export async function motoroutesV1(app: FastifyInstance, opts: { motoRepository:
     await updateMotoController.handle(request, reply)
   })
 
-  // DELETE /motos/:id
   app.delete('/motos/:id', async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
     const { error } = idParamSchema.validate(request.params)
     if (error) {

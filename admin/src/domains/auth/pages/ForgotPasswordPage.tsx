@@ -16,7 +16,6 @@ export function ForgotPasswordPage() {
     try {
       await api.post('/auth/forgot-password', { email });
     } catch {
-      // Avoid leaking whether the account exists — show the success state regardless.
     } finally {
       setIsSubmitting(false);
       setSubmitted(true);
