@@ -1,7 +1,7 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { createRemoteJWKSet, jwtVerify, JWTVerifyResult, JWTPayload } from 'jose'
 
-const PUBLIC_PATHS = new Set(['/health'])
+const PUBLIC_PATHS = new Set(['/health', '/api/v1/auth/forgot-password', '/api/v2/auth/forgot-password'])
 
 const PUBLIC_GET_PREFIXES = ['/api/v1/motos', '/api/v2/motos']
 
