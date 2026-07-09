@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import { PrismaClient } from '../src/generated/prisma/client'
+import { PrismaClient, Prisma } from '../src/generated/prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { readFileSync } from 'fs'
 import { join, dirname } from 'path'
@@ -110,6 +110,25 @@ async function main() {
   }
 
   console.log(`Done: ${created} motos créées, ${skipped} ignorées (déjà présentes).`)
+
+  console.log('Upsert des paramètres par défaut...')
+  const defaultSettings: Record<string, Prisma.InputJsonValue> = {
+    booking_rules: { minDays: 1, maxDays: 30, minAge: 21, freeCancelHours: 48 },
+    company_info: {
+      name: 'City Moto Yard',
+      address: '12 Rue des Motards, 75011 Paris',
+      email: 'contact@citymotoyard.fr',
+      phone: '+33 1 42 00 00 00',
+    },
+    preferences: { emailNotifications: true },
+  }
+  for (const [key, value] of Object.entries(defaultSettings)) {
+    await prisma.setting.upsert({
+      where: { key },
+      update: {},
+      create: { key, value },
+    })
+  }
 }
 
 main()

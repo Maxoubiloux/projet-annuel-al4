@@ -58,7 +58,10 @@ export const ModelName = {
   Shop: 'Shop',
   Moto: 'Moto',
   Image: 'Image',
-  Booking: 'Booking'
+  Booking: 'Booking',
+  MaintenanceJob: 'MaintenanceJob',
+  Payment: 'Payment',
+  Setting: 'Setting'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -109,6 +112,12 @@ export const UserScalarFieldEnum = {
   name: 'name',
   email: 'email',
   password: 'password',
+  firstName: 'firstName',
+  lastName: 'lastName',
+  phone: 'phone',
+  licenseNumber: 'licenseNumber',
+  licenseVerified: 'licenseVerified',
+  status: 'status',
   createdAt: 'createdAt'
 } as const
 
@@ -140,7 +149,16 @@ export const MotoScalarFieldEnum = {
   statusId: 'statusId',
   currentKm: 'currentKm',
   pricePerDay: 'pricePerDay',
+  deposit: 'deposit',
+  location: 'location',
   description: 'description',
+  style: 'style',
+  year: 'year',
+  hp: 'hp',
+  torque: 'torque',
+  consumption: 'consumption',
+  range: 'range',
+  nextServiceDate: 'nextServiceDate',
   createdAt: 'createdAt'
 } as const
 
@@ -164,10 +182,55 @@ export const BookingScalarFieldEnum = {
   shopId: 'shopId',
   startDate: 'startDate',
   endDate: 'endDate',
+  status: 'status',
+  paymentStatus: 'paymentStatus',
+  totalAmount: 'totalAmount',
+  depositAmount: 'depositAmount',
   createdAt: 'createdAt'
 } as const
 
 export type BookingScalarFieldEnum = (typeof BookingScalarFieldEnum)[keyof typeof BookingScalarFieldEnum]
+
+
+export const MaintenanceJobScalarFieldEnum = {
+  id: 'id',
+  motoId: 'motoId',
+  type: 'type',
+  date: 'date',
+  km: 'km',
+  cost: 'cost',
+  sev: 'sev',
+  status: 'status',
+  notes: 'notes',
+  createdAt: 'createdAt'
+} as const
+
+export type MaintenanceJobScalarFieldEnum = (typeof MaintenanceJobScalarFieldEnum)[keyof typeof MaintenanceJobScalarFieldEnum]
+
+
+export const PaymentScalarFieldEnum = {
+  id: 'id',
+  ref: 'ref',
+  bookingId: 'bookingId',
+  customerId: 'customerId',
+  amount: 'amount',
+  deposit: 'deposit',
+  method: 'method',
+  date: 'date',
+  status: 'status',
+  createdAt: 'createdAt'
+} as const
+
+export type PaymentScalarFieldEnum = (typeof PaymentScalarFieldEnum)[keyof typeof PaymentScalarFieldEnum]
+
+
+export const SettingScalarFieldEnum = {
+  key: 'key',
+  value: 'value',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SettingScalarFieldEnum = (typeof SettingScalarFieldEnum)[keyof typeof SettingScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -178,10 +241,34 @@ export const SortOrder = {
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
 export const QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
 } as const
 
 export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
+
+
+export const NullsOrder = {
+  first: 'first',
+  last: 'last'
+} as const
+
+export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 
