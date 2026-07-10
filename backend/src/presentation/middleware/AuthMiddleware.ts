@@ -5,6 +5,8 @@ const PUBLIC_PATHS = new Set(['/health', '/api/v1/auth/forgot-password', '/api/v
 
 const PUBLIC_GET_PREFIXES = ['/api/v1/motos', '/api/v2/motos']
 
+const PUBLIC_PREFIXES = ['/uploads/']
+
 const keycloakUrl = process.env.KEYCLOAK_URL ?? 'http://localhost:8080'
 const keycloakRealm = process.env.KEYCLOAK_REALM ?? 'moto-rental'
 const keycloakIssuerUrl = process.env.KEYCLOAK_ISSUER_URL ?? keycloakUrl
@@ -22,6 +24,7 @@ interface KeycloakJWTPayload extends JWTPayload {
 
 export const authMiddleware = async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
   if (PUBLIC_PATHS.has(request.url)) return
+  if (PUBLIC_PREFIXES.some(p => request.url.startsWith(p))) return
   if (request.method === 'GET' && PUBLIC_GET_PREFIXES.some(p => request.url.startsWith(p))) return
 
   const authHeader = request.headers.authorization

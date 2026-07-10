@@ -1,6 +1,9 @@
+import { join } from 'path'
 import fastify from 'fastify'
 import helmet from '@fastify/helmet'
 import cors from '@fastify/cors'
+import multipart from '@fastify/multipart'
+import fastifyStatic from '@fastify/static'
 import { authMiddleware } from '@presentation/middleware/AuthMiddleware'
 import v1Routes from '@presentation/routes/v1'
 import v2Routes from '@presentation/routes/v2'
@@ -41,6 +44,24 @@ await app.register(helmet)
 await app.register(cors, {
   origin: (process.env.CORS_ORIGIN || 'http://localhost:3001').split(','),
   credentials: true,
+  methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+})
+
+await app.register(multipart, {
+  limits: { fileSize: 5 * 1024 * 1024 },
+})
+
+// /uploads/* is exempted from authMiddleware's global preHandler hook (see
+// PUBLIC_PREFIXES in AuthMiddleware.ts) so images stay reachable via plain
+// <img> tags, which never send an Authorization header.
+await app.register(fastifyStatic, {
+  root: join(process.cwd(), 'uploads'),
+  prefix: '/uploads/',
+  setHeaders: (res) => {
+    // helmet's default Cross-Origin-Resource-Policy is same-origin, which
+    // would block the admin app (different origin) from rendering these.
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin')
+  },
 })
 
 app.get('/health', async () => ({ status: 'ok' }))
