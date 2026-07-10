@@ -14,9 +14,12 @@ export class ApiError extends Error {
   }
 }
 
-function buildHeaders(extra?: HeadersInit): HeadersInit {
+function buildHeaders(hasBody: boolean, extra?: HeadersInit): HeadersInit {
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    // Fastify's default JSON body parser rejects a request that declares
+    // this content-type but sends no body (e.g. DELETE with no payload),
+    // so only set it when there's actually a body to send.
+    ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
     ...(extra as Record<string, string>),
   };
   const token = keycloak.token;
@@ -55,8 +58,25 @@ async function request<T>(
   const url = path.startsWith('http') ? path : `${BASE_URL}${path}`;
   const res = await fetch(url, {
     method,
-    headers: buildHeaders(),
+    headers: buildHeaders(body !== undefined),
     body: body !== undefined ? JSON.stringify(body) : undefined,
+    signal,
+  });
+  return handleResponse<T>(res);
+}
+
+async function uploadFile<T>(path: string, file: File, signal?: AbortSignal): Promise<T> {
+  const url = path.startsWith('http') ? path : `${BASE_URL}${path}`;
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const token = keycloak.token;
+  const res = await fetch(url, {
+    method: 'POST',
+    // No Content-Type here: the browser sets it (with the multipart boundary)
+    // when the body is a FormData instance.
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    body: formData,
     signal,
   });
   return handleResponse<T>(res);
@@ -77,4 +97,7 @@ export const api = {
 
   delete: <T>(path: string, signal?: AbortSignal) =>
     request<T>('DELETE', path, undefined, signal),
+
+  upload: <T>(path: string, file: File, signal?: AbortSignal) =>
+    uploadFile<T>(path, file, signal),
 };
