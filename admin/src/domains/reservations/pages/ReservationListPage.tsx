@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { Search, Plus, SlidersHorizontal, Eye, Ellipsis, X, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import type { ReservationStatus, PaymentStatus, ReservationRow } from '../types';
 import { useReservations } from '../hooks/useReservations';
@@ -6,6 +6,7 @@ import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ConfirmDialog } from '@/core/components/ui/ConfirmDialog';
 import { Button } from '@/core/components/ui/Button';
+import { DropdownMenu, DropdownMenuItem } from '@/core/components/ui/DropdownMenu';
 import { CreateReservationModal } from '../components/CreateReservationModal';
 import { useToast } from '@/core/components/ToastProvider';
 import { useAsync } from '@/core/hooks/useAsync';
@@ -138,55 +139,48 @@ function InfoRow({ label, value, sub }: { label: string; value: string; sub?: st
 
 /* ── Row actions dropdown ── */
 function RowActions({
-  status, onView, onConfirm, onCancel, onRefund,
+  status, paymentStatus, onView, onConfirm, onCancel, onRefund,
 }: {
   status: ReservationStatus;
+  paymentStatus: PaymentStatus;
   onView: () => void;
   onConfirm: () => void;
   onCancel: () => void;
   onRefund: () => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
-    document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
-  }, []);
+  const [openRect, setOpenRect] = useState<DOMRect | null>(null);
 
   return (
     <div style={{ display: 'flex', gap: 4, position: 'relative' }}>
       <button onClick={onView} aria-label="View reservation" style={{ width: 26, height: 26, border: 'none', background: 'transparent', borderRadius: 6, color: 'var(--faint)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Eye size={13} strokeWidth={1.6} />
       </button>
-      <div ref={ref}>
-        <button onClick={() => setOpen(o => !o)} aria-label="More actions" style={{ width: 26, height: 26, border: 'none', background: 'transparent', borderRadius: 6, color: 'var(--faint)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Ellipsis size={13} strokeWidth={1.6} />
-        </button>
-        {open && (
-          <div style={{
-            position: 'absolute', right: 0, top: 30,
-            background: 'var(--surface)', border: '1px solid var(--border)',
-            borderRadius: 10, boxShadow: 'var(--shadow)',
-            minWidth: 150, padding: 5, zIndex: 50,
-          }}>
-            {status === 'pending' && (
-              <button onClick={() => { setOpen(false); onConfirm(); }} style={{ display: 'block', width: '100%', padding: '7px 10px', textAlign: 'left', fontSize: 12.5, color: 'var(--ink)', border: 'none', background: 'transparent', borderRadius: 7, cursor: 'pointer' }}>Confirm</button>
-            )}
-            {status !== 'cancelled' && status !== 'completed' && (
-              <button onClick={() => { setOpen(false); onCancel(); }} style={{ display: 'block', width: '100%', padding: '7px 10px', textAlign: 'left', fontSize: 12.5, color: 'var(--cmy-red)', border: 'none', background: 'transparent', borderRadius: 7, cursor: 'pointer' }}>Cancel</button>
-            )}
-            <button onClick={() => { setOpen(false); onRefund(); }} style={{ display: 'block', width: '100%', padding: '7px 10px', textAlign: 'left', fontSize: 12.5, color: 'var(--cmy-amber)', border: 'none', background: 'transparent', borderRadius: 7, cursor: 'pointer' }}>Refund</button>
-          </div>
-        )}
-      </div>
+      <button onClick={(e) => setOpenRect(openRect ? null : e.currentTarget.getBoundingClientRect())} aria-label="More actions" style={{ width: 26, height: 26, border: 'none', background: 'transparent', borderRadius: 6, color: 'var(--faint)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Ellipsis size={13} strokeWidth={1.6} />
+      </button>
+      {openRect && (
+        <DropdownMenu anchorRect={openRect} onClose={() => setOpenRect(null)} minWidth={150}>
+          {status === 'pending' && (
+            <DropdownMenuItem onClick={() => { setOpenRect(null); onConfirm(); }}>Confirm</DropdownMenuItem>
+          )}
+          {status !== 'cancelled' && status !== 'completed' && status !== 'in_progress' && (
+            <DropdownMenuItem color="var(--cmy-red)" onClick={() => { setOpenRect(null); onCancel(); }}>Cancel</DropdownMenuItem>
+          )}
+          {paymentStatus === 'paid' && (
+            <DropdownMenuItem color="var(--cmy-amber)" onClick={() => { setOpenRect(null); onRefund(); }}>Refund</DropdownMenuItem>
+          )}
+        </DropdownMenu>
+      )}
     </div>
   );
 }
 
 export function ReservationListPage() {
   const [page, setPage] = useState(1);
-  const { data: allRows, isLoading, error: fetchError, refetch } = useReservations({ page, limit: PAGE_SIZE });
+  // Fetch the whole reservation set in one page: all filtering, sorting and
+  // pagination below operate client-side, so a server-paginated slice here
+  // would silently hide rows (including newly-created ones) from those.
+  const { data: allRows, isLoading, error: fetchError, refetch } = useReservations({ limit: 1000 });
   const { success, error } = useToast();
 
   const [search, setSearch] = useState('');
@@ -469,14 +463,15 @@ export function ReservationListPage() {
                 <div style={{ fontSize: 11, color: 'var(--faint)' }}>{r.moto?.model}</div>
               </div>
               <div>
-                <div style={{ fontSize: 12, color: 'var(--ink)' }}>{format(parseISO(r.startDate), 'dd MMM', { locale: fr })}</div>
-                <div style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10.5, color: 'var(--faint)' }}>→ {format(parseISO(r.endDate), 'dd MMM yyyy', { locale: fr })}</div>
+                <div style={{ fontFamily: "'Geist Mono',monospace", fontSize: 12, color: 'var(--ink)' }}>{format(parseISO(r.startDate), 'yyyy-MM-dd')}</div>
+                <div style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10.5, color: 'var(--faint)' }}>→ {format(parseISO(r.endDate), 'yyyy-MM-dd')}</div>
               </div>
               <span style={{ fontFamily: "'Geist Mono',monospace", fontWeight: 500, color: 'var(--ink)' }}>{r.totalAmount} €</span>
               <Pill config={resCfg[r.status]} />
               <Pill config={payCfg[r.paymentStatus]} />
               <RowActions
                 status={r.status}
+                paymentStatus={r.paymentStatus}
                 onView={() => setDetailRow(r)}
                 onConfirm={() => handleConfirm(r)}
                 onCancel={() => setCancelTarget(r)}
