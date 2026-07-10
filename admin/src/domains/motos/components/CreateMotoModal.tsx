@@ -8,6 +8,7 @@ import { useAsync } from '@/core/hooks/useAsync';
 import { useFormValidation } from '@/core/hooks/useFormValidation';
 import { api } from '@/core/services/api';
 import { motoSchema } from '../schema';
+import { MotoImageField } from './MotoImageField';
 import type { Moto, MotoStatus } from '../types';
 
 const STATUS_OPTIONS: { key: MotoStatus; label: string }[] = [
@@ -135,9 +136,7 @@ export function CreateMotoModal({ onClose, onCreated }: { onClose: () => void; o
           </div>
         </div>
 
-        <FormField label="Image URL (optional)">
-          <input style={fieldInputStyle} value={form.imageUrl ?? ''} onChange={e => set('imageUrl', e.target.value)} placeholder="https://…" />
-        </FormField>
+        <MotoImageField value={form.imageUrl ?? ''} onChange={url => set('imageUrl', url)} />
 
         <FormField label="Description" error={errors.description}>
           <textarea style={fieldTextareaStyle} value={form.description} onChange={e => set('description', e.target.value)} placeholder="Notes about condition, equipment…" />

@@ -8,6 +8,7 @@ import { useAsync } from '@/core/hooks/useAsync';
 import { useFormValidation } from '@/core/hooks/useFormValidation';
 import { api } from '@/core/services/api';
 import { motoSchema } from '../schema';
+import { MotoImageField } from './MotoImageField';
 import type { Moto, MotoStatus } from '../types';
 
 const STATUS_OPTIONS: { key: MotoStatus; label: string }[] = [
@@ -32,7 +33,7 @@ export function EditMotoModal({ moto, onClose, onUpdated }: { moto: Moto; onClos
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm(f => ({ ...f, [key]: value }));
 
-  const { isValid, errors, touch } = useFormValidation(motoSchema, form);
+  const { isValid, isDirty, errors, touch } = useFormValidation(motoSchema, form);
 
   const handleSubmit = async () => {
     touch();
@@ -55,7 +56,7 @@ export function EditMotoModal({ moto, onClose, onUpdated }: { moto: Moto; onClos
       footer={
         <>
           <Button variant="secondary" size="md" style={{ flex: 1 }} onClick={onClose}>Cancel</Button>
-          <Button size="md" style={{ flex: 1 }} disabled={!isValid || isLoading} onClick={handleSubmit}>
+          <Button size="md" style={{ flex: 1 }} disabled={!isDirty || !isValid || isLoading} onClick={handleSubmit}>
             {isLoading ? 'Saving…' : 'Save changes'}
           </Button>
         </>
@@ -134,9 +135,7 @@ export function EditMotoModal({ moto, onClose, onUpdated }: { moto: Moto; onClos
           </div>
         </div>
 
-        <FormField label="Image URL (optional)">
-          <input style={fieldInputStyle} value={form.imageUrl ?? ''} onChange={e => set('imageUrl', e.target.value)} />
-        </FormField>
+        <MotoImageField value={form.imageUrl ?? ''} onChange={url => set('imageUrl', url)} />
 
         <FormField label="Description" error={errors.description}>
           <textarea style={fieldTextareaStyle} value={form.description} onChange={e => set('description', e.target.value)} />

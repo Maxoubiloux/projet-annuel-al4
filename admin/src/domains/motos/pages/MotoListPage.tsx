@@ -1,11 +1,14 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { Bike, Plus, SlidersHorizontal, ArrowUpDown, Search, Ellipsis, ChevronLeft, ChevronRight, X, ArrowUp, ArrowDown } from 'lucide-react';
 import type { Moto, MotoStatus } from '../types';
 import { useMotos } from '../hooks/useMotos';
 import { ConfirmDialog } from '@/core/components/ui/ConfirmDialog';
 import { Button } from '@/core/components/ui/Button';
+import { DropdownMenu, DropdownMenuItem } from '@/core/components/ui/DropdownMenu';
 import { CreateMotoModal } from '../components/CreateMotoModal';
 import { EditMotoModal } from '../components/EditMotoModal';
+import { MotoDetailModal } from '../components/MotoDetailModal';
+import { ChangeMotoStatusModal } from '../components/ChangeMotoStatusModal';
 import { TableSkeleton } from '@/core/components/ui/Skeleton';
 import { ErrorState } from '@/core/components/ui/ErrorState';
 import { useToast } from '@/core/components/ToastProvider';
@@ -33,7 +36,7 @@ const statusCfg: Record<MotoStatus, { label: string; color: string; bg: string }
 };
 
 function StatusPill({ status }: { status: MotoStatus }) {
-  const c = statusCfg[status];
+  const c = statusCfg[status] ?? statusCfg.inactive;
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
@@ -48,46 +51,23 @@ function StatusPill({ status }: { status: MotoStatus }) {
   );
 }
 
-function RowActionsMenu({ onClose, onDelete, onEdit }: { onClose: () => void; onDelete: () => void; onEdit: () => void }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [onClose]);
-
-  const actions = [
-    { label: 'View details', onClick: onClose },
-    { label: 'Edit', onClick: () => { onClose(); onEdit(); } },
-    { label: 'Change status', onClick: onClose },
-  ];
-
+function RowActionsMenu({ anchorRect, onClose, onDelete, onEdit, onView, onChangeStatus }: {
+  anchorRect: DOMRect;
+  onClose: () => void;
+  onDelete: () => void;
+  onEdit: () => void;
+  onView: () => void;
+  onChangeStatus: () => void;
+}) {
   return (
-    <div ref={ref} style={{
-      position: 'absolute', right: 0, top: 32,
-      background: 'var(--surface)', border: '1px solid var(--border)',
-      borderRadius: 10, boxShadow: 'var(--shadow)',
-      minWidth: 160, padding: 5, zIndex: 50,
-    }}>
-      {actions.map(a => (
-        <button key={a.label} onClick={a.onClick} style={{
-          display: 'block', width: '100%', padding: '7px 10px',
-          textAlign: 'left', fontSize: 12.5, color: 'var(--ink)',
-          border: 'none', background: 'transparent',
-          borderRadius: 7, cursor: 'pointer',
-        }}>{a.label}</button>
-      ))}
+    <DropdownMenu anchorRect={anchorRect} onClose={onClose} minWidth={160}>
+      <DropdownMenuItem onClick={() => { onClose(); onView(); }}>View details</DropdownMenuItem>
+      <DropdownMenuItem onClick={() => { onClose(); onEdit(); }}>Edit</DropdownMenuItem>
+      <DropdownMenuItem onClick={() => { onClose(); onChangeStatus(); }}>Change status</DropdownMenuItem>
       <div style={{ borderTop: '1px solid var(--border-2)', marginTop: 4, paddingTop: 4 }}>
-        <button onClick={() => { onClose(); onDelete(); }} style={{
-          display: 'block', width: '100%', padding: '7px 10px',
-          textAlign: 'left', fontSize: 12.5, color: 'var(--cmy-red)',
-          border: 'none', background: 'transparent',
-          borderRadius: 7, cursor: 'pointer',
-        }}>Delete</button>
+        <DropdownMenuItem color="var(--cmy-red)" onClick={() => { onClose(); onDelete(); }}>Delete</DropdownMenuItem>
       </div>
-    </div>
+    </DropdownMenu>
   );
 }
 
@@ -101,11 +81,13 @@ export function MotoListPage() {
   const [catFilter, setCatFilter] = useState<string>('all');
   const [sort, setSort] = useState<{ field: SortField; dir: SortDir }>({ field: 'brand', dir: 'asc' });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [openMenu, setOpenMenu] = useState<{ id: string; rect: DOMRect } | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Moto | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Moto | null>(null);
+  const [detailTarget, setDetailTarget] = useState<Moto | null>(null);
+  const [statusTarget, setStatusTarget] = useState<Moto | null>(null);
 
   const deleteAction = useAsync((id: string) => api.delete(`/motos/${id}`));
 
@@ -206,6 +188,14 @@ export function MotoListPage() {
 
       {editTarget && (
         <EditMotoModal moto={editTarget} onClose={() => setEditTarget(null)} onUpdated={refetch} />
+      )}
+
+      {detailTarget && (
+        <MotoDetailModal moto={detailTarget} onClose={() => setDetailTarget(null)} />
+      )}
+
+      {statusTarget && (
+        <ChangeMotoStatusModal moto={statusTarget} onClose={() => setStatusTarget(null)} onUpdated={refetch} />
       )}
 
       {deleteTarget && (
@@ -397,17 +387,19 @@ export function MotoListPage() {
           </div>
         ) : (
           paginated.map((moto) => (
-            <div key={moto.id} style={{
+            <div key={moto.id} onClick={() => setDetailTarget(moto)} style={{
               display: 'grid',
               gridTemplateColumns: '34px 2.4fr 1fr 1.15fr 1fr 1.1fr 1.2fr .7fr 36px',
               gap: 12, alignItems: 'center', padding: '11px 18px',
               borderTop: '1px solid var(--border-2)', fontSize: 12.5,
               background: selectedIds.has(moto.id) ? 'var(--brand-tint)' : undefined,
+              cursor: 'pointer',
             }}>
               <input
                 type="checkbox"
                 checked={selectedIds.has(moto.id)}
                 onChange={() => toggleRow(moto.id)}
+                onClick={e => e.stopPropagation()}
                 aria-label={`Select ${moto.brand} ${moto.model}`}
                 style={{ width: 15, height: 15, accentColor: 'var(--brand)', cursor: 'pointer' }}
               />
@@ -439,9 +431,9 @@ export function MotoListPage() {
                 {moto.location}
               </span>
               <span style={{ fontFamily: "'Geist Mono',monospace", color: 'var(--ink)' }}>€{moto.pricePerDay}</span>
-              <div style={{ position: 'relative' }}>
+              <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
                 <button
-                  onClick={() => setOpenMenuId(openMenuId === moto.id ? null : moto.id)}
+                  onClick={(e) => setOpenMenu(openMenu?.id === moto.id ? null : { id: moto.id, rect: e.currentTarget.getBoundingClientRect() })}
                   aria-label="Row actions"
                   style={{
                     width: 28, height: 28, border: 'none', background: 'transparent',
@@ -451,11 +443,14 @@ export function MotoListPage() {
                 >
                   <Ellipsis size={15} strokeWidth={1.6} />
                 </button>
-                {openMenuId === moto.id && (
+                {openMenu?.id === moto.id && (
                   <RowActionsMenu
-                    onClose={() => setOpenMenuId(null)}
+                    anchorRect={openMenu.rect}
+                    onClose={() => setOpenMenu(null)}
                     onDelete={() => setDeleteTarget(moto)}
                     onEdit={() => setEditTarget(moto)}
+                    onView={() => setDetailTarget(moto)}
+                    onChangeStatus={() => setStatusTarget(moto)}
                   />
                 )}
               </div>
