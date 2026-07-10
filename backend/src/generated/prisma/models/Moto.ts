@@ -325,7 +325,7 @@ export type MotoGroupByOutputType = {
   _max: MotoMaxAggregateOutputType | null
 }
 
-type GetMotoGroupByPayload<T extends MotoGroupByArgs> = Prisma.PrismaPromise<
+export type GetMotoGroupByPayload<T extends MotoGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<MotoGroupByOutputType, T['by']> &
       {
