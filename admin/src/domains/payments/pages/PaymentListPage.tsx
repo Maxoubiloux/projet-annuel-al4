@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
-import { Download, Search, X, Ellipsis, SlidersHorizontal, ArrowUp, ArrowDown, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState } from 'react';
+import { Download, Search, X, Ellipsis, ArrowUp, ArrowDown, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ConfirmDialog } from '@/core/components/ui/ConfirmDialog';
 import { Button } from '@/core/components/ui/Button';
+import { DropdownMenu, DropdownMenuItem } from '@/core/components/ui/DropdownMenu';
 import type { Payment, PaymentStatus } from '../types';
 import { usePayments } from '../hooks/usePayments';
 import { ReceiptModal, downloadReceipt } from '../components/ReceiptModal';
@@ -51,32 +52,24 @@ const STATUS_FILTER_OPTIONS: { key: PayStatusFilter; label: string; color?: stri
 ];
 
 /* ── Row actions ── */
-function RowActions({ onClose, onViewReceipt, onDownload, onRefund }: {
+function RowActions({ anchorRect, onClose, onViewReceipt, onDownload, onRefund, canRefund }: {
+  anchorRect: DOMRect;
   onClose: () => void;
   onViewReceipt: () => void;
   onDownload: () => void;
   onRefund: () => void;
+  canRefund: boolean;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) onClose(); };
-    document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
-  }, [onClose]);
-
   return (
-    <div ref={ref} style={{
-      position: 'absolute', right: 0, top: 32,
-      background: 'var(--surface)', border: '1px solid var(--border)',
-      borderRadius: 10, boxShadow: 'var(--shadow)',
-      minWidth: 160, padding: 5, zIndex: 50,
-    }}>
-      <button onClick={() => { onClose(); onViewReceipt(); }} style={{ display: 'block', width: '100%', padding: '7px 10px', textAlign: 'left', fontSize: 12.5, color: 'var(--ink)', border: 'none', background: 'transparent', borderRadius: 7, cursor: 'pointer' }}>View receipt</button>
-      <button onClick={() => { onClose(); onDownload(); }} style={{ display: 'block', width: '100%', padding: '7px 10px', textAlign: 'left', fontSize: 12.5, color: 'var(--ink)', border: 'none', background: 'transparent', borderRadius: 7, cursor: 'pointer' }}>Export receipt (.txt)</button>
-      <div style={{ borderTop: '1px solid var(--border-2)', marginTop: 4, paddingTop: 4 }}>
-        <button onClick={() => { onClose(); onRefund(); }} style={{ display: 'block', width: '100%', padding: '7px 10px', textAlign: 'left', fontSize: 12.5, color: 'var(--cmy-amber)', border: 'none', background: 'transparent', borderRadius: 7, cursor: 'pointer' }}>Refund</button>
-      </div>
-    </div>
+    <DropdownMenu anchorRect={anchorRect} onClose={onClose} minWidth={160}>
+      <DropdownMenuItem onClick={() => { onClose(); onViewReceipt(); }}>View receipt</DropdownMenuItem>
+      <DropdownMenuItem onClick={() => { onClose(); onDownload(); }}>Export receipt (.txt)</DropdownMenuItem>
+      {canRefund && (
+        <div style={{ borderTop: '1px solid var(--border-2)', marginTop: 4, paddingTop: 4 }}>
+          <DropdownMenuItem color="var(--cmy-amber)" onClick={() => { onClose(); onRefund(); }}>Refund</DropdownMenuItem>
+        </div>
+      )}
+    </DropdownMenu>
   );
 }
 
@@ -99,8 +92,7 @@ export function PaymentListPage() {
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<PayStatusFilter>('all');
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [openMenu, setOpenMenu] = useState<{ id: string; rect: DOMRect } | null>(null);
   const [refundTarget, setRefundTarget] = useState<Payment | null>(null);
   const [receiptTarget, setReceiptTarget] = useState<Payment | null>(null);
   const [sort, setSort] = useState<{ field: SortField; dir: SortDir }>({ field: 'date', dir: 'desc' });
@@ -140,7 +132,11 @@ export function PaymentListPage() {
   const depositsHeld = payments.reduce((s, p) => s + p.deposit, 0);
   const pendingAmount = sorted.filter(p => p.status === 'pending').reduce((s, p) => s + p.amount, 0);
   const pendingCount = sorted.filter(p => p.status === 'pending').length;
-  const activeFilterCount = statusFilter !== 'all' ? 1 : 0;
+
+  const statusCounts = STATUS_FILTER_OPTIONS.reduce((acc, f) => {
+    acc[f.key] = f.key === 'all' ? payments.length : payments.filter(p => p.status === f.key).length;
+    return acc;
+  }, {} as Record<PayStatusFilter, number>);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
   const paginated = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -170,14 +166,6 @@ export function PaymentListPage() {
     borderRadius: 16, boxShadow: 'var(--shadow)',
   };
 
-  const chipBtn = (active: boolean, color?: string): React.CSSProperties => ({
-    padding: '4px 10px', borderRadius: 7, fontSize: 12,
-    border: '1px solid var(--border)',
-    background: active ? (color || 'var(--ink)') : 'transparent',
-    color: active ? 'var(--bg)' : 'var(--muted)',
-    cursor: 'pointer',
-  });
-
   return (
     <div>
       {refundTarget && (
@@ -202,17 +190,6 @@ export function PaymentListPage() {
           <p style={{ margin: '5px 0 0', fontSize: 13.5, color: 'var(--muted)' }}>Transaction history &amp; deposits</p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
-          <Button
-            variant={filtersOpen ? 'secondary' : 'outline'}
-            size="md"
-            onClick={() => setFiltersOpen(o => !o)}
-            style={filtersOpen ? { background: 'var(--surface-2)' } : undefined}
-          >
-            <SlidersHorizontal size={15} strokeWidth={1.6} />Filters
-            {activeFilterCount > 0 && (
-              <span style={{ background: 'var(--brand)', color: '#fff', borderRadius: 999, width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontFamily: "'Geist Mono',monospace" }}>{activeFilterCount}</span>
-            )}
-          </Button>
           <Button variant="outline" size="md" onClick={() => exportCSV(sorted)}>
             <Download size={15} strokeWidth={1.6} />Export CSV
           </Button>
@@ -240,33 +217,24 @@ export function PaymentListPage() {
         )}
       </div>
 
-      {/* Filters panel */}
-      {filtersOpen && (
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px 18px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Status</div>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {STATUS_FILTER_OPTIONS.map(f => (
-                <button key={f.key} onClick={() => { setStatusFilter(f.key); setPage(1); }} style={chipBtn(statusFilter === f.key, f.color)}>{f.label}</button>
-              ))}
-            </div>
-          </div>
-          {statusFilter !== 'all' && (
-            <button onClick={() => { setStatusFilter('all'); setPage(1); }} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--faint)', border: 'none', background: 'transparent', cursor: 'pointer' }}>
-              <X size={13} />Clear filters
+      {/* Status tabs + Search */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
+        <div style={{ display: 'flex', gap: 3, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 4 }}>
+          {STATUS_FILTER_OPTIONS.map(f => (
+            <button key={f.key} onClick={() => { setStatusFilter(f.key); setPage(1); }} style={{ fontSize: 12.5, fontWeight: 500, padding: '6px 11px', borderRadius: 7, border: 'none', cursor: 'pointer', background: statusFilter === f.key ? 'var(--ink)' : 'transparent', color: statusFilter === f.key ? 'var(--bg)' : 'var(--muted)' }}>
+              {f.label}{' '}
+              <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10, opacity: 0.65 }}>{statusCounts[f.key] ?? 0}</span>
             </button>
-          )}
+          ))}
         </div>
-      )}
-
-      {/* Search */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 36, padding: '0 12px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--faint)', minWidth: 240 }}>
-          <Search size={14} strokeWidth={1.6} />
-          <input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} placeholder="Search by booking or customer…" style={{ fontSize: 13, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink)', width: '100%' }} />
-          {search && (
-            <button onClick={() => { setSearch(''); setPage(1); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--faint)', display: 'flex' }}><X size={13} /></button>
-          )}
+        <div style={{ marginLeft: 'auto' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 36, padding: '0 12px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--faint)', minWidth: 240 }}>
+            <Search size={14} strokeWidth={1.6} />
+            <input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} placeholder="Search by booking or customer…" style={{ fontSize: 13, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink)', width: '100%' }} />
+            {search && (
+              <button onClick={() => { setSearch(''); setPage(1); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--faint)', display: 'flex' }}><X size={13} /></button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -292,7 +260,7 @@ export function PaymentListPage() {
         ) : (
           paginated.map(p => (
             <div key={p.id} style={{ display: 'grid', gridTemplateColumns: '100px 1.4fr 1.2fr 90px 90px 90px 100px 44px', gap: 12, alignItems: 'center', padding: '12px 20px', borderTop: '1px solid var(--border-2)', fontSize: 12.5 }}>
-              <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 11, color: 'var(--faint)' }}>{p.date}</span>
+              <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 11, color: 'var(--faint)' }}>{p.date.slice(0, 10)}</span>
               <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 11, color: 'var(--muted)' }}>#{p.ref}</span>
               <span style={{ fontWeight: 500, color: 'var(--ink)' }}>{p.customer}</span>
               <span style={{ color: 'var(--muted)' }}>{p.method}</span>
@@ -300,15 +268,17 @@ export function PaymentListPage() {
               <span style={{ fontFamily: "'Geist Mono',monospace", color: 'var(--faint)' }}>€{p.deposit}</span>
               <Pill status={p.status} />
               <div style={{ position: 'relative' }}>
-                <button onClick={() => setOpenMenuId(openMenuId === p.id ? null : p.id)} aria-label="Payment actions" style={{ width: 28, height: 28, border: 'none', background: 'transparent', borderRadius: 7, color: 'var(--faint)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <button onClick={(e) => setOpenMenu(openMenu?.id === p.id ? null : { id: p.id, rect: e.currentTarget.getBoundingClientRect() })} aria-label="Payment actions" style={{ width: 28, height: 28, border: 'none', background: 'transparent', borderRadius: 7, color: 'var(--faint)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Ellipsis size={15} strokeWidth={1.6} />
                 </button>
-                {openMenuId === p.id && (
+                {openMenu?.id === p.id && (
                   <RowActions
-                    onClose={() => setOpenMenuId(null)}
+                    anchorRect={openMenu.rect}
+                    onClose={() => setOpenMenu(null)}
                     onViewReceipt={() => setReceiptTarget(p)}
                     onDownload={() => downloadReceipt(p)}
                     onRefund={() => setRefundTarget(p)}
+                    canRefund={p.status === 'paid'}
                   />
                 )}
               </div>
