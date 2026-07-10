@@ -3,10 +3,12 @@ import { ICustomerRepository } from '@domain/repositories/ICustomerRepository'
 import { CreateCustomerParams, UpdateCustomerParams } from '@domain/entities/Customer'
 import { CreateCustomerUseCase } from '@domain/usecases/create-customer.usecase'
 import { GetAllCustomersUseCase } from '@domain/usecases/get-all-customers.usecase'
+import { GetCustomerByIdUseCase } from '@domain/usecases/get-customer-by-id.usecase'
 import { UpdateCustomerUseCase } from '@domain/usecases/update-customer.usecase'
 import { UpdateCustomerStatusUseCase } from '@domain/usecases/update-customer-status.usecase'
 import { CreateCustomerController } from '@presentation/controllers/create-customer.controller'
 import { GetAllCustomersController } from '@presentation/controllers/get-all-customers.controller'
+import { GetCustomerByIdController } from '@presentation/controllers/get-customer-by-id.controller'
 import { UpdateCustomerController } from '@presentation/controllers/update-customer.controller'
 import { UpdateCustomerStatusController } from '@presentation/controllers/update-customer-status.controller'
 import {
@@ -21,11 +23,24 @@ export async function customerRoutesV1(app: FastifyInstance, opts: { customerRep
 
   const createCustomerController = new CreateCustomerController(new CreateCustomerUseCase(repo))
   const getAllCustomersController = new GetAllCustomersController(new GetAllCustomersUseCase(repo))
+  const getCustomerByIdController = new GetCustomerByIdController(new GetCustomerByIdUseCase(repo))
   const updateCustomerController = new UpdateCustomerController(new UpdateCustomerUseCase(repo))
   const updateCustomerStatusController = new UpdateCustomerStatusController(new UpdateCustomerStatusUseCase(repo))
 
   app.get('/customers', async (request: FastifyRequest, reply: FastifyReply) => {
     await getAllCustomersController.handle(request as never, reply)
+  })
+
+  app.get('/customers/:id', async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+    const { error } = idParamSchema.validate(request.params)
+    if (error) {
+      reply.status(400).send({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: error.details.map(d => d.message).join(', ') },
+      })
+      return
+    }
+    await getCustomerByIdController.handle(request, reply)
   })
 
   app.post('/customers', async (request: FastifyRequest<{ Body: CreateCustomerParams }>, reply: FastifyReply) => {
