@@ -111,6 +111,28 @@ export function DashboardPage() {
   const alerts = dash.maintenanceAlerts ?? STATIC_ALERTS;
 
   const apiKpis = dash.kpis;
+
+  const fleetTotal = apiKpis?.totalFleet ?? 163;
+  const fleetAvailable = apiKpis?.availableCount ?? 93;
+  const fleetOnRent = apiKpis?.onRoad ?? 44;
+  const fleetMaintenance = apiKpis?.maintenanceDue ?? 15;
+  const fleetReserved = Math.max(fleetTotal - fleetAvailable - fleetOnRent - fleetMaintenance, 0);
+  const fleetPct = (n: number) => fleetTotal > 0 ? Math.round((n / fleetTotal) * 100) : 0;
+  const donutSegments = [
+    { dot: 'var(--cmy-green)', label: 'Available',   n: fleetAvailable,   pct: fleetPct(fleetAvailable) },
+    { dot: 'var(--brand)',     label: 'On rent',     n: fleetOnRent,      pct: fleetPct(fleetOnRent) },
+    { dot: 'var(--cmy-amber)', label: 'Maintenance', n: fleetMaintenance, pct: fleetPct(fleetMaintenance) },
+    { dot: 'var(--faint)',     label: 'Reserved',    n: fleetReserved,    pct: fleetPct(fleetReserved) },
+  ];
+  let donutCursor = 0;
+  const donutGradient = donutSegments
+    .map(seg => {
+      const from = donutCursor;
+      donutCursor += seg.pct;
+      return `${seg.dot} ${from}% ${donutCursor}%`;
+    })
+    .join(',');
+
   const kpis = [
     {
       label: 'Fleet utilization',
@@ -360,7 +382,7 @@ export function DashboardPage() {
               <div style={{ display: 'flex', justifyContent: 'center', margin: '16px 0' }}>
                 <div style={{
                   position: 'relative', width: 150, height: 150, borderRadius: 999,
-                  background: 'conic-gradient(var(--cmy-green) 0 57%,var(--brand) 57% 84%,var(--cmy-amber) 84% 93%,var(--faint) 93% 100%)',
+                  background: `conic-gradient(${donutGradient})`,
                 }}>
                   <div style={{
                     position: 'absolute', inset: 19, borderRadius: 999,
@@ -376,17 +398,12 @@ export function DashboardPage() {
                 </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-                {[
-                  { dot: 'var(--cmy-green)', label: 'Available',   n: String(apiKpis?.availableCount ?? 93),  pct: '57%' },
-                  { dot: 'var(--brand)',     label: 'On rent',     n: String(apiKpis?.onRoad ?? 44),          pct: '27%' },
-                  { dot: 'var(--cmy-amber)', label: 'Maintenance', n: String(apiKpis?.maintenanceDue ?? 15),  pct: '9%'  },
-                  { dot: 'var(--faint)',     label: 'Reserved',    n: '11',                                   pct: '7%'  },
-                ].map(item => (
+                {donutSegments.map(item => (
                   <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 12.5, color: 'var(--ink)' }}>
                     <span style={{ width: 8, height: 8, borderRadius: 3, background: item.dot, flexShrink: 0 }} />
                     {item.label}
                     <span style={{ marginLeft: 'auto', fontFamily: "'Geist Mono',monospace", color: 'var(--muted)' }}>
-                      {item.n}<span style={{ color: 'var(--faint)' }}> · {item.pct}</span>
+                      {item.n}<span style={{ color: 'var(--faint)' }}> · {item.pct}%</span>
                     </span>
                   </div>
                 ))}
