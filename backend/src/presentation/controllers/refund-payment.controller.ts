@@ -1,5 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify'
 import { RefundPaymentUseCase } from '@domain/usecases/refund-payment.usecase'
+import { toPaymentResponse } from './payment-response.mapper'
 
 export class RefundPaymentController {
   constructor(private readonly refundPaymentUseCase: RefundPaymentUseCase) { }
@@ -18,6 +19,6 @@ export class RefundPaymentController {
       return
     }
 
-    reply.send({ success: true, data: result.value })
+    reply.send({ success: true, data: toPaymentResponse(result.value) })
   }
 }

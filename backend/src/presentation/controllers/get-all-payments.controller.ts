@@ -1,5 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify'
 import { GetAllPaymentsUseCase } from '@domain/usecases/get-all-payments.usecase'
+import { toPaymentResponse } from './payment-response.mapper'
 
 interface PaymentsQuery {
   page?: string
@@ -16,6 +17,6 @@ export class GetAllPaymentsController {
     const limit = request.query.limit ? Number(request.query.limit) : 10
     const { items, total } = await this.getAllPaymentsUseCase.execute({ page, limit })
 
-    reply.send({ success: true, data: items, meta: { total, page, limit } })
+    reply.send({ success: true, data: items.map(toPaymentResponse), meta: { total, page, limit } })
   }
 }
