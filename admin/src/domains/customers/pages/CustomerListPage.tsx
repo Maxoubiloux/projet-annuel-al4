@@ -1,11 +1,13 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { Search, Plus, Mail, Phone, UserCheck, UserX, Ellipsis, X, ChevronLeft, ChevronRight, SlidersHorizontal, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import type { Customer } from '@/domains/reservations/types';
 import { useCustomers } from '../hooks/useCustomers';
 import { ConfirmDialog } from '@/core/components/ui/ConfirmDialog';
 import { Button } from '@/core/components/ui/Button';
+import { DropdownMenu, DropdownMenuItem } from '@/core/components/ui/DropdownMenu';
 import { CreateCustomerModal } from '../components/CreateCustomerModal';
 import { EditCustomerModal } from '../components/EditCustomerModal';
+import { CustomerDetailModal } from '../components/CustomerDetailModal';
 import { useToast } from '@/core/components/ToastProvider';
 import { useAsync } from '@/core/hooks/useAsync';
 import { api } from '@/core/services/api';
@@ -19,45 +21,26 @@ type SortDir = 'asc' | 'desc';
 
 const PAGE_SIZE = 10;
 
-function RowActionsMenu({ customer, onClose, onSuspend, onEdit }: { customer: Customer; onClose: () => void; onSuspend: () => void; onEdit: () => void }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) onClose(); };
-    document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
-  }, [onClose]);
-
-  // TODO: "View profile" / "View bookings" modals — out of Day 3 scope
-  const actions = [
-    { label: 'View profile', onClick: onClose },
-    { label: 'Edit', onClick: () => { onClose(); onEdit(); } },
-    { label: 'View bookings', onClick: onClose },
-  ];
-
+function RowActionsMenu({ customer, anchorRect, onClose, onSuspend, onEdit, onViewProfile, onViewBookings }: {
+  customer: Customer;
+  anchorRect: DOMRect;
+  onClose: () => void;
+  onSuspend: () => void;
+  onEdit: () => void;
+  onViewProfile: () => void;
+  onViewBookings: () => void;
+}) {
   return (
-    <div ref={ref} style={{
-      position: 'absolute', right: 0, top: 32,
-      background: 'var(--surface)', border: '1px solid var(--border)',
-      borderRadius: 10, boxShadow: 'var(--shadow)',
-      minWidth: 170, padding: 5, zIndex: 50,
-    }}>
-      {actions.map(a => (
-        <button key={a.label} onClick={a.onClick} style={{
-          display: 'block', width: '100%', padding: '7px 10px',
-          textAlign: 'left', fontSize: 12.5, color: 'var(--ink)',
-          border: 'none', background: 'transparent', borderRadius: 7, cursor: 'pointer',
-        }}>{a.label}</button>
-      ))}
+    <DropdownMenu anchorRect={anchorRect} onClose={onClose} minWidth={170}>
+      <DropdownMenuItem onClick={() => { onClose(); onViewProfile(); }}>View profile</DropdownMenuItem>
+      <DropdownMenuItem onClick={() => { onClose(); onEdit(); }}>Edit</DropdownMenuItem>
+      <DropdownMenuItem onClick={() => { onClose(); onViewBookings(); }}>View bookings</DropdownMenuItem>
       <div style={{ borderTop: '1px solid var(--border-2)', marginTop: 4, paddingTop: 4 }}>
-        <button onClick={() => { onClose(); onSuspend(); }} style={{
-          display: 'block', width: '100%', padding: '7px 10px',
-          textAlign: 'left', fontSize: 12.5, color: 'var(--cmy-amber)',
-          border: 'none', background: 'transparent', borderRadius: 7, cursor: 'pointer',
-        }}>
+        <DropdownMenuItem color="var(--cmy-amber)" onClick={() => { onClose(); onSuspend(); }}>
           {customer.status === 'active' ? 'Suspend' : 'Reactivate'}
-        </button>
+        </DropdownMenuItem>
       </div>
-    </div>
+    </DropdownMenu>
   );
 }
 
@@ -82,11 +65,12 @@ export function CustomerListPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [licenceFilter, setLicenceFilter] = useState<LicenceFilter>('all');
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [openMenu, setOpenMenu] = useState<{ id: string; rect: DOMRect } | null>(null);
   const [suspendTarget, setSuspendTarget] = useState<Customer | null>(null);
   const [sort, setSort] = useState<{ field: SortField; dir: SortDir }>({ field: 'name', dir: 'asc' });
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Customer | null>(null);
+  const [detailTarget, setDetailTarget] = useState<{ customer: Customer; tab: 'profile' | 'bookings' } | null>(null);
 
   const suspendAction = useAsync((id: string, status: Customer['status']) => api.patch(`/customers/${id}/status`, { status }));
 
@@ -130,7 +114,13 @@ export function CustomerListPage() {
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
   const paginated = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const activeFilterCount = (statusFilter !== 'all' ? 1 : 0) + (licenceFilter !== 'all' ? 1 : 0);
+  const activeFilterCount = statusFilter !== 'all' ? 1 : 0;
+
+  const licenceCounts = LICENCE_OPTIONS.reduce((acc, o) => {
+    acc[o.key] = o.key === 'all' ? customers.length
+      : customers.filter(c => (o.key === 'verified') === c.licenseVerified).length;
+    return acc;
+  }, {} as Record<LicenceFilter, number>);
 
   const toggleSort = (field: SortField) => {
     setSort(s => s.field === field
@@ -173,6 +163,14 @@ export function CustomerListPage() {
 
       {editTarget && (
         <EditCustomerModal customer={editTarget} onClose={() => setEditTarget(null)} onUpdated={refetch} />
+      )}
+
+      {detailTarget && (
+        <CustomerDetailModal
+          customerId={detailTarget.customer.id}
+          initialTab={detailTarget.tab}
+          onClose={() => setDetailTarget(null)}
+        />
       )}
 
       {suspendTarget && (
@@ -232,34 +230,36 @@ export function CustomerListPage() {
               ))}
             </div>
           </div>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Licence</div>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {LICENCE_OPTIONS.map(o => (
-                <button key={o.key} onClick={() => { setLicenceFilter(o.key); setPage(1); }} style={chipBtn(licenceFilter === o.key, o.color)}>{o.label}</button>
-              ))}
-            </div>
-          </div>
           {activeFilterCount > 0 && (
-            <button onClick={() => { setStatusFilter('all'); setLicenceFilter('all'); setPage(1); }} style={{ display: 'flex', alignItems: 'center', gap: 5, alignSelf: 'flex-end', fontSize: 12, color: 'var(--faint)', border: 'none', background: 'transparent', cursor: 'pointer' }}>
+            <button onClick={() => { setStatusFilter('all'); setPage(1); }} style={{ display: 'flex', alignItems: 'center', gap: 5, alignSelf: 'flex-end', fontSize: 12, color: 'var(--faint)', border: 'none', background: 'transparent', cursor: 'pointer' }}>
               <X size={13} />Clear filters
             </button>
           )}
         </div>
       )}
 
-      {/* Search row */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 36, padding: '0 12px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--faint)', minWidth: 260 }}>
-          <Search size={14} strokeWidth={1.6} />
-          <input
-            value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
-            placeholder="Search by name or email…"
-            style={{ fontSize: 13, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink)', width: '100%' }}
-          />
-          {search && (
-            <button onClick={() => { setSearch(''); setPage(1); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--faint)', display: 'flex' }}><X size={13} /></button>
-          )}
+      {/* Licence tabs + Search row */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
+        <div style={{ display: 'flex', gap: 3, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 4 }}>
+          {LICENCE_OPTIONS.map(o => (
+            <button key={o.key} onClick={() => { setLicenceFilter(o.key); setPage(1); }} style={{ fontSize: 12.5, fontWeight: 500, padding: '6px 11px', borderRadius: 7, border: 'none', cursor: 'pointer', background: licenceFilter === o.key ? 'var(--ink)' : 'transparent', color: licenceFilter === o.key ? 'var(--bg)' : 'var(--muted)' }}>
+              {o.label}{' '}
+              <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10, opacity: 0.65 }}>{licenceCounts[o.key] ?? 0}</span>
+            </button>
+          ))}
+        </div>
+        <div style={{ marginLeft: 'auto' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 36, padding: '0 12px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--faint)', minWidth: 260 }}>
+            <Search size={14} strokeWidth={1.6} />
+            <input
+              value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
+              placeholder="Search by name or email…"
+              style={{ fontSize: 13, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink)', width: '100%' }}
+            />
+            {search && (
+              <button onClick={() => { setSearch(''); setPage(1); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--faint)', display: 'flex' }}><X size={13} /></button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -288,12 +288,11 @@ export function CustomerListPage() {
                   <div style={{ width: 34, height: 34, borderRadius: 8, background: 'var(--brand-tint)', color: 'var(--brand)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Geist Mono',monospace", fontSize: 11, fontWeight: 600, flexShrink: 0 }}>{initials}</div>
                   <div>
                     <div style={{ fontWeight: 500, color: 'var(--ink)' }}>{c.firstName} {c.lastName}</div>
-                    <div style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10.5, color: 'var(--faint)' }}>
-                      #{c.id}
-                      {c.totalRentals !== undefined && (
-                        <> · {c.totalRentals} rental{c.totalRentals !== 1 ? 's' : ''} · €{c.totalSpent?.toLocaleString()}</>
-                      )}
-                    </div>
+                    {c.totalRentals !== undefined && (
+                      <div style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10.5, color: 'var(--faint)' }}>
+                        {c.totalRentals} rental{c.totalRentals !== 1 ? 's' : ''} · €{c.totalSpent?.toLocaleString()}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div>
@@ -329,11 +328,19 @@ export function CustomerListPage() {
                   )}
                 </div>
                 <div style={{ position: 'relative' }}>
-                  <button onClick={() => setOpenMenuId(openMenuId === c.id ? null : c.id)} aria-label="Customer actions" style={{ width: 28, height: 28, border: 'none', background: 'transparent', borderRadius: 7, color: 'var(--faint)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <button onClick={(e) => setOpenMenu(openMenu?.id === c.id ? null : { id: c.id, rect: e.currentTarget.getBoundingClientRect() })} aria-label="Customer actions" style={{ width: 28, height: 28, border: 'none', background: 'transparent', borderRadius: 7, color: 'var(--faint)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Ellipsis size={15} strokeWidth={1.6} />
                   </button>
-                  {openMenuId === c.id && (
-                    <RowActionsMenu customer={c} onClose={() => setOpenMenuId(null)} onSuspend={() => setSuspendTarget(c)} onEdit={() => setEditTarget(c)} />
+                  {openMenu?.id === c.id && (
+                    <RowActionsMenu
+                      customer={c}
+                      anchorRect={openMenu.rect}
+                      onClose={() => setOpenMenu(null)}
+                      onSuspend={() => setSuspendTarget(c)}
+                      onEdit={() => setEditTarget(c)}
+                      onViewProfile={() => setDetailTarget({ customer: c, tab: 'profile' })}
+                      onViewBookings={() => setDetailTarget({ customer: c, tab: 'bookings' })}
+                    />
                   )}
                 </div>
               </div>
