@@ -7,6 +7,7 @@ interface ReservationsQuery {
   page?: string
   limit?: string
   sort?: string
+  customerId?: string
 }
 
 /**
@@ -55,7 +56,8 @@ export class GetReservationsController {
 
     const page = request.query.page ? Number(request.query.page) : 1
     const limit = request.query.limit ? Number(request.query.limit) : 10
-    const { items, total } = await this.getAllReservationsUseCase.execute({ page, limit })
+    const customerId = request.query.customerId
+    const { items, total } = await this.getAllReservationsUseCase.execute({ page, limit, customerId })
 
     reply.send({
       success: true,

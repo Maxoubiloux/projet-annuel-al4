@@ -349,6 +349,20 @@ async function main() {
       })
     }
   }
+
+  console.log('Passage des motos restantes en "available"...')
+  await prisma.moto.updateMany({
+    where: {
+      statusId: {
+        notIn: [
+          motoStatusMap.get('reserved')!,
+          motoStatusMap.get('maintenance')!,
+          motoStatusMap.get('inactive')!,
+        ],
+      },
+    },
+    data: { statusId: motoStatusMap.get('available')! },
+  })
 }
 
 main()

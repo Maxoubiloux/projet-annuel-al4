@@ -65,15 +65,17 @@ export class PrismaReservationRepository implements IReservationRepository {
   async findAll(params: ReservationListParams): Promise<ReservationListResult> {
     const page = params.page ?? 1
     const limit = params.limit ?? 10
+    const where = params.customerId ? { userId: params.customerId } : {}
 
     const [records, total] = await Promise.all([
       prisma.booking.findMany({
+        where,
         include,
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
       }),
-      prisma.booking.count(),
+      prisma.booking.count({ where }),
     ])
 
     return { items: records.map(toDomain), total }

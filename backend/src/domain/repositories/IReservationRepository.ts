@@ -3,6 +3,7 @@ import { Reservation } from '../entities/Reservation'
 export interface ReservationListParams {
   page?: number
   limit?: number
+  customerId?: string
 }
 
 export interface ReservationListResult {
