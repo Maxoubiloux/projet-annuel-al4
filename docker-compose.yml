@@ -100,6 +100,7 @@ services:
       REDIS_PORT: 6379
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
       KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_ISSUER_URL: http://localhost:8080
       KEYCLOAK_REALM: moto-rental
       KEYCLOAK_CLIENT_ID: moto-rental-backend
       KEYCLOAK_CLIENT_SECRET: backend-secret-dev

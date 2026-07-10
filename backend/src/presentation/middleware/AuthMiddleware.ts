@@ -7,12 +7,13 @@ const PUBLIC_GET_PREFIXES = ['/api/v1/motos', '/api/v2/motos']
 
 const keycloakUrl = process.env.KEYCLOAK_URL ?? 'http://localhost:8080'
 const keycloakRealm = process.env.KEYCLOAK_REALM ?? 'moto-rental'
+const keycloakIssuerUrl = process.env.KEYCLOAK_ISSUER_URL ?? keycloakUrl
 
 const JWKS = createRemoteJWKSet(
   new URL(`${keycloakUrl}/realms/${keycloakRealm}/protocol/openid-connect/certs`),
 )
 
-const ISSUER = `${keycloakUrl}/realms/${keycloakRealm}`
+const ISSUER = `${keycloakIssuerUrl}/realms/${keycloakRealm}`
 
 interface KeycloakJWTPayload extends JWTPayload {
   email?: string
