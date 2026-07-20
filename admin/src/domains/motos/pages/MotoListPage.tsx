@@ -1,9 +1,19 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { Bike, Plus, SlidersHorizontal, ArrowUpDown, Search, Ellipsis, ChevronLeft, ChevronRight, X, ArrowUp, ArrowDown } from 'lucide-react';
-import { MOTOS_MOCK } from '@/mocks/motos';
 import type { Moto, MotoStatus } from '../types';
+import { useMotos } from '../hooks/useMotos';
 import { ConfirmDialog } from '@/core/components/ui/ConfirmDialog';
 import { Button } from '@/core/components/ui/Button';
+import { DropdownMenu, DropdownMenuItem } from '@/core/components/ui/DropdownMenu';
+import { CreateMotoModal } from '../components/CreateMotoModal';
+import { EditMotoModal } from '../components/EditMotoModal';
+import { MotoDetailModal } from '../components/MotoDetailModal';
+import { ChangeMotoStatusModal } from '../components/ChangeMotoStatusModal';
+import { TableSkeleton } from '@/core/components/ui/Skeleton';
+import { ErrorState } from '@/core/components/ui/ErrorState';
+import { useToast } from '@/core/components/ToastProvider';
+import { useAsync } from '@/core/hooks/useAsync';
+import { api } from '@/core/services/api';
 
 type SortField = 'brand' | 'mileage' | 'pricePerDay' | 'status';
 type SortDir = 'asc' | 'desc';
@@ -16,7 +26,6 @@ const STATUS_TABS: { key: MotoStatus | 'all'; label: string }[] = [
   { key: 'inactive',    label: 'Inactive'    },
 ];
 
-const CATEGORIES = Array.from(new Set(MOTOS_MOCK.map(m => m.category)));
 const PAGE_SIZE = 10;
 
 const statusCfg: Record<MotoStatus, { label: string; color: string; bg: string }> = {
@@ -27,7 +36,7 @@ const statusCfg: Record<MotoStatus, { label: string; color: string; bg: string }
 };
 
 function StatusPill({ status }: { status: MotoStatus }) {
-  const c = statusCfg[status];
+  const c = statusCfg[status] ?? statusCfg.inactive;
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
@@ -42,68 +51,68 @@ function StatusPill({ status }: { status: MotoStatus }) {
   );
 }
 
-function RowActionsMenu({ moto, onClose, onDelete }: { moto: Moto; onClose: () => void; onDelete: () => void }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [onClose]);
-
-  const actions = [
-    { label: 'View details', onClick: onClose },
-    { label: 'Edit', onClick: onClose },
-    { label: 'Change status', onClick: onClose },
-  ];
-
+function RowActionsMenu({ anchorRect, onClose, onDelete, onEdit, onView, onChangeStatus }: {
+  anchorRect: DOMRect;
+  onClose: () => void;
+  onDelete: () => void;
+  onEdit: () => void;
+  onView: () => void;
+  onChangeStatus: () => void;
+}) {
   return (
-    <div ref={ref} style={{
-      position: 'absolute', right: 0, top: 32,
-      background: 'var(--surface)', border: '1px solid var(--border)',
-      borderRadius: 10, boxShadow: 'var(--shadow)',
-      minWidth: 160, padding: 5, zIndex: 50,
-    }}>
-      {actions.map(a => (
-        <button key={a.label} onClick={a.onClick} style={{
-          display: 'block', width: '100%', padding: '7px 10px',
-          textAlign: 'left', fontSize: 12.5, color: 'var(--ink)',
-          border: 'none', background: 'transparent',
-          borderRadius: 7, cursor: 'pointer',
-        }}>{a.label}</button>
-      ))}
+    <DropdownMenu anchorRect={anchorRect} onClose={onClose} minWidth={160}>
+      <DropdownMenuItem onClick={() => { onClose(); onView(); }}>View details</DropdownMenuItem>
+      <DropdownMenuItem onClick={() => { onClose(); onEdit(); }}>Edit</DropdownMenuItem>
+      <DropdownMenuItem onClick={() => { onClose(); onChangeStatus(); }}>Change status</DropdownMenuItem>
       <div style={{ borderTop: '1px solid var(--border-2)', marginTop: 4, paddingTop: 4 }}>
-        <button onClick={() => { onClose(); onDelete(); }} style={{
-          display: 'block', width: '100%', padding: '7px 10px',
-          textAlign: 'left', fontSize: 12.5, color: 'var(--cmy-red)',
-          border: 'none', background: 'transparent',
-          borderRadius: 7, cursor: 'pointer',
-        }}>Delete</button>
+        <DropdownMenuItem color="var(--cmy-red)" onClick={() => { onClose(); onDelete(); }}>Delete</DropdownMenuItem>
       </div>
-    </div>
+    </DropdownMenu>
   );
 }
 
 export function MotoListPage() {
+  const [page, setPage] = useState(1);
+  const { data: motos, isLoading, error: fetchError, refetch } = useMotos({ page, limit: PAGE_SIZE });
+  const { success, error } = useToast();
+
   const [tab, setTab] = useState<MotoStatus | 'all'>('all');
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState<string>('all');
   const [sort, setSort] = useState<{ field: SortField; dir: SortDir }>({ field: 'brand', dir: 'asc' });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [openMenu, setOpenMenu] = useState<{ id: string; rect: DOMRect } | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [page, setPage] = useState(1);
   const [deleteTarget, setDeleteTarget] = useState<Moto | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<Moto | null>(null);
+  const [detailTarget, setDetailTarget] = useState<Moto | null>(null);
+  const [statusTarget, setStatusTarget] = useState<Moto | null>(null);
+
+  const deleteAction = useAsync((id: string) => api.delete(`/motos/${id}`));
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    const result = await deleteAction.execute(deleteTarget.id);
+    if (result !== undefined) {
+      success('Motorcycle deleted');
+      refetch();
+      setDeleteTarget(null);
+    } else {
+      error('Failed to delete motorcycle');
+    }
+  };
+
+  const categories = Array.from(new Set(motos.map(m => m.category)));
 
   const counts = STATUS_TABS.reduce((acc, t) => {
     acc[t.key] = t.key === 'all'
-      ? MOTOS_MOCK.length
-      : MOTOS_MOCK.filter(m => m.status === t.key).length;
+      ? motos.length
+      : motos.filter(m => m.status === t.key).length;
     return acc;
   }, {} as Record<string, number>);
 
-  const filtered = MOTOS_MOCK
+  const filtered = motos
     .filter(m => {
       const matchTab = tab === 'all' || m.status === tab;
       const matchCat = catFilter === 'all' || m.category === catFilter;
@@ -173,16 +182,30 @@ export function MotoListPage() {
 
   return (
     <div>
+      {createOpen && (
+        <CreateMotoModal onClose={() => setCreateOpen(false)} onCreated={refetch} />
+      )}
+
+      {editTarget && (
+        <EditMotoModal moto={editTarget} onClose={() => setEditTarget(null)} onUpdated={refetch} />
+      )}
+
+      {detailTarget && (
+        <MotoDetailModal moto={detailTarget} onClose={() => setDetailTarget(null)} />
+      )}
+
+      {statusTarget && (
+        <ChangeMotoStatusModal moto={statusTarget} onClose={() => setStatusTarget(null)} onUpdated={refetch} />
+      )}
+
       {deleteTarget && (
         <ConfirmDialog
           title="Delete motorcycle"
           message={`Are you sure you want to permanently delete ${deleteTarget.brand} ${deleteTarget.model} (${deleteTarget.plate})? This action cannot be undone.`}
           confirmLabel="Delete"
           danger
-          onConfirm={() => {
-            // TODO: DELETE /api/motos/:id
-            setDeleteTarget(null);
-          }}
+          isLoading={deleteAction.isLoading}
+          onConfirm={handleDelete}
           onCancel={() => setDeleteTarget(null)}
         />
       )}
@@ -192,13 +215,19 @@ export function MotoListPage() {
         <div>
           <h1 style={{ margin: 0, fontFamily: "'Cormorant Garamond',serif", fontSize: 30, fontWeight: 600, letterSpacing: '.01em', lineHeight: 1.05, color: 'var(--ink)' }}>Fleet</h1>
           <p style={{ margin: '5px 0 0', fontSize: 13.5, color: 'var(--muted)' }}>
-            {MOTOS_MOCK.length} motorcycles ·{' '}
-            <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 12 }}>
-              {counts['available'] ?? 0} available
-            </span> ·{' '}
-            <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 12, color: 'var(--cmy-amber)' }}>
-              {counts['maintenance'] ?? 0} in service
-            </span>
+            {isLoading ? (
+              <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 12, color: 'var(--faint)' }}>Loading…</span>
+            ) : (
+              <>
+                {motos.length} motorcycles ·{' '}
+                <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 12 }}>
+                  {counts['available'] ?? 0} available
+                </span> ·{' '}
+                <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 12, color: 'var(--cmy-amber)' }}>
+                  {counts['maintenance'] ?? 0} in service
+                </span>
+              </>
+            )}
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
@@ -218,8 +247,7 @@ export function MotoListPage() {
               }}>1</span>
             )}
           </Button>
-          {/* TODO: open CreateMotoModal + POST /api/motos */}
-          <Button size="md">
+          <Button size="md" onClick={() => setCreateOpen(true)}>
             <Plus size={15} strokeWidth={1.6} />Add motorcycle
           </Button>
         </div>
@@ -235,7 +263,7 @@ export function MotoListPage() {
           <div>
             <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Category</div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {['all', ...CATEGORIES].map(c => (
+              {['all', ...categories].map(c => (
                 <button key={c} onClick={() => { setCatFilter(c); setPage(1); }} style={{
                   padding: '4px 10px', borderRadius: 7, fontSize: 12,
                   border: '1px solid var(--border)',
@@ -248,15 +276,18 @@ export function MotoListPage() {
               ))}
             </div>
           </div>
-          {catFilter !== 'all' && (
-            <button onClick={() => { setCatFilter('all'); setPage(1); }} style={{
+          <button
+            disabled={catFilter === 'all'}
+            onClick={() => { setCatFilter('all'); setPage(1); }}
+            style={{
               display: 'flex', alignItems: 'center', gap: 5,
               fontSize: 12, color: 'var(--faint)', border: 'none',
-              background: 'transparent', cursor: 'pointer',
-            }}>
-              <X size={13} />Clear filters
-            </button>
-          )}
+              background: 'transparent', cursor: catFilter === 'all' ? 'default' : 'pointer',
+              opacity: catFilter === 'all' ? 0.4 : 1,
+            }}
+          >
+            <X size={13} />Clear filters
+          </button>
         </div>
       )}
 
@@ -305,7 +336,7 @@ export function MotoListPage() {
         }}>
           <span style={{ color: 'var(--brand)', fontWeight: 500 }}>{selectedIds.size} selected</span>
           <div style={{ display: 'flex', gap: 8 }}>
-            {/* TODO: bulk actions → API */}
+            {/* TODO: bulk delete + bulk status change */}
             <Button variant="secondary" size="sm" onClick={() => setSelectedIds(new Set())}>Clear selection</Button>
           </div>
         </div>
@@ -346,23 +377,29 @@ export function MotoListPage() {
           <span />
         </div>
 
-        {paginated.length === 0 ? (
+        {isLoading ? (
+          <TableSkeleton gridTemplateColumns="34px 2.4fr 1fr 1.15fr 1fr 1.1fr 1.2fr .7fr 36px" columns={9} />
+        ) : fetchError ? (
+          <ErrorState message="Impossible de charger la flotte." onRetry={refetch} />
+        ) : paginated.length === 0 ? (
           <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--faint)', fontSize: 13 }}>
             No motorcycles found.
           </div>
         ) : (
           paginated.map((moto) => (
-            <div key={moto.id} style={{
+            <div key={moto.id} onClick={() => setDetailTarget(moto)} style={{
               display: 'grid',
               gridTemplateColumns: '34px 2.4fr 1fr 1.15fr 1fr 1.1fr 1.2fr .7fr 36px',
               gap: 12, alignItems: 'center', padding: '11px 18px',
               borderTop: '1px solid var(--border-2)', fontSize: 12.5,
               background: selectedIds.has(moto.id) ? 'var(--brand-tint)' : undefined,
+              cursor: 'pointer',
             }}>
               <input
                 type="checkbox"
                 checked={selectedIds.has(moto.id)}
                 onChange={() => toggleRow(moto.id)}
+                onClick={e => e.stopPropagation()}
                 aria-label={`Select ${moto.brand} ${moto.model}`}
                 style={{ width: 15, height: 15, accentColor: 'var(--brand)', cursor: 'pointer' }}
               />
@@ -394,9 +431,9 @@ export function MotoListPage() {
                 {moto.location}
               </span>
               <span style={{ fontFamily: "'Geist Mono',monospace", color: 'var(--ink)' }}>€{moto.pricePerDay}</span>
-              <div style={{ position: 'relative' }}>
+              <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
                 <button
-                  onClick={() => setOpenMenuId(openMenuId === moto.id ? null : moto.id)}
+                  onClick={(e) => setOpenMenu(openMenu?.id === moto.id ? null : { id: moto.id, rect: e.currentTarget.getBoundingClientRect() })}
                   aria-label="Row actions"
                   style={{
                     width: 28, height: 28, border: 'none', background: 'transparent',
@@ -406,11 +443,14 @@ export function MotoListPage() {
                 >
                   <Ellipsis size={15} strokeWidth={1.6} />
                 </button>
-                {openMenuId === moto.id && (
+                {openMenu?.id === moto.id && (
                   <RowActionsMenu
-                    moto={moto}
-                    onClose={() => setOpenMenuId(null)}
+                    anchorRect={openMenu.rect}
+                    onClose={() => setOpenMenu(null)}
                     onDelete={() => setDeleteTarget(moto)}
+                    onEdit={() => setEditTarget(moto)}
+                    onView={() => setDetailTarget(moto)}
+                    onChangeStatus={() => setStatusTarget(moto)}
                   />
                 )}
               </div>
@@ -419,7 +459,7 @@ export function MotoListPage() {
         )}
 
         {/* Pagination */}
-        {totalPages > 1 && (
+        {!isLoading && totalPages > 1 && (
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             padding: '12px 18px', borderTop: '1px solid var(--border-2)',

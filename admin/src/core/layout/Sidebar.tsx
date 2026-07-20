@@ -1,30 +1,34 @@
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Bike, CalendarCheck, Users,
-  Wrench, CreditCard, Settings, ChevronLeft, ChevronRight,
+  Wrench, CreditCard, Settings,
 } from 'lucide-react';
 import { useLayout } from '@/core/hooks/useLayout';
 import { useAuth } from '@/core/auth/AuthContext';
-
-const overviewNav = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Fleet', href: '/motos', icon: Bike, meta: '163' },
-  { name: 'Reservations', href: '/reservations', icon: CalendarCheck, badge: '12' },
-  { name: 'Customers', href: '/customers', icon: Users },
-  { name: 'Payments', href: '/payments', icon: CreditCard },
-  { name: 'Maintenance', href: '/maintenance', icon: Wrench, badgeAmber: '7' },
-];
+import { useFetch } from '@/core/hooks/useFetch';
+import { REFRESH_INTERVAL_MS } from '@/core/constants';
+import type { DashboardKPIs } from '@/domains/dashboard/types';
 
 const systemNav = [
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
 export function Sidebar() {
-  const { collapsed, toggleCollapsed } = useLayout();
+  const { collapsed } = useLayout();
   const { user } = useAuth();
+  const { data: kpis } = useFetch<DashboardKPIs>('/dashboard/kpis', { refetchInterval: REFRESH_INTERVAL_MS });
   const initials = user?.name
     ? user.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
     : 'AM';
+
+  const overviewNav = [
+    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+    { name: 'Fleet', href: '/motos', icon: Bike, meta: kpis ? String(kpis.totalFleet) : undefined },
+    { name: 'Reservations', href: '/reservations', icon: CalendarCheck, badge: kpis ? String(kpis.dueTodayCount + kpis.overdueCount) : undefined },
+    { name: 'Customers', href: '/customers', icon: Users },
+    { name: 'Payments', href: '/payments', icon: CreditCard },
+    { name: 'Maintenance', href: '/maintenance', icon: Wrench, badgeAmber: kpis ? String(kpis.maintenanceDue) : undefined },
+  ];
 
   return (
     <aside
@@ -222,22 +226,6 @@ export function Sidebar() {
             </div>
           )}
         </div>
-        <button
-          onClick={toggleCollapsed}
-          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          style={{
-            marginTop: 8, width: '100%', height: 30,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            border: '1px solid var(--border)', borderRadius: 8,
-            background: 'transparent', color: 'var(--faint)',
-            cursor: 'pointer',
-          }}
-        >
-          {collapsed
-            ? <ChevronRight size={13} strokeWidth={1.6} />
-            : <ChevronLeft size={13} strokeWidth={1.6} />
-          }
-        </button>
       </div>
     </aside>
   );

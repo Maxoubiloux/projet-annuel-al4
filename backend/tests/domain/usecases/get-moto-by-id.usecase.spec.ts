@@ -3,8 +3,8 @@ import { IMotoRepository } from '@domain/repositories/IMotoRepository'
 import { Moto } from '@domain/entities/Moto'
 
 const motoFixture = new Moto(
-  'id-1', 'brand-1', 'MT-07', 'VIN001', 'AB-123-CD',
-  'cat-1', 'status-1', 15000, 89, 'desc', new Date(),
+  'id-1', 'Yamaha', 'MT-07', 'AB-123-CD', 2024, 'A2',
+  15000, 89, 500, 'available', 'Paris — Bastille', 'desc', new Date(),
 )
 
 const makeMockRepository = (moto: Moto | null): IMotoRepository => ({

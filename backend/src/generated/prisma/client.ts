@@ -81,3 +81,18 @@ export type Image = Prisma.ImageModel
  * 
  */
 export type Booking = Prisma.BookingModel
+/**
+ * Model MaintenanceJob
+ * 
+ */
+export type MaintenanceJob = Prisma.MaintenanceJobModel
+/**
+ * Model Payment
+ * 
+ */
+export type Payment = Prisma.PaymentModel
+/**
+ * Model Setting
+ * 
+ */
+export type Setting = Prisma.SettingModel

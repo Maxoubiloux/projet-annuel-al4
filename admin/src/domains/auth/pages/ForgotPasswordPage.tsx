@@ -2,15 +2,22 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Bike, ArrowLeft, CheckCircle } from 'lucide-react';
 import { Button } from '@/core/components/ui/Button';
+import { api } from '@/core/services/api';
 
 export function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email) {
-      // TODO: POST /api/auth/forgot-password with { email }
+    if (!email || isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await api.post('/auth/forgot-password', { email });
+    } catch {
+    } finally {
+      setIsSubmitting(false);
       setSubmitted(true);
     }
   };
@@ -65,8 +72,8 @@ export function ForgotPasswordPage() {
                   />
                 </div>
 
-                <Button type="submit" className="mt-2 w-full" size="lg">
-                  Envoyer le lien
+                <Button type="submit" className="mt-2 w-full" size="lg" disabled={isSubmitting}>
+                  {isSubmitting ? 'Envoi…' : 'Envoyer le lien'}
                 </Button>
               </form>
             </>

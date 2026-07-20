@@ -10,3 +10,8 @@ yarn-error.log*
 .env.*.local
 
 /src/generated/prisma
+
+/uploads/*
+!/uploads/motos
+/uploads/motos/*
+!/uploads/motos/.gitkeep

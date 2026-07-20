@@ -1,33 +1,33 @@
-import { useState, useRef, useEffect } from 'react';
-import { Download, Search, X, Ellipsis, SlidersHorizontal, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { useState } from 'react';
+import { Download, Search, X, Ellipsis, ArrowUp, ArrowDown, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ConfirmDialog } from '@/core/components/ui/ConfirmDialog';
 import { Button } from '@/core/components/ui/Button';
+import { DropdownMenu, DropdownMenuItem } from '@/core/components/ui/DropdownMenu';
+import type { Payment, PaymentStatus } from '../types';
+import { usePayments } from '../hooks/usePayments';
+import { ReceiptModal, downloadReceipt } from '../components/ReceiptModal';
+import { useToast } from '@/core/components/ToastProvider';
+import { useAsync } from '@/core/hooks/useAsync';
+import { api } from '@/core/services/api';
+import { TableSkeleton, CardSkeleton } from '@/core/components/ui/Skeleton';
+import { ErrorState } from '@/core/components/ui/ErrorState';
 
-const PAYMENTS_MOCK = [
-  { id: 'p1', ref: 'RZ-4821', customer: 'Lucas Bernard', amount: 420, deposit: 1500, method: 'Card',    date: '2026-06-18', status: 'paid'    },
-  { id: 'p2', ref: 'RZ-4820', customer: 'Sofia Rossi',   amount: 615, deposit: 2000, method: 'Card',    date: '2026-06-20', status: 'paid'    },
-  { id: 'p3', ref: 'RZ-4818', customer: 'Marco Conti',   amount: 380, deposit: 1500, method: 'Card',    date: '2026-06-19', status: 'paid'    },
-  { id: 'p4', ref: 'RZ-4815', customer: 'Emma Laurent',  amount: 190, deposit: 800,  method: 'Transfer', date: '2026-06-14', status: 'paid'    },
-  { id: 'p5', ref: 'RZ-4811', customer: 'Tom Dubois',    amount: 540, deposit: 2000, method: 'Card',    date: '2026-06-11', status: 'pending' },
-  { id: 'p6', ref: 'RZ-4799', customer: 'Ana Ferreira',  amount: 320, deposit: 1000, method: 'Card',    date: '2026-06-08', status: 'paid'    },
-  { id: 'p7', ref: 'RZ-4782', customer: 'Luca Romano',   amount: 260, deposit: 1000, method: 'Transfer', date: '2026-06-04', status: 'refunded'},
-];
-
-type PayStatus = 'paid' | 'pending' | 'refunded' | 'failed';
-type PayStatusFilter = PayStatus | 'all';
+type PayStatusFilter = PaymentStatus | 'all';
 type SortField = 'date' | 'amount' | 'customer' | 'status';
 type SortDir = 'asc' | 'desc';
 
-const STATUS_ORDER: Record<PayStatus, number> = { paid: 0, pending: 1, refunded: 2, failed: 3 };
+const PAGE_SIZE = 10;
 
-const statusCfg: Record<PayStatus, { label: string; color: string; bg: string }> = {
+const STATUS_ORDER: Record<PaymentStatus, number> = { paid: 0, pending: 1, refunded: 2, failed: 3 };
+
+const statusCfg: Record<PaymentStatus, { label: string; color: string; bg: string }> = {
   paid:     { label: 'Paid',     color: 'var(--cmy-green)', bg: 'color-mix(in srgb,var(--cmy-green) 13%,transparent)' },
   pending:  { label: 'Pending',  color: 'var(--cmy-amber)', bg: 'color-mix(in srgb,var(--cmy-amber) 15%,transparent)' },
   refunded: { label: 'Refunded', color: 'var(--faint)',     bg: 'color-mix(in srgb,var(--faint) 16%,transparent)' },
   failed:   { label: 'Failed',   color: 'var(--cmy-red)',   bg: 'color-mix(in srgb,var(--cmy-red) 14%,transparent)' },
 };
 
-function Pill({ status }: { status: PayStatus }) {
+function Pill({ status }: { status: PaymentStatus }) {
   const c = statusCfg[status];
   return (
     <span style={{
@@ -43,8 +43,6 @@ function Pill({ status }: { status: PayStatus }) {
   );
 }
 
-type Payment = typeof PAYMENTS_MOCK[number];
-
 const STATUS_FILTER_OPTIONS: { key: PayStatusFilter; label: string; color?: string }[] = [
   { key: 'all',      label: 'All'      },
   { key: 'paid',     label: 'Paid',     color: 'var(--cmy-green)' },
@@ -54,41 +52,28 @@ const STATUS_FILTER_OPTIONS: { key: PayStatusFilter; label: string; color?: stri
 ];
 
 /* ── Row actions ── */
-function RowActions({ onClose, onRefund }: { onClose: () => void; onRefund: () => void }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) onClose(); };
-    document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
-  }, [onClose]);
-
+function RowActions({ anchorRect, onClose, onViewReceipt, onDownload, onRefund, canRefund }: {
+  anchorRect: DOMRect;
+  onClose: () => void;
+  onViewReceipt: () => void;
+  onDownload: () => void;
+  onRefund: () => void;
+  canRefund: boolean;
+}) {
   return (
-    <div ref={ref} style={{
-      position: 'absolute', right: 0, top: 32,
-      background: 'var(--surface)', border: '1px solid var(--border)',
-      borderRadius: 10, boxShadow: 'var(--shadow)',
-      minWidth: 160, padding: 5, zIndex: 50,
-    }}>
-      {['View receipt', 'Download invoice'].map(label => (
-        <button key={label} onClick={onClose} style={{
-          display: 'block', width: '100%', padding: '7px 10px',
-          textAlign: 'left', fontSize: 12.5, color: 'var(--ink)',
-          border: 'none', background: 'transparent', borderRadius: 7, cursor: 'pointer',
-        }}>{label}</button>
-      ))}
-      <div style={{ borderTop: '1px solid var(--border-2)', marginTop: 4, paddingTop: 4 }}>
-        <button onClick={() => { onClose(); onRefund(); }} style={{
-          display: 'block', width: '100%', padding: '7px 10px',
-          textAlign: 'left', fontSize: 12.5, color: 'var(--cmy-amber)',
-          border: 'none', background: 'transparent', borderRadius: 7, cursor: 'pointer',
-        }}>Refund</button>
-      </div>
-    </div>
+    <DropdownMenu anchorRect={anchorRect} onClose={onClose} minWidth={160}>
+      <DropdownMenuItem onClick={() => { onClose(); onViewReceipt(); }}>View receipt</DropdownMenuItem>
+      <DropdownMenuItem onClick={() => { onClose(); onDownload(); }}>Export receipt (.txt)</DropdownMenuItem>
+      {canRefund && (
+        <div style={{ borderTop: '1px solid var(--border-2)', marginTop: 4, paddingTop: 4 }}>
+          <DropdownMenuItem color="var(--cmy-amber)" onClick={() => { onClose(); onRefund(); }}>Refund</DropdownMenuItem>
+        </div>
+      )}
+    </DropdownMenu>
   );
 }
 
-/* ── Client-side CSV export ── */
-function exportCSV(data: typeof PAYMENTS_MOCK) {
+function exportCSV(data: Payment[]) {
   const headers = ['Date', 'Booking', 'Customer', 'Method', 'Amount', 'Deposit', 'Status'];
   const rows = data.map(p => [p.date, `#${p.ref}`, p.customer, p.method, `€${p.amount}`, `€${p.deposit}`, p.status]);
   const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
@@ -101,14 +86,32 @@ function exportCSV(data: typeof PAYMENTS_MOCK) {
 }
 
 export function PaymentListPage() {
+  const [page, setPage] = useState(1);
+  const { data: payments, isLoading, error: fetchError, refetch } = usePayments({ page, limit: PAGE_SIZE });
+  const { success, error } = useToast();
+
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<PayStatusFilter>('all');
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [openMenu, setOpenMenu] = useState<{ id: string; rect: DOMRect } | null>(null);
   const [refundTarget, setRefundTarget] = useState<Payment | null>(null);
+  const [receiptTarget, setReceiptTarget] = useState<Payment | null>(null);
   const [sort, setSort] = useState<{ field: SortField; dir: SortDir }>({ field: 'date', dir: 'desc' });
 
-  const filtered = PAYMENTS_MOCK.filter(p => {
+  const refundAction = useAsync((id: string) => api.post(`/payments/${id}/refund`));
+
+  const handleRefund = async () => {
+    if (!refundTarget) return;
+    const result = await refundAction.execute(refundTarget.id);
+    if (result !== undefined) {
+      success('Refund issued');
+      refetch();
+      setRefundTarget(null);
+    } else {
+      error('Failed to issue refund');
+    }
+  };
+
+  const filtered = payments.filter(p => {
     const matchSearch = !search ||
       p.ref.toLowerCase().includes(search.toLowerCase()) ||
       p.customer.toLowerCase().includes(search.toLowerCase());
@@ -121,17 +124,28 @@ export function PaymentListPage() {
     if (sort.field === 'date')     return d * a.date.localeCompare(b.date);
     if (sort.field === 'amount')   return d * (a.amount - b.amount);
     if (sort.field === 'customer') return d * a.customer.localeCompare(b.customer);
-    if (sort.field === 'status')   return d * (STATUS_ORDER[a.status as PayStatus] - STATUS_ORDER[b.status as PayStatus]);
+    if (sort.field === 'status')   return d * (STATUS_ORDER[a.status] - STATUS_ORDER[b.status]);
     return 0;
   });
 
-  const total = sorted.filter(p => p.status === 'paid').reduce((s, p) => s + p.amount, 0);
-  const activeFilterCount = statusFilter !== 'all' ? 1 : 0;
+  const collectedMTD = sorted.filter(p => p.status === 'paid').reduce((s, p) => s + p.amount, 0);
+  const depositsHeld = payments.reduce((s, p) => s + p.deposit, 0);
+  const pendingAmount = sorted.filter(p => p.status === 'pending').reduce((s, p) => s + p.amount, 0);
+  const pendingCount = sorted.filter(p => p.status === 'pending').length;
+
+  const statusCounts = STATUS_FILTER_OPTIONS.reduce((acc, f) => {
+    acc[f.key] = f.key === 'all' ? payments.length : payments.filter(p => p.status === f.key).length;
+    return acc;
+  }, {} as Record<PayStatusFilter, number>);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const paginated = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const toggleSort = (field: SortField) => {
     setSort(s => s.field === field
       ? { field, dir: s.dir === 'asc' ? 'desc' : 'asc' }
       : { field, dir: 'asc' });
+    setPage(1);
   };
 
   const SortIcon = ({ field }: { field: SortField }) => {
@@ -152,14 +166,6 @@ export function PaymentListPage() {
     borderRadius: 16, boxShadow: 'var(--shadow)',
   };
 
-  const chipBtn = (active: boolean, color?: string): React.CSSProperties => ({
-    padding: '4px 10px', borderRadius: 7, fontSize: 12,
-    border: '1px solid var(--border)',
-    background: active ? (color || 'var(--ink)') : 'transparent',
-    color: active ? 'var(--bg)' : 'var(--muted)',
-    cursor: 'pointer',
-  });
-
   return (
     <div>
       {refundTarget && (
@@ -167,176 +173,130 @@ export function PaymentListPage() {
           title="Issue refund"
           message={`Refund €${refundTarget.amount} to ${refundTarget.customer} for booking #${refundTarget.ref}? This will initiate a payment reversal.`}
           confirmLabel="Issue refund"
-          onConfirm={() => {
-            // TODO: POST /api/payments/:id/refund
-            setRefundTarget(null);
-          }}
+          isLoading={refundAction.isLoading}
+          onConfirm={handleRefund}
           onCancel={() => setRefundTarget(null)}
         />
+      )}
+
+      {receiptTarget && (
+        <ReceiptModal payment={receiptTarget} onClose={() => setReceiptTarget(null)} />
       )}
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', marginBottom: 20 }}>
         <div>
           <h1 style={{ margin: 0, fontFamily: "'Cormorant Garamond',serif", fontSize: 30, fontWeight: 600, letterSpacing: '.01em', lineHeight: 1.05, color: 'var(--ink)' }}>Payments</h1>
-          <p style={{ margin: '5px 0 0', fontSize: 13.5, color: 'var(--muted)' }}>
-            Transaction history &amp; deposits
-          </p>
+          <p style={{ margin: '5px 0 0', fontSize: 13.5, color: 'var(--muted)' }}>Transaction history &amp; deposits</p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
-          <Button
-            variant={filtersOpen ? 'secondary' : 'outline'}
-            size="md"
-            onClick={() => setFiltersOpen(o => !o)}
-            style={filtersOpen ? { background: 'var(--surface-2)' } : undefined}
-          >
-            <SlidersHorizontal size={15} strokeWidth={1.6} />Filters
-            {activeFilterCount > 0 && (
-              <span style={{
-                background: 'var(--brand)', color: '#fff',
-                borderRadius: 999, width: 16, height: 16,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 9, fontFamily: "'Geist Mono',monospace",
-              }}>{activeFilterCount}</span>
-            )}
-          </Button>
-          {/* Client-side CSV export on filtered data */}
           <Button variant="outline" size="md" onClick={() => exportCSV(sorted)}>
             <Download size={15} strokeWidth={1.6} />Export CSV
           </Button>
         </div>
       </div>
 
-      {/* Summary cards — calculated from filtered data */}
+      {/* Summary cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14, marginBottom: 16 }}>
-        {[
-          { label: 'Collected MTD',  value: `€${total.toLocaleString()}`,                                                                                        sub: 'gross rental income',    color: 'var(--ink)'       },
-          { label: 'Deposits held',  value: `€${PAYMENTS_MOCK.reduce((s,p)=>s+p.deposit,0).toLocaleString()}`,                                                   sub: 'across active bookings', color: 'var(--ink)'       },
-          { label: 'Pending',        value: `€${sorted.filter(p=>p.status==='pending').reduce((s,p)=>s+p.amount,0)}`,                                            sub: `${sorted.filter(p=>p.status==='pending').length} awaiting payment`, color: 'var(--cmy-amber)' },
-        ].map(s => (
-          <div key={s.label} style={{ ...card, padding: '17px 18px' }}>
-            <div style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10.5, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--faint)' }}>{s.label}</div>
-            <div style={{ fontFamily: "'Geist Mono',monospace", fontSize: 26, fontWeight: 500, letterSpacing: '-.02em', color: s.color, marginTop: 10 }}>{s.value}</div>
-            <div style={{ fontSize: 12, color: 'var(--faint)', marginTop: 4 }}>{s.sub}</div>
-          </div>
-        ))}
+        {isLoading ? (
+          <>
+            <CardSkeleton /><CardSkeleton /><CardSkeleton />
+          </>
+        ) : (
+          [
+            { label: 'Collected MTD',  value: `€${collectedMTD.toLocaleString()}`,   sub: 'gross rental income',    color: 'var(--ink)'       },
+            { label: 'Deposits held',  value: `€${depositsHeld.toLocaleString()}`,    sub: 'across active bookings', color: 'var(--ink)'       },
+            { label: 'Pending',        value: `€${pendingAmount}`,                    sub: `${pendingCount} awaiting payment`, color: 'var(--cmy-amber)' },
+          ].map(s => (
+            <div key={s.label} style={{ ...card, padding: '17px 18px' }}>
+              <div style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10.5, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--faint)' }}>{s.label}</div>
+              <div style={{ fontFamily: "'Geist Mono',monospace", fontSize: 26, fontWeight: 500, letterSpacing: '-.02em', color: s.color, marginTop: 10 }}>{s.value}</div>
+              <div style={{ fontSize: 12, color: 'var(--faint)', marginTop: 4 }}>{s.sub}</div>
+            </div>
+          ))
+        )}
       </div>
 
-      {/* Filters panel */}
-      {filtersOpen && (
-        <div style={{
-          background: 'var(--surface)', border: '1px solid var(--border)',
-          borderRadius: 12, padding: '16px 18px', marginBottom: 14,
-          display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap',
-        }}>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Status</div>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {STATUS_FILTER_OPTIONS.map(f => (
-                <button key={f.key} onClick={() => setStatusFilter(f.key)} style={chipBtn(statusFilter === f.key, f.color)}>
-                  {f.label}
-                </button>
-              ))}
-            </div>
-          </div>
-          {statusFilter !== 'all' && (
-            <button onClick={() => setStatusFilter('all')} style={{
-              display: 'flex', alignItems: 'center', gap: 5,
-              fontSize: 12, color: 'var(--faint)', border: 'none',
-              background: 'transparent', cursor: 'pointer',
-            }}>
-              <X size={13} />Clear filters
+      {/* Status tabs + Search */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
+        <div style={{ display: 'flex', gap: 3, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 4 }}>
+          {STATUS_FILTER_OPTIONS.map(f => (
+            <button key={f.key} onClick={() => { setStatusFilter(f.key); setPage(1); }} style={{ fontSize: 12.5, fontWeight: 500, padding: '6px 11px', borderRadius: 7, border: 'none', cursor: 'pointer', background: statusFilter === f.key ? 'var(--ink)' : 'transparent', color: statusFilter === f.key ? 'var(--bg)' : 'var(--muted)' }}>
+              {f.label}{' '}
+              <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10, opacity: 0.65 }}>{statusCounts[f.key] ?? 0}</span>
             </button>
-          )}
+          ))}
         </div>
-      )}
-
-      {/* Search + table */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: 8, height: 36, padding: '0 12px',
-          background: 'var(--surface)', border: '1px solid var(--border)',
-          borderRadius: 10, color: 'var(--faint)', minWidth: 240,
-        }}>
-          <Search size={14} strokeWidth={1.6} />
-          <input
-            value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Search by booking or customer…"
-            style={{ fontSize: 13, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink)', width: '100%' }}
-          />
-          {search && (
-            <button onClick={() => setSearch('')} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--faint)', display: 'flex' }}>
-              <X size={13} />
-            </button>
-          )}
+        <div style={{ marginLeft: 'auto' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 36, padding: '0 12px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--faint)', minWidth: 240 }}>
+            <Search size={14} strokeWidth={1.6} />
+            <input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} placeholder="Search by booking or customer…" style={{ fontSize: 13, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink)', width: '100%' }} />
+            {search && (
+              <button onClick={() => { setSearch(''); setPage(1); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--faint)', display: 'flex' }}><X size={13} /></button>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Table */}
       <div style={{ ...card, overflow: 'hidden' }}>
-        <div style={{
-          display: 'grid', gridTemplateColumns: '100px 1.4fr 1.2fr 90px 90px 90px 100px 44px',
-          gap: 12, alignItems: 'center', padding: '11px 20px',
-          background: 'var(--surface-2)',
-          borderBottom: '1px solid var(--border-2)',
-        }}>
-          <button style={colBtn} onClick={() => toggleSort('date')}>
-            Date <SortIcon field="date" />
-          </button>
+        <div style={{ display: 'grid', gridTemplateColumns: '100px 1.4fr 1.2fr 90px 90px 90px 100px 44px', gap: 12, alignItems: 'center', padding: '11px 20px', background: 'var(--surface-2)', borderBottom: '1px solid var(--border-2)' }}>
+          <button style={colBtn} onClick={() => toggleSort('date')}>Date <SortIcon field="date" /></button>
           <span style={{ ...colBtn, cursor: 'default' }}>Booking</span>
-          <button style={colBtn} onClick={() => toggleSort('customer')}>
-            Customer <SortIcon field="customer" />
-          </button>
+          <button style={colBtn} onClick={() => toggleSort('customer')}>Customer <SortIcon field="customer" /></button>
           <span style={{ ...colBtn, cursor: 'default' }}>Method</span>
-          <button style={colBtn} onClick={() => toggleSort('amount')}>
-            Amount <SortIcon field="amount" />
-          </button>
+          <button style={colBtn} onClick={() => toggleSort('amount')}>Amount <SortIcon field="amount" /></button>
           <span style={{ ...colBtn, cursor: 'default' }}>Deposit</span>
-          <button style={colBtn} onClick={() => toggleSort('status')}>
-            Status <SortIcon field="status" />
-          </button>
+          <button style={colBtn} onClick={() => toggleSort('status')}>Status <SortIcon field="status" /></button>
           <span />
         </div>
 
-        {sorted.length === 0 ? (
-          <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--faint)', fontSize: 13 }}>
-            No payments found.
-          </div>
+        {isLoading ? (
+          <TableSkeleton gridTemplateColumns="100px 1.4fr 1.2fr 90px 90px 90px 100px 44px" columns={8} />
+        ) : fetchError ? (
+          <ErrorState message="Impossible de charger les paiements." onRetry={refetch} />
+        ) : paginated.length === 0 ? (
+          <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--faint)', fontSize: 13 }}>No payments found.</div>
         ) : (
-          sorted.map(p => (
-            <div key={p.id} style={{
-              display: 'grid', gridTemplateColumns: '100px 1.4fr 1.2fr 90px 90px 90px 100px 44px',
-              gap: 12, alignItems: 'center', padding: '12px 20px',
-              borderTop: '1px solid var(--border-2)', fontSize: 12.5,
-            }}>
-              <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 11, color: 'var(--faint)' }}>{p.date}</span>
+          paginated.map(p => (
+            <div key={p.id} style={{ display: 'grid', gridTemplateColumns: '100px 1.4fr 1.2fr 90px 90px 90px 100px 44px', gap: 12, alignItems: 'center', padding: '12px 20px', borderTop: '1px solid var(--border-2)', fontSize: 12.5 }}>
+              <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 11, color: 'var(--faint)' }}>{p.date.slice(0, 10)}</span>
               <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 11, color: 'var(--muted)' }}>#{p.ref}</span>
               <span style={{ fontWeight: 500, color: 'var(--ink)' }}>{p.customer}</span>
               <span style={{ color: 'var(--muted)' }}>{p.method}</span>
               <span style={{ fontFamily: "'Geist Mono',monospace", fontWeight: 500, color: 'var(--ink)' }}>€{p.amount}</span>
               <span style={{ fontFamily: "'Geist Mono',monospace", color: 'var(--faint)' }}>€{p.deposit}</span>
-              <Pill status={p.status as PayStatus} />
+              <Pill status={p.status} />
               <div style={{ position: 'relative' }}>
-                <button
-                  onClick={() => setOpenMenuId(openMenuId === p.id ? null : p.id)}
-                  aria-label="Payment actions"
-                  style={{
-                    width: 28, height: 28, border: 'none', background: 'transparent',
-                    borderRadius: 7, color: 'var(--faint)', cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}
-                >
+                <button onClick={(e) => setOpenMenu(openMenu?.id === p.id ? null : { id: p.id, rect: e.currentTarget.getBoundingClientRect() })} aria-label="Payment actions" style={{ width: 28, height: 28, border: 'none', background: 'transparent', borderRadius: 7, color: 'var(--faint)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Ellipsis size={15} strokeWidth={1.6} />
                 </button>
-                {openMenuId === p.id && (
+                {openMenu?.id === p.id && (
                   <RowActions
-                    onClose={() => setOpenMenuId(null)}
+                    anchorRect={openMenu.rect}
+                    onClose={() => setOpenMenu(null)}
+                    onViewReceipt={() => setReceiptTarget(p)}
+                    onDownload={() => downloadReceipt(p)}
                     onRefund={() => setRefundTarget(p)}
+                    canRefund={p.status === 'paid'}
                   />
                 )}
               </div>
             </div>
           ))
+        )}
+
+        {/* Pagination */}
+        {!isLoading && !fetchError && totalPages > 1 && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderTop: '1px solid var(--border-2)', background: 'var(--surface-2)' }}>
+            <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 11, color: 'var(--faint)' }}>
+              {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, sorted.length)} of {sorted.length}
+            </span>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: page === 1 ? 'var(--border)' : 'var(--ink)', cursor: page === 1 ? 'default' : 'pointer' }}><ChevronLeft size={14} /></button>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: page === totalPages ? 'var(--border)' : 'var(--ink)', cursor: page === totalPages ? 'default' : 'pointer' }}><ChevronRight size={14} /></button>
+            </div>
+          </div>
         )}
       </div>
     </div>

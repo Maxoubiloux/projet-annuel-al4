@@ -1,3 +1,8 @@
+import { randomUUID } from 'crypto'
+import { createWriteStream } from 'fs'
+import { mkdir } from 'fs/promises'
+import { join } from 'path'
+import { pipeline } from 'stream/promises'
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { IMotoRepository } from '@domain/repositories/IMotoRepository'
 import { CreateMotoParams, UpdateMotoParams } from '@domain/entities/Moto'
@@ -15,6 +20,15 @@ import { createMotoSchema } from '@presentation/validators/create-moto.validator
 import { updateMotoSchema } from '@presentation/validators/update-moto.validator'
 import { idParamSchema } from '@presentation/validators/id-param.validator'
 
+const UPLOAD_DIR = join(process.cwd(), 'uploads', 'motos')
+
+const ALLOWED_IMAGE_EXT: Record<string, string> = {
+  'image/jpeg': '.jpg',
+  'image/png': '.png',
+  'image/webp': '.webp',
+  'image/gif': '.gif',
+}
+
 export async function motoroutesV1(app: FastifyInstance, opts: { motoRepository: IMotoRepository }) {
   const repo = opts.motoRepository
 
@@ -24,12 +38,10 @@ export async function motoroutesV1(app: FastifyInstance, opts: { motoRepository:
   const updateMotoController = new UpdateMotoController(new UpdateMotoUseCase(repo))
   const deleteMotoController = new DeleteMotoController(new DeleteMotoUseCase(repo))
 
-  // GET /motos
   app.get('/motos', async (request: FastifyRequest, reply: FastifyReply) => {
     await getAllMotosController.handle(request, reply)
   })
 
-  // GET /motos/:id
   app.get('/motos/:id', async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
     const { error } = idParamSchema.validate(request.params)
     if (error) {
@@ -42,7 +54,33 @@ export async function motoroutesV1(app: FastifyInstance, opts: { motoRepository:
     await getMotoByIdController.handle(request, reply)
   })
 
-  // POST /motos
+  app.post('/motos/upload-image', async (request: FastifyRequest, reply: FastifyReply) => {
+    const file = await request.file()
+    if (!file) {
+      reply.status(400).send({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: 'No file provided' },
+      })
+      return
+    }
+
+    const ext = ALLOWED_IMAGE_EXT[file.mimetype]
+    if (!ext) {
+      reply.status(400).send({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: 'File must be a JPEG, PNG, WebP or GIF image' },
+      })
+      return
+    }
+
+    await mkdir(UPLOAD_DIR, { recursive: true })
+    const filename = `${randomUUID()}${ext}`
+    await pipeline(file.file, createWriteStream(join(UPLOAD_DIR, filename)))
+
+    const origin = `${request.protocol}://${request.headers.host}`
+    reply.send({ success: true, data: { url: `${origin}/uploads/motos/${filename}` } })
+  })
+
   app.post('/motos', async (request: FastifyRequest<{ Body: CreateMotoParams }>, reply: FastifyReply) => {
     const { error } = createMotoSchema.validate(request.body, { abortEarly: false })
     if (error) {
@@ -55,7 +93,6 @@ export async function motoroutesV1(app: FastifyInstance, opts: { motoRepository:
     await createMotoController.handle(request, reply)
   })
 
-  // PUT /motos/:id
   app.put('/motos/:id', async (request: FastifyRequest<{ Params: { id: string }; Body: UpdateMotoParams }>, reply: FastifyReply) => {
     const paramValidation = idParamSchema.validate(request.params)
     if (paramValidation.error) {
@@ -78,7 +115,6 @@ export async function motoroutesV1(app: FastifyInstance, opts: { motoRepository:
     await updateMotoController.handle(request, reply)
   })
 
-  // DELETE /motos/:id
   app.delete('/motos/:id', async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
     const { error } = idParamSchema.validate(request.params)
     if (error) {
