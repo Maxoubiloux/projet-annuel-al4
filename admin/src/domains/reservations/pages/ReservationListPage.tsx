@@ -177,9 +177,6 @@ function RowActions({
 
 export function ReservationListPage() {
   const [page, setPage] = useState(1);
-  // Fetch the whole reservation set in one page: all filtering, sorting and
-  // pagination below operate client-side, so a server-paginated slice here
-  // would silently hide rows (including newly-created ones) from those.
   const { data: allRows, isLoading, error: fetchError, refetch } = useReservations({ limit: 1000 });
   const { success, error } = useToast();
 

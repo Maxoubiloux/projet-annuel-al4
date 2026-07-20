@@ -102,8 +102,3 @@
     scrollbar-color: var(--border) transparent;
   }
 }
-
-@keyframes skeleton-pulse {
-  0%, 100% { opacity: 0.55; }
-  50% { opacity: 1; }
-}

@@ -1,21 +1,18 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { createRemoteJWKSet, jwtVerify, JWTVerifyResult, JWTPayload } from 'jose'
 
-const PUBLIC_PATHS = new Set(['/health', '/api/v1/auth/forgot-password', '/api/v2/auth/forgot-password'])
+const PUBLIC_PATHS = new Set(['/health'])
 
 const PUBLIC_GET_PREFIXES = ['/api/v1/motos', '/api/v2/motos']
 
-const PUBLIC_PREFIXES = ['/uploads/']
-
 const keycloakUrl = process.env.KEYCLOAK_URL ?? 'http://localhost:8080'
 const keycloakRealm = process.env.KEYCLOAK_REALM ?? 'moto-rental'
-const keycloakIssuerUrl = process.env.KEYCLOAK_ISSUER_URL ?? keycloakUrl
 
 const JWKS = createRemoteJWKSet(
   new URL(`${keycloakUrl}/realms/${keycloakRealm}/protocol/openid-connect/certs`),
 )
 
-const ISSUER = `${keycloakIssuerUrl}/realms/${keycloakRealm}`
+const ISSUER = `${keycloakUrl}/realms/${keycloakRealm}`
 
 interface KeycloakJWTPayload extends JWTPayload {
   email?: string
@@ -24,7 +21,6 @@ interface KeycloakJWTPayload extends JWTPayload {
 
 export const authMiddleware = async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
   if (PUBLIC_PATHS.has(request.url)) return
-  if (PUBLIC_PREFIXES.some(p => request.url.startsWith(p))) return
   if (request.method === 'GET' && PUBLIC_GET_PREFIXES.some(p => request.url.startsWith(p))) return
 
   const authHeader = request.headers.authorization

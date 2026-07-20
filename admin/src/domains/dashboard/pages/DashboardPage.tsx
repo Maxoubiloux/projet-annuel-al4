@@ -59,7 +59,7 @@ const occupancy = [
   { name: 'Kawasaki Z900',    l: '0%',  w: '100%', c: 'var(--cmy-amber)', dashed: true, dim: 0.35 },
 ];
 
-/* ── sub-components ── */
+/* ── sub-components ───────────────────────────────────────── */
 function Sparkline({ data, color }: { data: number[]; color: string }) {
   const W = 120, H = 40;
   const min = Math.min(...data), rng = Math.max(...data) - min || 1;
@@ -97,124 +97,81 @@ function Pill({ status }: { status: string }) {
   );
 }
 
-/* ── main component ── */
+/* ── CSV export ───────────────────────────────────────────── */
+function exportDashboard() {
+  const date = new Date().toISOString().slice(0, 10);
+  const lines: string[] = [
+    `MotoManager — Dashboard export · ${date}`,
+    '',
+    'KPIs',
+    'Metric,Value,Delta,vs',
+    'Fleet utilization,87.4%,+4.2,vs 83.2%',
+    'Active rentals,142,+12,vs 130',
+    'Revenue MTD,€90.2k,+9.8%,vs €82.1k',
+    'Maintenance due,7,−2,vs 9',
+    '',
+    'Recent reservations',
+    'ID,Customer,Motorcycle,Period,Days,Amount,Status',
+    ...reservations.map(r =>
+      [r.id, r.customer, r.moto, r.period, r.days, r.amount, r.status].join(',')
+    ),
+    '',
+    'Maintenance alerts',
+    'Severity,Title,Motorcycle,ID,Mileage,Due',
+    ...alerts.map(a =>
+      [a.sev, a.title, a.moto, a.id, a.km, a.due].join(',')
+    ),
+  ];
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `dashboard-${date}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ── main component ───────────────────────────────────────── */
 export function DashboardPage() {
   const [pane, setPane] = useState<'A' | 'B'>('A');
   const { user } = useAuth();
-  const firstName = user?.name?.split(' ')[0] || 'Admin';
-
-  const dash = useDashboard();
-
-  const revenueData = dash.revenueData ?? STATIC_REVENUE;
-  const rentalsData = dash.rentalsData ?? STATIC_RENTALS;
-  const reservations = dash.recentReservations ?? STATIC_RESERVATIONS;
-  const alerts = dash.maintenanceAlerts ?? STATIC_ALERTS;
-
-  const apiKpis = dash.kpis;
-
-  const fleetTotal = apiKpis?.totalFleet ?? 163;
-  const fleetAvailable = apiKpis?.availableCount ?? 93;
-  const fleetOnRent = apiKpis?.onRoad ?? 44;
-  const fleetMaintenance = apiKpis?.maintenanceDue ?? 15;
-  const fleetReserved = Math.max(fleetTotal - fleetAvailable - fleetOnRent - fleetMaintenance, 0);
-  const fleetPct = (n: number) => fleetTotal > 0 ? Math.round((n / fleetTotal) * 100) : 0;
-  const donutSegments = [
-    { dot: 'var(--cmy-green)', label: 'Available',   n: fleetAvailable,   pct: fleetPct(fleetAvailable) },
-    { dot: 'var(--brand)',     label: 'On rent',     n: fleetOnRent,      pct: fleetPct(fleetOnRent) },
-    { dot: 'var(--cmy-amber)', label: 'Maintenance', n: fleetMaintenance, pct: fleetPct(fleetMaintenance) },
-    { dot: 'var(--faint)',     label: 'Reserved',    n: fleetReserved,    pct: fleetPct(fleetReserved) },
-  ];
-  let donutCursor = 0;
-  const donutGradient = donutSegments
-    .map(seg => {
-      const from = donutCursor;
-      donutCursor += seg.pct;
-      return `${seg.dot} ${from}% ${donutCursor}%`;
-    })
-    .join(',');
-
-  const kpis = [
-    {
-      label: 'Fleet utilization',
-      value: apiKpis ? `${apiKpis.fleetUtilization.toFixed(1)}%` : '87.4%',
-      Icon: TrendingUp, delta: apiKpis ? `+${(apiKpis.fleetUtilization - 83).toFixed(1)}` : '+4.2',
-      deltaColor: 'var(--cmy-green)', vs: apiKpis ? `vs ${apiKpis.availableCount} avail.` : 'vs 83.2%',
-      sparkData: [60,65,70,68,72,75,78,74,80,82,85, apiKpis?.fleetUtilization ?? 87.4],
-      sparkColor: 'var(--brand)',
-      footL: apiKpis ? `${apiKpis.onRoad} / ${apiKpis.totalFleet} on road` : '142 / 163 on road',
-      footR: 'target 85%', footRColor: 'var(--faint)',
-    },
-    {
-      label: 'Active rentals',
-      value: apiKpis ? String(apiKpis.activeRentals) : '142',
-      Icon: TrendingUp, delta: '+12', deltaColor: 'var(--cmy-green)', vs: 'vs 130',
-      sparkData: [100,108,112,115,118,122,125,128,130,132,138, apiKpis?.activeRentals ?? 142],
-      sparkColor: 'var(--brand)',
-      footL: apiKpis ? `${apiKpis.dueTodayCount} due back today` : '38 due back today',
-      footR: apiKpis ? `${apiKpis.overdueCount} overdue` : '6 overdue', footRColor: 'var(--cmy-red)',
-    },
-    {
-      label: 'Revenue · MTD',
-      value: apiKpis ? `€${(apiKpis.revenueMTD / 1000).toFixed(1)}k` : '€90.2k',
-      Icon: TrendingUp,
-      delta: apiKpis && apiKpis.revenuePrevMonth > 0
-        ? `+${(((apiKpis.revenueMTD - apiKpis.revenuePrevMonth) / apiKpis.revenuePrevMonth) * 100).toFixed(1)}%`
-        : '+9.8%',
-      deltaColor: 'var(--cmy-green)', vs: apiKpis ? `vs €${(apiKpis.revenuePrevMonth / 1000).toFixed(1)}k` : 'vs €82.1k',
-      sparkData: [55,62,65,60,68,72,75,78,80,83,85, apiKpis ? apiKpis.revenueMTD / 1000 : 90.2],
-      sparkColor: 'var(--brand)',
-      footL: apiKpis ? `€${(apiKpis.dailyAvgRevenue / 1000).toFixed(1)}k/day avg` : '€3.0k/day avg',
-      footR: apiKpis ? `fcst €${(apiKpis.forecastRevenue / 1000).toFixed(0)}k` : 'fcst €112k', footRColor: 'var(--faint)',
-    },
-    {
-      label: 'Maintenance due',
-      value: apiKpis ? String(apiKpis.maintenanceDue) : '7',
-      Icon: TrendingDown, delta: '−2', deltaColor: 'var(--cmy-green)', vs: 'vs 9',
-      sparkData: [12,11,10,11,9,10,9,8,9,7,8, apiKpis?.maintenanceDue ?? 7],
-      sparkColor: 'var(--cmy-amber)',
-      footL: apiKpis ? `${apiKpis.maintenanceCritical} critical` : '2 critical', footLColor: 'var(--cmy-red)',
-      footR: apiKpis ? `${apiKpis.maintenanceScheduled} scheduled` : '5 scheduled', footRColor: 'var(--faint)',
-    },
-  ] as const;
-
-  function exportDashboard() {
-    const date = new Date().toISOString().slice(0, 10);
-    const lines: string[] = [
-      `MotoManager — Dashboard export · ${date}`,
-      '',
-      'KPIs',
-      'Metric,Value',
-      ...kpis.map(k => `${k.label},${k.value}`),
-      '',
-      'Recent reservations',
-      'ID,Customer,Motorcycle,Period,Days,Amount,Status',
-      ...reservations.map(r =>
-        [r.id, r.customer, r.moto, r.period, r.days, r.amount, r.status].join(',')
-      ),
-      '',
-      'Maintenance alerts',
-      'Severity,Title,Motorcycle,ID,Mileage,Due',
-      ...alerts.map(a =>
-        [a.sev, a.title, a.moto, a.id, a.km, a.due].join(',')
-      ),
-    ];
-    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `dashboard-${date}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
+  const firstName = user?.name?.split(' ')[0] || 'Adèle';
 
   const card: React.CSSProperties = {
     background: 'var(--surface)', border: '1px solid var(--border)',
     borderRadius: 16, boxShadow: 'var(--shadow)',
   };
 
+  const kpis = [
+    {
+      label: 'Fleet utilization', value: '87.4%',
+      Icon: TrendingUp, delta: '+4.2', deltaColor: 'var(--cmy-green)',
+      vs: 'vs 83.2%', sparkData: [60,65,70,68,72,75,78,74,80,82,85,87.4],
+      sparkColor: 'var(--brand)', footL: '142 / 163 on road', footR: 'target 85%', footRColor: 'var(--faint)',
+    },
+    {
+      label: 'Active rentals', value: '142',
+      Icon: TrendingUp, delta: '+12', deltaColor: 'var(--cmy-green)',
+      vs: 'vs 130', sparkData: [100,108,112,115,118,122,125,128,130,132,138,142],
+      sparkColor: 'var(--brand)', footL: '38 due back today', footR: '6 overdue', footRColor: 'var(--cmy-red)',
+    },
+    {
+      label: 'Revenue · MTD', value: '€90.2k',
+      Icon: TrendingUp, delta: '+9.8%', deltaColor: 'var(--cmy-green)',
+      vs: 'vs €82.1k', sparkData: [55,62,65,60,68,72,75,78,80,83,85,90.2],
+      sparkColor: 'var(--brand)', footL: '€3.0k/day avg', footR: 'fcst €112k', footRColor: 'var(--faint)',
+    },
+    {
+      label: 'Maintenance due', value: '7',
+      Icon: TrendingDown, delta: '−2', deltaColor: 'var(--cmy-green)',
+      vs: 'vs 9', sparkData: [12,11,10,11,9,10,9,8,9,7,8,7],
+      sparkColor: 'var(--cmy-amber)', footL: '2 critical', footLColor: 'var(--cmy-red)', footR: '5 scheduled', footRColor: 'var(--faint)',
+    },
+  ] as const;
+
   return (
     <div>
-      {/* page header */}
+      {/* ── page header ── */}
       <div style={{
         display: 'flex', alignItems: 'flex-end',
         justifyContent: 'space-between', gap: 16,
@@ -263,37 +220,12 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {dash.error && (
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 10,
-          background: 'color-mix(in srgb,var(--cmy-red) 10%,transparent)',
-          border: '1px solid var(--border)', borderRadius: 12,
-          padding: '10px 16px', marginBottom: 16, fontSize: 12.5, color: 'var(--muted)',
-        }}>
-          <AlertTriangle size={15} strokeWidth={1.6} style={{ color: 'var(--cmy-red)', flexShrink: 0 }} />
-          <span style={{ flex: 1 }}>Live data unavailable — showing cached figures.</span>
-          <button
-            onClick={dash.refetch}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 5, fontSize: 12,
-              color: 'var(--ink)', border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
-            }}
-          >
-            <RefreshCw size={12} strokeWidth={1.6} />Retry
-          </button>
-        </div>
-      )}
-
-      {/* ══ PANE A: OPERATIONS ══ */}
+      {/* ══════════════ PANE A: OPERATIONS ══════════════ */}
       {pane === 'A' && (
         <div>
           {/* KPI cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 16 }}>
-            {dash.isLoading && !apiKpis ? (
-              <>
-                <CardSkeleton /><CardSkeleton /><CardSkeleton /><CardSkeleton />
-              </>
-            ) : kpis.map((k, i) => (
+            {kpis.map((k, i) => (
               <div key={i} style={{ ...card, padding: '17px 18px' }}>
                 <div style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10.5, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--faint)' }}>
                   {k.label}
