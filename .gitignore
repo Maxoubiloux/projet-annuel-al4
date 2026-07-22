@@ -4,3 +4,4 @@ claude*
 .claude
 backend/CLAUDE.md
 .env
+.env.prod

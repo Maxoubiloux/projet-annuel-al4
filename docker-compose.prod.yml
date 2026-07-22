@@ -108,13 +108,13 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: https://${API_DOMAIN}/api
+        NEXT_PUBLIC_API_URL: /api
     container_name: moto-frontend
     restart: unless-stopped
     environment:
       NODE_ENV: production
       PORT: 3000
-      NEXT_PUBLIC_API_URL: https://${API_DOMAIN}/api
+      NEXT_PUBLIC_API_URL: /api
     depends_on:
       - backend
 
