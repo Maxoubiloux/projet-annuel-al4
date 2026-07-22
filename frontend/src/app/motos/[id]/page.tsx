@@ -15,6 +15,176 @@ const categoryDot: Record<string, string> = {
   A1: '#5d7a4a',
 };
 
+const monthFormatter = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' });
+const shortDateFormatter = new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'short' });
+const weekdayLabels = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+
+function toDateInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function fromDateInputValue(value: string) {
+  const [year, month, day] = value.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function isSameDay(a: Date, b: Date) {
+  return toDateInputValue(a) === toDateInputValue(b);
+}
+
+function isBeforeDay(a: Date, b: Date) {
+  return fromDateInputValue(toDateInputValue(a)).getTime() < fromDateInputValue(toDateInputValue(b)).getTime();
+}
+
+function isBetweenDays(day: Date, start: Date, end: Date) {
+  const time = fromDateInputValue(toDateInputValue(day)).getTime();
+  return time > start.getTime() && time < end.getTime();
+}
+
+function getCalendarDays(month: Date) {
+  const firstDay = new Date(month.getFullYear(), month.getMonth(), 1);
+  const firstWeekday = (firstDay.getDay() + 6) % 7;
+  const gridStart = new Date(firstDay);
+  gridStart.setDate(firstDay.getDate() - firstWeekday);
+
+  return Array.from({ length: 42 }, (_, index) => {
+    const day = new Date(gridStart);
+    day.setDate(gridStart.getDate() + index);
+    return day;
+  });
+}
+
+function DateRangePicker({
+  startDate,
+  endDate,
+  onStartDateChange,
+  onEndDateChange,
+}: {
+  startDate: string;
+  endDate: string;
+  onStartDateChange: (value: string) => void;
+  onEndDateChange: (value: string) => void;
+}) {
+  const today = fromDateInputValue(toDateInputValue(new Date()));
+  const selectedStart = startDate ? fromDateInputValue(startDate) : null;
+  const selectedEnd = endDate ? fromDateInputValue(endDate) : null;
+  const [visibleMonth, setVisibleMonth] = useState(() => {
+    const initial = selectedStart ?? today;
+    return new Date(initial.getFullYear(), initial.getMonth(), 1);
+  });
+
+  const selectDay = (day: Date) => {
+    if (isBeforeDay(day, today)) return;
+
+    const value = toDateInputValue(day);
+    if (!selectedStart || selectedEnd || isBeforeDay(day, selectedStart)) {
+      onStartDateChange(value);
+      onEndDateChange('');
+      return;
+    }
+
+    onEndDateChange(value);
+  };
+
+  const moveMonth = (offset: number) => {
+    setVisibleMonth((current) => new Date(current.getFullYear(), current.getMonth() + offset, 1));
+  };
+
+  const days = getCalendarDays(visibleMonth);
+
+  return (
+    <div className="mb-[18px]">
+      <div className="grid grid-cols-2 gap-3 mb-3">
+        <div className="border border-[#E4DECF] bg-[#FBF9F3] rounded-[10px] px-4 py-3">
+          <p className="font-mono text-[9.5px] tracking-[0.16em] uppercase text-[#a0967f] mb-[5px]">
+            Départ
+          </p>
+          <p className="font-serif font-semibold text-[22px] leading-none text-[#1B1A17]">
+            {selectedStart ? shortDateFormatter.format(selectedStart) : 'Choisir'}
+          </p>
+        </div>
+        <div className="border border-[#E4DECF] bg-[#FBF9F3] rounded-[10px] px-4 py-3">
+          <p className="font-mono text-[9.5px] tracking-[0.16em] uppercase text-[#a0967f] mb-[5px]">
+            Retour
+          </p>
+          <p className="font-serif font-semibold text-[22px] leading-none text-[#1B1A17]">
+            {selectedEnd ? shortDateFormatter.format(selectedEnd) : 'Choisir'}
+          </p>
+        </div>
+      </div>
+
+      <div className="border border-[#E4DECF] bg-[#FBF9F3] rounded-[12px] p-3">
+        <div className="flex items-center justify-between px-1 mb-3">
+          <button
+            type="button"
+            onClick={() => moveMonth(-1)}
+            aria-label="Mois précédent"
+            className="w-9 h-9 rounded-full border border-[#E4DECF] bg-white text-[#7E2E32] hover:border-[#7E2E32] transition-colors"
+          >
+            &lt;
+          </button>
+          <p className="font-serif font-semibold text-[24px] leading-none capitalize">
+            {monthFormatter.format(visibleMonth)}
+          </p>
+          <button
+            type="button"
+            onClick={() => moveMonth(1)}
+            aria-label="Mois suivant"
+            className="w-9 h-9 rounded-full border border-[#E4DECF] bg-white text-[#7E2E32] hover:border-[#7E2E32] transition-colors"
+          >
+            &gt;
+          </button>
+        </div>
+
+        <div className="grid grid-cols-7 gap-1 mb-1">
+          {weekdayLabels.map((label) => (
+            <div key={label} className="h-7 flex items-center justify-center font-mono text-[9px] tracking-[0.1em] uppercase text-[#a0967f]">
+              {label}
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-7 gap-1">
+          {days.map((day) => {
+            const inCurrentMonth = day.getMonth() === visibleMonth.getMonth();
+            const disabled = isBeforeDay(day, today);
+            const isStart = !!selectedStart && isSameDay(day, selectedStart);
+            const isEnd = !!selectedEnd && isSameDay(day, selectedEnd);
+            const inRange = !!selectedStart && !!selectedEnd && isBetweenDays(day, selectedStart, selectedEnd);
+
+            return (
+              <button
+                key={toDateInputValue(day)}
+                type="button"
+                disabled={disabled}
+                onClick={() => selectDay(day)}
+                className={[
+                  'h-10 rounded-[8px] text-[13px] transition-colors outline-none focus:ring-2 focus:ring-[#7E2E32]/25',
+                  inCurrentMonth ? 'text-[#1B1A17]' : 'text-[#c0b69f]',
+                  disabled ? 'cursor-not-allowed text-[#d2c8b4]' : 'hover:bg-white hover:text-[#7E2E32]',
+                  inRange ? 'bg-[#EFE8DA] text-[#7E2E32]' : '',
+                  isStart || isEnd ? 'bg-[#7E2E32] text-[#F4F1E9] hover:bg-[#651f23] hover:text-[#F4F1E9]' : '',
+                ].join(' ')}
+              >
+                {day.getDate()}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <p className="mt-3 text-center font-mono text-[10.5px] tracking-[0.08em] uppercase text-[#a0967f]">
+        {!selectedStart && 'Sélectionnez une date de départ'}
+        {selectedStart && !selectedEnd && 'Sélectionnez une date de retour'}
+        {selectedStart && selectedEnd && 'Période sélectionnée'}
+      </p>
+    </div>
+  );
+}
+
 export default function MotoDetails() {
   const params = useParams();
   const id = params?.id as string;
@@ -169,30 +339,12 @@ export default function MotoDetails() {
               <span className="font-mono text-[11px] tracking-[0.08em] text-[#5d9a6a]">✓ Disponible</span>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mb-[18px]">
-              <label className="block">
-                <span className="block font-mono text-[9.5px] tracking-[0.16em] uppercase text-[#a0967f] mb-[7px]">
-                  Départ
-                </span>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full border border-[#E4DECF] bg-[#FBF9F3] rounded-[9px] px-3 py-[11px] text-[13px] text-[#1B1A17] outline-none focus:border-[#7E2E32] transition-colors"
-                />
-              </label>
-              <label className="block">
-                <span className="block font-mono text-[9.5px] tracking-[0.16em] uppercase text-[#a0967f] mb-[7px]">
-                  Retour
-                </span>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full border border-[#E4DECF] bg-[#FBF9F3] rounded-[9px] px-3 py-[11px] text-[13px] text-[#1B1A17] outline-none focus:border-[#7E2E32] transition-colors"
-                />
-              </label>
-            </div>
+            <DateRangePicker
+              startDate={startDate}
+              endDate={endDate}
+              onStartDateChange={setStartDate}
+              onEndDateChange={setEndDate}
+            />
 
             <div className="border-t border-[#F0EADB] pt-4">
               <div className="flex justify-between text-[13.5px] text-[#56503f] mb-[10px]">
