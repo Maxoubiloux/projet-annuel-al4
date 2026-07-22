@@ -98,7 +98,10 @@ function Pill({ status }: { status: string }) {
 }
 
 /* ── CSV export ───────────────────────────────────────────── */
-function exportDashboard() {
+function exportDashboard(
+  reservations: DashboardRecentReservation[],
+  alerts: DashboardMaintenanceAlert[],
+) {
   const date = new Date().toISOString().slice(0, 10);
   const lines: string[] = [
     `MotoManager — Dashboard export · ${date}`,
@@ -135,7 +138,35 @@ function exportDashboard() {
 export function DashboardPage() {
   const [pane, setPane] = useState<'A' | 'B'>('A');
   const { user } = useAuth();
+  const dash = useDashboard();
   const firstName = user?.name?.split(' ')[0] || 'Adèle';
+
+  const apiKpis = dash.kpis;
+  const revenueData = dash.revenueData?.length ? dash.revenueData : STATIC_REVENUE;
+  const rentalsData = dash.rentalsData?.length ? dash.rentalsData : STATIC_RENTALS;
+  const reservations = dash.recentReservations?.length ? dash.recentReservations : STATIC_RESERVATIONS;
+  const alerts = dash.maintenanceAlerts?.length ? dash.maintenanceAlerts : STATIC_ALERTS;
+
+  const totalFleet = apiKpis?.totalFleet ?? 163;
+  const availableCount = apiKpis?.availableCount ?? 93;
+  const activeRentals = apiKpis?.activeRentals ?? 142;
+  const maintenanceDue = apiKpis?.maintenanceDue ?? 7;
+  const rentedCount = Math.min(apiKpis?.activeRentals ?? 52, Math.max(totalFleet - availableCount - maintenanceDue, 0));
+  const reservedCount = Math.max(totalFleet - availableCount - rentedCount - maintenanceDue, 0);
+  const pct = (value: number) => Math.round((value / Math.max(totalFleet, 1)) * 100);
+  const donutSegments = [
+    { label: 'Available', n: availableCount, pct: pct(availableCount), dot: 'var(--cmy-green)' },
+    { label: 'Rented', n: rentedCount, pct: pct(rentedCount), dot: 'var(--brand)' },
+    { label: 'Service', n: maintenanceDue, pct: pct(maintenanceDue), dot: 'var(--cmy-amber)' },
+    { label: 'Reserved', n: reservedCount, pct: pct(reservedCount), dot: 'var(--faint)' },
+  ];
+
+  let cursor = 0;
+  const donutGradient = donutSegments.map((item) => {
+    const start = cursor;
+    cursor += item.pct;
+    return `${item.dot} ${start}% ${cursor}%`;
+  }).join(', ');
 
   const card: React.CSSProperties = {
     background: 'var(--surface)', border: '1px solid var(--border)',
@@ -214,7 +245,7 @@ export function DashboardPage() {
               </button>
             ))}
           </div>
-          <Button size="md" onClick={exportDashboard}>
+          <Button size="md" onClick={() => exportDashboard(reservations, alerts)}>
             <Download size={14} strokeWidth={1.6} />Export
           </Button>
         </div>
