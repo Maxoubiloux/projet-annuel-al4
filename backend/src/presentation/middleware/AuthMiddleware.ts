@@ -21,7 +21,7 @@ interface KeycloakJWTPayload extends JWTPayload {
 
 export const authMiddleware = async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
   if (PUBLIC_PATHS.has(request.url)) return
-  if (request.method === 'GET' && PUBLIC_GET_PREFIXES.some(p => request.url.startsWith(p))) return
+  if (['GET', 'HEAD'].includes(request.method) && PUBLIC_GET_PREFIXES.some(p => request.url.startsWith(p))) return
 
   const authHeader = request.headers.authorization
   if (!authHeader?.startsWith('Bearer ')) {
