@@ -4,14 +4,7 @@
 
 {$APP_DOMAIN} {
 	encode zstd gzip
-
-	route /api/* {
-		reverse_proxy backend:3000
-	}
-
-	route {
-		reverse_proxy frontend:3000
-	}
+	reverse_proxy frontend:3000
 }
 
 {$ADMIN_DOMAIN} {
