@@ -28,3 +28,4 @@ RUN npx vite build
 FROM caddy:2.8-alpine
 
 COPY --from=builder /build/dist /usr/share/caddy
+COPY Caddyfile /etc/caddy/Caddyfile
