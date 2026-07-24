@@ -18,4 +18,5 @@ export interface IReservationRepository {
   save(reservation: Reservation): Promise<Reservation>
   updateStatus(id: string, status: string): Promise<Reservation>
   updatePaymentStatus(id: string, paymentStatus: string): Promise<Reservation>
+  updateContract(id: string, contractStatus: string, contractPdfUrl: string | null): Promise<Reservation>
 }
