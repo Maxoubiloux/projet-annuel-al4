@@ -81,7 +81,7 @@ app.register(v1Routes, {
   dashboardRepository,
   iamClient,
 })
-app.register(v2Routes, { prefix: '/api/v2' })
+app.register(v2Routes, { prefix: '/api/v2', motoRepository })
 
 // app.setErrorHandler((error, request, reply) => {
 //   request.log.error(error)

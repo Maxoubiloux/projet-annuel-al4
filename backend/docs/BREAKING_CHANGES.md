@@ -1,5 +1,34 @@
 # Gestion des Breaking Changes
 
+## Journal des breaking changes
+
+> Chaque rupture de compatibilité ascendante est consignée ici **avant merge**.
+> Stratégie de versioning : voir ADR `docs/ADR/0004-versioning-par-url-breaking-change.md`.
+
+### [v2] 2026-07-24 — Prix moto en centimes entiers
+
+**Route concernée** : `GET /api/v2/motos/:id` (nouvelle version de `GET /api/v1/motos/:id`)
+**Type de changement** : Renommage + changement de type d'un champ de réponse
+**Description** : Le champ `pricePerDay` (nombre flottant, en euros) est remplacé par
+`dailyPriceCents` (entier, en centimes). Manipuler un entier en centimes évite les erreurs
+d'arrondi en virgule flottante côté client. Le champ `pricePerDay` **n'existe plus** dans la
+réponse v2 ; tous les autres champs sont inchangés.
+**Exemple** :
+```jsonc
+// v1  →  GET /api/v1/motos/:id
+{ "success": true, "data": { "id": "…", "pricePerDay": 49.9, /* … */ } }
+
+// v2  →  GET /api/v2/motos/:id
+{ "success": true, "data": { "id": "…", "dailyPriceCents": 4990, /* … */ } }
+```
+**Migration** : le frontend lit `data.dailyPriceCents` au lieu de `data.pricePerDay` et divise par
+100 pour l'affichage en euros. Le basculement se fait via le flag `API_VERSION=v1|v2` (redéploiement
+du frontend seul, sans toucher au backend).
+**Ancienne version** : `v1` reste disponible et inchangée jusqu'à migration de tous les clients
+(délai de transition indicatif : 3 mois).
+
+---
+
 ## Procédure
 
 Ce document décrit comment gérer les breaking changes dans notre API sans impacter le frontend.
