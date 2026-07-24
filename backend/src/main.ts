@@ -92,7 +92,7 @@ app.register(v1Routes, {
   iamClient,
   contractPublisher,
 })
-app.register(v2Routes, { prefix: '/api/v2' })
+app.register(v2Routes, { prefix: '/api/v2', motoRepository })
 
 app.setErrorHandler(errorHandler)
 app.setNotFoundHandler(notFoundHandler)
