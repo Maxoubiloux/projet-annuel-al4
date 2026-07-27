@@ -5,6 +5,7 @@ import cors from '@fastify/cors'
 import multipart from '@fastify/multipart'
 import fastifyStatic from '@fastify/static'
 import { authMiddleware } from '@presentation/middleware/AuthMiddleware'
+import { errorHandler, notFoundHandler } from '@presentation/middleware/error-handler'
 import v1Routes from '@presentation/routes/v1'
 import v2Routes from '@presentation/routes/v2'
 import { PrismaMotoRepository } from '@infrastructure/db/prisma-moto.repository'
@@ -93,13 +94,8 @@ app.register(v1Routes, {
 })
 app.register(v2Routes, { prefix: '/api/v2' })
 
-// app.setErrorHandler((error, request, reply) => {
-//   request.log.error(error)
-//   reply.status(error.statusCode || 500).send({
-//     error: error.message || 'Internal Server Error',
-//     correlationId: request.id,
-//   })
-// })
+app.setErrorHandler(errorHandler)
+app.setNotFoundHandler(notFoundHandler)
 
 const start = async () => {
   // Connexion à RabbitMQ + démarrage du consumer de réponses worker. Non

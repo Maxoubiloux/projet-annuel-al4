@@ -21,7 +21,7 @@ function toDashboardShape(r: Reservation) {
   const end = new Date(r.endDate)
   const days = Math.max(1, Math.round((end.getTime() - start.getTime()) / 86_400_000))
 
-  let status: 'active' | 'pending' | 'done' | 'overdue' = 'pending'
+  let status: 'active' | 'pending' | 'done' | 'overdue'
   if (r.status === 'pending') status = 'pending'
   else if (r.status === 'completed' || r.status === 'cancelled') status = 'done'
   else if (r.status === 'in_progress' && end.getTime() < Date.now()) status = 'overdue'
