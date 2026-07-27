@@ -1,11 +1,13 @@
-use crate::error::Result;
+use crate::error::{Result, WorkerError};
 use lapin::{
-    options::{BasicPublishOptions, QueueDeclareOptions},
-    types::FieldTable,
-    BasicProperties, Connection, Channel
+    options::{BasicPublishOptions, ConfirmSelectOptions},
+    types::ShortString,
+    BasicProperties, Channel, Connection,
 };
 use serde::Serialize;
-use tracing::info;
+use tracing::debug;
+
+const DELIVERY_MODE_PERSISTENT: u8 = 2;
 
 pub struct Producer {
     channel: Channel,
@@ -17,11 +19,7 @@ impl Producer {
         let channel = connection.create_channel().await?;
 
         channel
-            .queue_declare(
-                &queue_name,
-                QueueDeclareOptions::default(),
-                FieldTable::default(),
-            )
+            .confirm_select(ConfirmSelectOptions::default())
             .await?;
 
         Ok(Self {
@@ -30,18 +28,34 @@ impl Producer {
         })
     }
 
-    pub async fn publish<T: Serialize>(&self, message: &T) -> Result<()> {
+    pub async fn publish<T: Serialize>(&self, message: &T, correlation_id: &str) -> Result<()> {
         let payload = serde_json::to_vec(message)?;
 
-        self.channel
+        let properties = BasicProperties::default()
+            .with_delivery_mode(DELIVERY_MODE_PERSISTENT)
+            .with_content_type(ShortString::from("application/json"))
+            .with_correlation_id(ShortString::from(correlation_id.to_string()));
+
+        let confirmation = self
+            .channel
             .basic_publish(
                 "",
                 &self.queue_name,
                 BasicPublishOptions::default(),
                 &payload,
-                BasicProperties::default(),
+                properties,
             )
+            .await?
             .await?;
+
+        if confirmation.is_nack() {
+            return Err(WorkerError::JobFailed(format!(
+                "le broker a rejeté la réponse publiée sur {}",
+                self.queue_name
+            )));
+        }
+
+        debug!(queue = %self.queue_name, correlation_id, "Response published");
 
         Ok(())
     }
