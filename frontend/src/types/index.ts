@@ -5,9 +5,10 @@ export interface Motorbike {
   registration: string;
   category: 'A' | 'A2' | 'A1';
   style: 'Sportive' | 'Roadster' | 'Trail' | 'Touring' | 'Custom';
-  status: 'PUBLISHED' | 'DRAFT' | 'ARCHIVED';
+  status: 'PUBLISHED' | 'DRAFT' | 'ARCHIVED' | 'available' | 'reserved' | 'maintenance' | 'inactive';
   currentKm: number;
   pricePerDay: number;
+  location: string;
   imageUrl: string;
   description: string;
   createdAt: string;
@@ -33,6 +34,13 @@ export interface AuthUser {
   email: string;
   firstName: string;
   lastName: string;
+  phone: string;
+  address: string;
+  zipCode: string;
+  city: string;
+  licenseCategory: 'A1' | 'A2' | 'A';
+  licenseNumber: string;
+  createdAt: string;
   role: 'user' | 'admin';
 }
 

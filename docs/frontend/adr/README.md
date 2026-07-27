@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADR)
 
-Ce dossier contient les ADR (Architecture Decision Records) du projet City Moto Yard.
+Ce dossier contient les ADR (Architecture Decision Records) du projet Plein Gaz Loc.
 
 ## Qu'est-ce qu'un ADR ?
 

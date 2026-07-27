@@ -9,6 +9,7 @@ import { paymentRoutesV1 } from './payments.routes'
 import { settingsRoutesV1 } from './settings.routes'
 import { dashboardRoutesV1 } from './dashboard.routes'
 import { authRoutesV1 } from './auth.routes'
+import { favoriteRoutesV1 } from './favorites.routes'
 import { IMotoRepository } from '@domain/repositories/IMotoRepository'
 import { IShopRepository } from '@domain/repositories/IShopRepository'
 import { IBrandRepository } from '@domain/repositories/IBrandRepository'
@@ -16,10 +17,12 @@ import { IReservationRepository } from '@domain/repositories/IReservationReposit
 import { ICustomerRepository } from '@domain/repositories/ICustomerRepository'
 import { IMaintenanceRepository } from '@domain/repositories/IMaintenanceRepository'
 import { IPaymentRepository } from '@domain/repositories/IPaymentRepository'
+import { IPaymentGateway } from '@domain/repositories/IPaymentGateway'
 import { ISettingsRepository } from '@domain/repositories/ISettingsRepository'
 import { IDashboardRepository } from '@domain/repositories/IDashboardRepository'
 import { IIamClient } from '@domain/repositories/IIamClient'
 import { IContractQueuePublisher } from '@domain/ports/IContractQueuePublisher'
+import { IFavoriteRepository } from '@domain/repositories/IFavoriteRepository'
 
 export default async function (
   fastify: FastifyInstance,
@@ -31,10 +34,12 @@ export default async function (
     customerRepository: ICustomerRepository
     maintenanceRepository: IMaintenanceRepository
     paymentRepository: IPaymentRepository
+    paymentGateway: IPaymentGateway
     settingsRepository: ISettingsRepository
     dashboardRepository: IDashboardRepository
     iamClient: IIamClient
     contractPublisher?: IContractQueuePublisher
+    favoriteRepository: IFavoriteRepository
   },
 ) {
   await motoroutesV1(fastify, { motoRepository: opts.motoRepository })
@@ -44,6 +49,7 @@ export default async function (
     reservationRepository: opts.reservationRepository,
     paymentRepository: opts.paymentRepository,
     contractPublisher: opts.contractPublisher,
+    paymentGateway: opts.paymentGateway,
   })
   await customerRoutesV1(fastify, { customerRepository: opts.customerRepository })
   await maintenanceRoutesV1(fastify, { maintenanceRepository: opts.maintenanceRepository })
@@ -51,4 +57,5 @@ export default async function (
   await settingsRoutesV1(fastify, { settingsRepository: opts.settingsRepository })
   await dashboardRoutesV1(fastify, { dashboardRepository: opts.dashboardRepository })
   await authRoutesV1(fastify, { iamClient: opts.iamClient })
+  await favoriteRoutesV1(fastify, { favoriteRepository: opts.favoriteRepository })
 }

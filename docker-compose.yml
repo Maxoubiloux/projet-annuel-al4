@@ -77,11 +77,33 @@ services:
         condition: service_healthy
     command: start-dev --import-realm
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:8080/realms/master || exit 1"]
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /realms/master HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && head -n 1 <&3 | grep -q '200 OK'"]
       interval: 20s
       timeout: 10s
       retries: 10
       start_period: 60s
+
+  keycloak-config:
+    image: quay.io/keycloak/keycloak:25.0.6
+    container_name: moto-keycloak-config
+    volumes:
+      - ./docker/keycloak-user-profile.json:/config/keycloak-user-profile.json:ro
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      "/opt/keycloak/bin/kcadm.sh config credentials --server http://keycloak:8080 --realm master --user admin --password admin &&
+      /opt/keycloak/bin/kcadm.sh update realms/moto-rental/users/profile -f /config/keycloak-user-profile.json &&
+      CLIENT_ID=$$(/opt/keycloak/bin/kcadm.sh get clients -r moto-rental -q clientId=moto-rental-frontend --fields id --format csv --noquotes | tail -n 1) &&
+      /opt/keycloak/bin/kcadm.sh update clients/$$CLIENT_ID -r moto-rental -s directAccessGrantsEnabled=true &&
+      ADMIN_CLIENT_ID=$$(/opt/keycloak/bin/kcadm.sh get clients -r moto-rental -q clientId=moto-rental-admin --fields id --format csv --noquotes | tail -n 1) &&
+      /opt/keycloak/bin/kcadm.sh update clients/$$ADMIN_CLIENT_ID -r moto-rental -s 'redirectUris=[\"http://localhost:5173/*\",\"http://localhost:5174/*\",\"http://localhost:4173/*\",\"http://localhost:3002/*\",\"https://admin.pleingazloc.fr/*\"]' -s 'webOrigins=[\"http://localhost:5173\",\"http://localhost:5174\",\"http://localhost:4173\",\"http://localhost:3002\",\"https://admin.pleingazloc.fr\"]' &&
+      BACKEND_CLIENT_ID=$$(/opt/keycloak/bin/kcadm.sh get clients -r moto-rental -q clientId=moto-rental-backend --fields id --format csv --noquotes | tail -n 1) &&
+      /opt/keycloak/bin/kcadm.sh update clients/$$BACKEND_CLIENT_ID -r moto-rental -s fullScopeAllowed=true &&
+      /opt/keycloak/bin/kcadm.sh add-roles -r moto-rental --uusername service-account-moto-rental-backend --cclientid realm-management --rolename manage-users || true &&
+      /opt/keycloak/bin/kcadm.sh add-roles -r moto-rental --uusername service-account-moto-rental-backend --cclientid realm-management --rolename view-users || true"
+    restart: "no"
 
   backend:
     build:
@@ -107,8 +129,11 @@ services:
       KEYCLOAK_REALM: moto-rental
       KEYCLOAK_CLIENT_ID: moto-rental-backend
       KEYCLOAK_CLIENT_SECRET: backend-secret-dev
+      KEYCLOAK_PUBLIC_CLIENT_ID: moto-rental-frontend
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      FRONTEND_URL: http://localhost:3001
       PORT: 3000
-      CORS_ORIGIN: http://localhost:3001,http://localhost:5173
+      CORS_ORIGIN: http://localhost:3001,http://127.0.0.1:3001,http://localhost:3002,http://localhost:5173
     ports:
       - "3000:3000"
     depends_on:
@@ -118,6 +143,8 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      keycloak-config:
+        condition: service_completed_successfully
     restart: unless-stopped
     volumes:
       - ./backend/src:/app/src
@@ -141,14 +168,39 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:3000/api
+        NEXT_PUBLIC_KEYCLOAK_URL: http://localhost:8080
+        NEXT_PUBLIC_KEYCLOAK_REALM: moto-rental
+        NEXT_PUBLIC_KEYCLOAK_CLIENT_ID: moto-rental-frontend
     container_name: moto-frontend
     environment:
       - PORT=3000
       - NEXT_PUBLIC_API_URL=http://localhost:3000/api
+      - NEXT_PUBLIC_KEYCLOAK_URL=http://localhost:8080
+      - NEXT_PUBLIC_KEYCLOAK_REALM=moto-rental
+      - NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=moto-rental-frontend
     ports:
       - "3001:3000"
     depends_on:
       - backend
+    restart: unless-stopped
+
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:3000/api/v1
+        VITE_KEYCLOAK_URL: http://localhost:8080
+        VITE_KEYCLOAK_REALM: moto-rental
+        VITE_KEYCLOAK_CLIENT_ID: moto-rental-admin
+    container_name: moto-admin
+    ports:
+      - "3002:80"
+    depends_on:
+      - backend
+      - keycloak
     restart: unless-stopped
 
 volumes:

@@ -15,4 +15,9 @@ export const updateMotoSchema = Joi.object({
   description: Joi.string().trim().allow(''),
   imageUrl: Joi.string().trim().allow(''),
   nextServiceDate: Joi.string().trim().allow(''),
+  style: Joi.string().trim().allow(''),
+  hp: Joi.number().min(0),
+  torque: Joi.number().min(0),
+  consumption: Joi.number().min(0),
+  range: Joi.number().integer().min(0),
 }).min(1)

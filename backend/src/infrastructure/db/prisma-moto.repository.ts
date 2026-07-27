@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
-import { IMotoRepository } from '@domain/repositories/IMotoRepository'
+import { IMotoRepository, MotoAvailability } from '@domain/repositories/IMotoRepository'
 import { Moto, UpdateMotoParams } from '@domain/entities/Moto'
 import prisma from './prisma.client'
 import { Prisma } from '../../generated/prisma/client'
@@ -10,6 +10,14 @@ type MotoRecord = Prisma.MotoGetPayload<{ include: typeof include }>
 
 function toDateOnly(d: Date | null): string | undefined {
   return d ? d.toISOString().slice(0, 10) : undefined
+}
+
+function dayBounds(value: Date): { start: Date; end: Date } {
+  const start = new Date(value)
+  start.setHours(0, 0, 0, 0)
+  const end = new Date(value)
+  end.setHours(23, 59, 59, 999)
+  return { start, end }
 }
 
 function toDomain(r: MotoRecord): Moto {
@@ -29,6 +37,11 @@ function toDomain(r: MotoRecord): Moto {
     r.createdAt,
     r.images?.[0]?.url,
     toDateOnly(r.nextServiceDate),
+    r.style ?? undefined,
+    r.hp ?? undefined,
+    r.torque ?? undefined,
+    r.consumption ?? undefined,
+    r.range ?? undefined,
   )
 }
 
@@ -74,6 +87,56 @@ export class PrismaMotoRepository implements IMotoRepository {
     return r ? toDomain(r) : null
   }
 
+  async findReservedTodayIds(): Promise<string[]> {
+    const { start, end } = dayBounds(new Date())
+    const records = await prisma.booking.findMany({
+      where: {
+        status: { notIn: ['cancelled', 'completed'] },
+        startDate: { lte: end },
+        endDate: { gte: start },
+      },
+      distinct: ['motoId'],
+      select: { motoId: true },
+    })
+
+    return records.map((record) => record.motoId)
+  }
+
+  async findAvailability(id: string): Promise<MotoAvailability | null> {
+    const moto = await prisma.moto.findUnique({ where: { id }, select: { id: true } })
+    if (!moto) return null
+
+    const { start, end } = dayBounds(new Date())
+    const [todayCount, bookings] = await Promise.all([
+      prisma.booking.count({
+        where: {
+          motoId: id,
+          status: { notIn: ['cancelled', 'completed'] },
+          startDate: { lte: end },
+          endDate: { gte: start },
+        },
+      }),
+      prisma.booking.findMany({
+        where: {
+          motoId: id,
+          status: { notIn: ['cancelled', 'completed'] },
+          endDate: { gte: start },
+        },
+        orderBy: { startDate: 'asc' },
+        select: { startDate: true, endDate: true },
+      }),
+    ])
+
+    return {
+      motoId: id,
+      isAvailableToday: todayCount === 0,
+      unavailableRanges: bookings.map((booking) => ({
+        startDate: booking.startDate.toISOString().slice(0, 10),
+        endDate: booking.endDate.toISOString().slice(0, 10),
+      })),
+    }
+  }
+
   async save(moto: Moto): Promise<Moto> {
     const [brandId, categoryId, statusId] = await Promise.all([
       this.resolveBrandId(moto.brand),
@@ -95,6 +158,11 @@ export class PrismaMotoRepository implements IMotoRepository {
         deposit: moto.deposit,
         location: moto.location,
         description: moto.description,
+        style: moto.style,
+        hp: moto.hp,
+        torque: moto.torque,
+        consumption: moto.consumption,
+        range: moto.range,
         nextServiceDate: moto.nextServiceDate ? new Date(moto.nextServiceDate) : null,
         createdAt: moto.createdAt,
         images: moto.imageUrl ? { create: [{ id: uuidv4(), url: moto.imageUrl }] } : undefined,
@@ -132,6 +200,11 @@ export class PrismaMotoRepository implements IMotoRepository {
         deposit: params.deposit,
         location: params.location,
         description: params.description,
+        style: params.style,
+        hp: params.hp,
+        torque: params.torque,
+        consumption: params.consumption,
+        range: params.range,
         nextServiceDate: params.nextServiceDate !== undefined
           ? (params.nextServiceDate ? new Date(params.nextServiceDate) : null)
           : undefined,

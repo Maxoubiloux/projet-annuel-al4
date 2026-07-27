@@ -17,10 +17,13 @@ import { PrismaMaintenanceRepository } from '@infrastructure/db/prisma-maintenan
 import { PrismaPaymentRepository } from '@infrastructure/db/prisma-payment.repository'
 import { PrismaSettingsRepository } from '@infrastructure/db/prisma-settings.repository'
 import { PrismaDashboardRepository } from '@infrastructure/db/prisma-dashboard.repository'
+import { PrismaFavoriteRepository } from '@infrastructure/db/prisma-favorite.repository'
 import { KeycloakAdminClient } from '@infrastructure/external/keycloak-admin.client'
 import { RabbitMqConnection } from '@infrastructure/queues/rabbitmq.connection'
 import { RabbitMqContractPublisher } from '@infrastructure/queues/rabbitmq-contract.publisher'
 import { startWorkerResponseConsumer } from '@infrastructure/queues/worker-response.consumer'
+import { StripePaymentGateway } from '@infrastructure/external/stripe-payment.gateway'
+import { UnavailablePaymentGateway } from '@infrastructure/external/unavailable-payment.gateway'
 
 const motoRepository = new PrismaMotoRepository()
 const shopRepository = new PrismaShopRepository()
@@ -31,7 +34,11 @@ const maintenanceRepository = new PrismaMaintenanceRepository()
 const paymentRepository = new PrismaPaymentRepository()
 const settingsRepository = new PrismaSettingsRepository()
 const dashboardRepository = new PrismaDashboardRepository()
+const favoriteRepository = new PrismaFavoriteRepository()
 const iamClient = new KeycloakAdminClient()
+const paymentGateway = process.env.STRIPE_SECRET_KEY
+  ? new StripePaymentGateway(process.env.STRIPE_SECRET_KEY)
+  : new UnavailablePaymentGateway()
 
 // File de messages : la connexion est établie au démarrage (voir start()).
 // Le publisher est toujours injecté ; en l'absence de broker joignable, la
@@ -43,11 +50,11 @@ const app = fastify({
   logger: process.env.NODE_ENV === 'production'
     ? true
     : {
-        transport: {
-          target: 'pino-pretty',
-          options: { colorize: true },
-        },
+      transport: {
+        target: 'pino-pretty',
+        options: { colorize: true },
       },
+    },
 })
 
 await app.register(helmet)
@@ -87,8 +94,10 @@ app.register(v1Routes, {
   customerRepository,
   maintenanceRepository,
   paymentRepository,
+  paymentGateway,
   settingsRepository,
   dashboardRepository,
+  favoriteRepository,
   iamClient,
   contractPublisher,
 })
@@ -112,7 +121,7 @@ const start = async () => {
   // Arrêt gracieux : ferme proprement le canal et la connexion RabbitMQ.
   for (const signal of ['SIGTERM', 'SIGINT'] as const) {
     process.once(signal, () => {
-      void rabbitConnection.close().catch(() => {})
+      void rabbitConnection.close().catch(() => { })
       void app.close().finally(() => process.exit(0))
     })
   }

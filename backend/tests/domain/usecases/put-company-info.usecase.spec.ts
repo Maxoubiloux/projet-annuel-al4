@@ -8,9 +8,9 @@ const makeMockRepository = (): ISettingsRepository => ({
 
 describe('PutCompanyInfoUseCase', () => {
   const validInfo = {
-    name: 'City Moto Yard',
+    name: 'Plein Gaz Loc',
     address: '12 Rue des Motards, 75011 Paris',
-    email: 'contact@citymotoyard.fr',
+    email: 'contact@pleingazloc.fr',
     phone: '+33 1 42 00 00 00',
   }
 

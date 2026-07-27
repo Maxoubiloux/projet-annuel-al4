@@ -13,7 +13,7 @@ const SUBJECTS = [
 ];
 
 const COORDS = [
-  { label: 'Par e-mail', value: 'contact@citymotoyard.fr', sub: 'Réponse sous 24h ouvrées' },
+  { label: 'Par e-mail', value: 'contact@pleingazloc.fr', sub: 'Réponse sous 24h ouvrées' },
   { label: 'Par téléphone', value: '+33 1 23 45 67 89', sub: 'Du lundi au samedi' },
   { label: 'Siège', value: '12 avenue de la Grande Armée, 75017 Paris', sub: 'Sur rendez-vous' },
   { label: 'Horaires', value: 'Lun – Sam · 08h – 20h', sub: 'Assistance 24h/24 incluse' },

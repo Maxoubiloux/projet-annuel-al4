@@ -10,13 +10,48 @@ import { useRouter } from 'next/navigation';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login } = useAuth();
+  const [otp, setOtp] = useState('');
+  const [otpRequested, setOtpRequested] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { login, resetPassword } = useAuth();
   const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    login(email);
-    router.push('/');
+    setError(null);
+    setInfo(null);
+    setIsSubmitting(true);
+    try {
+      await login(email, password, otpRequested ? otp : undefined);
+      router.push('/profile');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Connexion impossible';
+      if (message.toLowerCase().includes('a2f') || message.toLowerCase().includes('otp')) {
+        setOtpRequested(true);
+        setError('Saisissez le code A2F généré par votre application.');
+      } else {
+        setError(message);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    setError(null);
+    setInfo(null);
+    if (!email) {
+      setError('Saisissez votre email avant de demander la réinitialisation.');
+      return;
+    }
+    try {
+      await resetPassword(email);
+      setInfo('Si un compte existe pour cet email, un lien de réinitialisation a été envoyé.');
+    } catch {
+      setInfo('Si un compte existe pour cet email, un lien de réinitialisation a été envoyé.');
+    }
   };
 
   return (
@@ -24,7 +59,7 @@ export default function LoginPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 w-full max-w-[980px] bg-white border border-[#ECE5D5] rounded-[20px] overflow-hidden shadow-[0_40px_90px_-50px_rgba(40,30,20,0.45)]">
         <div className="relative bg-[#1B1A17] text-[#F4F1E9] px-11 py-12 flex flex-col justify-between min-h-[520px] overflow-hidden">
           <div className="font-serif text-[23px] font-semibold relative z-10">
-            City Moto Yard<span className="text-[#d8a96a]">.</span>
+            Plein Gaz Loc<span className="text-[#d8a96a]">.</span>
           </div>
           <div className="relative z-10">
             <h2 className="font-serif font-medium text-[42px] leading-[1.05] mb-3">
@@ -53,6 +88,17 @@ export default function LoginPage() {
           <h1 className="font-serif font-semibold text-[38px] mb-7">Se connecter</h1>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="rounded-xl border border-[#e6b9b3] bg-[#F8ECEA] px-4 py-3 text-[13px] text-[#9a3b35]">
+                {error}
+              </div>
+            )}
+            {info && (
+              <div className="rounded-xl border border-[#bcd9c4] bg-[#EAF3EC] px-4 py-3 text-[13px] text-[#2f6b44]">
+                {info}
+              </div>
+            )}
+
             <label className="block">
               <span className="block font-mono text-[9.5px] tracking-[0.16em] uppercase text-[#a0967f] mb-2">
                 Adresse e-mail
@@ -67,6 +113,26 @@ export default function LoginPage() {
                 className="w-full border border-[#E4DECF] bg-[#FBF9F3] rounded-[10px] px-[14px] py-[13px] text-[14px] text-[#1B1A17] outline-none focus:border-[#7E2E32] transition-colors"
               />
             </label>
+
+            {otpRequested && (
+              <label className="block">
+                <span className="block font-mono text-[9.5px] tracking-[0.16em] uppercase text-[#a0967f] mb-2">
+                  Code A2F
+                </span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  required
+                  pattern="\d{6}"
+                  maxLength={6}
+                  placeholder="123456"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  className="w-full border border-[#E4DECF] bg-[#FBF9F3] rounded-[10px] px-[14px] py-[13px] text-[14px] text-[#1B1A17] outline-none focus:border-[#7E2E32] transition-colors"
+                />
+              </label>
+            )}
 
             <label className="block">
               <span className="block font-mono text-[9.5px] tracking-[0.16em] uppercase text-[#a0967f] mb-2">
@@ -84,13 +150,17 @@ export default function LoginPage() {
             </label>
 
             <div className="text-right">
-              <a href="#" className="text-[12px] text-[#7E2E32] hover:opacity-70 transition-opacity">
+              <button
+                type="button"
+                onClick={handleResetPassword}
+                className="text-[12px] text-[#7E2E32] hover:opacity-70 transition-opacity cursor-pointer"
+              >
                 Mot de passe oublié ?
-              </a>
+              </button>
             </div>
 
-            <Button type="submit" variant="primary" size="lg" className="w-full mt-2">
-              Se connecter
+            <Button type="submit" disabled={isSubmitting} variant="primary" size="lg" className="w-full mt-2">
+              {isSubmitting ? 'Connexion...' : 'Se connecter'}
             </Button>
           </form>
 

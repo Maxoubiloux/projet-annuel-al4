@@ -15,6 +15,11 @@ export interface CreateMotoParams {
   description: string
   imageUrl?: string
   nextServiceDate?: string
+  style?: string
+  hp?: number
+  torque?: number
+  consumption?: number
+  range?: number
 }
 
 export type UpdateMotoParams = Partial<CreateMotoParams>
@@ -36,6 +41,13 @@ export class Moto {
     readonly createdAt: Date,
     readonly imageUrl?: string,
     readonly nextServiceDate?: string,
+    readonly style?: string,
+    readonly hp?: number,
+    readonly torque?: number,
+    readonly consumption?: number,
+    readonly range?: number,
+    readonly registration: string = plate,
+    readonly currentKm: number = mileage,
   ) { }
 
   static create(id: string, params: CreateMotoParams): Moto {
@@ -55,6 +67,11 @@ export class Moto {
       new Date(),
       params.imageUrl,
       params.nextServiceDate,
+      params.style,
+      params.hp,
+      params.torque,
+      params.consumption,
+      params.range,
     )
   }
 }

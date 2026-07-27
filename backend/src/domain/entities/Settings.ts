@@ -25,9 +25,9 @@ export interface Preferences {
 export const DEFAULT_BOOKING_RULES: BookingRules = { minDays: 1, maxDays: 30, minAge: 21, freeCancelHours: 48 }
 
 export const DEFAULT_COMPANY_INFO: CompanyInfo = {
-  name: 'City Moto Yard',
+  name: 'Plein Gaz Loc',
   address: '12 Rue des Motards, 75011 Paris',
-  email: 'contact@citymotoyard.fr',
+  email: 'contact@pleingazloc.fr',
   phone: '+33 1 42 00 00 00',
 }
 
