@@ -12,7 +12,7 @@ const makeMockRepository = (updateImpl?: () => Promise<Reservation>): IReservati
   save: jest.fn(),
   updateStatus: jest.fn(),
   updatePaymentStatus: jest.fn(),
-  updateContract: jest.fn(updateImpl ?? (async () => ({}) as Reservation)),
+  updateContract: jest.fn(updateImpl ?? (async () => ({} as Reservation)))
 })
 
 describe('handleContractResponse', () => {
