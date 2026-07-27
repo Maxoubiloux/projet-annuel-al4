@@ -4,7 +4,6 @@ import { Button } from '@/core/components/ui/Button';
 import {
   LayoutGrid, LayoutPanelLeft, Download,
   TrendingUp, TrendingDown, ArrowRight,
-  AlertTriangle, RefreshCw,
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip,
@@ -12,7 +11,6 @@ import {
 } from 'recharts';
 import { useAuth } from '@/core/auth/AuthContext';
 import { useDashboard } from '../hooks/useDashboard';
-import { CardSkeleton } from '@/core/components/ui/Skeleton';
 import type {
   DashboardRecentReservation,
   DashboardMaintenanceAlert,
@@ -39,10 +37,10 @@ const STATIC_RESERVATIONS: DashboardRecentReservation[] = [
 ];
 
 const STATIC_ALERTS: DashboardMaintenanceAlert[] = [
-  { sev: 'critical', title: 'Brake service overdue', moto: 'Kawasaki Z900',   id: 'CMY-072', km: '18,400 km', due: '23 Jun' },
-  { sev: 'warning',  title: 'Oil change due',         moto: 'Ducati Monster', id: 'CMY-038', km: '12,050 km', due: '28 Jun' },
-  { sev: 'warning',  title: 'Tire wear inspection',   moto: 'BMW R nineT',    id: 'CMY-119', km: '9,800 km',  due: '30 Jun' },
-  { sev: 'ok',       title: 'Chain lubrication',      moto: 'Triumph Street', id: 'CMY-051', km: '15,600 km', due: '04 Jul' },
+  { sev: 'critical', title: 'Brake service overdue', moto: 'Kawasaki Z900',   id: 'PGL-072', km: '18,400 km', due: '23 Jun' },
+  { sev: 'warning',  title: 'Oil change due',         moto: 'Ducati Monster', id: 'PGL-038', km: '12,050 km', due: '28 Jun' },
+  { sev: 'warning',  title: 'Tire wear inspection',   moto: 'BMW R nineT',    id: 'PGL-119', km: '9,800 km',  due: '30 Jun' },
+  { sev: 'ok',       title: 'Chain lubrication',      moto: 'Triumph Street', id: 'PGL-051', km: '15,600 km', due: '04 Jul' },
 ];
 
 const yardTiles = (() => {
@@ -149,7 +147,6 @@ export function DashboardPage() {
 
   const totalFleet = apiKpis?.totalFleet ?? 163;
   const availableCount = apiKpis?.availableCount ?? 93;
-  const activeRentals = apiKpis?.activeRentals ?? 142;
   const maintenanceDue = apiKpis?.maintenanceDue ?? 7;
   const rentedCount = Math.min(apiKpis?.activeRentals ?? 52, Math.max(totalFleet - availableCount - maintenanceDue, 0));
   const reservedCount = Math.max(totalFleet - availableCount - rentedCount - maintenanceDue, 0);

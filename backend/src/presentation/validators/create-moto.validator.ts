@@ -15,4 +15,9 @@ export const createMotoSchema = Joi.object({
   description: Joi.string().trim().allow('').required(),
   imageUrl: Joi.string().trim().allow('').optional(),
   nextServiceDate: Joi.string().trim().allow('').optional(),
+  style: Joi.string().trim().allow('').optional(),
+  hp: Joi.number().min(0).optional(),
+  torque: Joi.number().min(0).optional(),
+  consumption: Joi.number().min(0).optional(),
+  range: Joi.number().integer().min(0).optional(),
 })

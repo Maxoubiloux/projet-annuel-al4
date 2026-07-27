@@ -5,6 +5,8 @@ import { Moto } from '@domain/entities/Moto'
 const makeMockRepository = (): IMotoRepository => ({
   findAll: jest.fn(async () => []),
   findById: jest.fn(async () => null),
+  findReservedTodayIds: jest.fn(),
+  findAvailability: jest.fn(),
   save: jest.fn(async (moto: Moto) => moto),
   update: jest.fn(async (_id: string, _params) => ({}) as Moto),
   delete: jest.fn(async () => undefined),

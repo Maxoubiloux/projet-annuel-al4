@@ -42,6 +42,33 @@ export async function motoroutesV1(app: FastifyInstance, opts: { motoRepository:
     await getAllMotosController.handle(request, reply)
   })
 
+  app.get('/motos/availability/today', async (_request: FastifyRequest, reply: FastifyReply) => {
+    const ids = await repo.findReservedTodayIds()
+    reply.send({ success: true, data: ids, meta: { total: ids.length } })
+  })
+
+  app.get('/motos/:id/availability', async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+    const { error } = idParamSchema.validate(request.params)
+    if (error) {
+      reply.status(400).send({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: error.details.map(d => d.message).join(', ') },
+      })
+      return
+    }
+
+    const availability = await repo.findAvailability(request.params.id)
+    if (!availability) {
+      reply.status(404).send({
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'Moto introuvable' },
+      })
+      return
+    }
+
+    reply.send({ success: true, data: availability })
+  })
+
   app.get('/motos/:id', async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
     const { error } = idParamSchema.validate(request.params)
     if (error) {

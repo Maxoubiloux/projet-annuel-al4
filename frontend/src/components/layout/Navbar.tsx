@@ -50,7 +50,7 @@ export default function Navbar() {
           href="/"
           className="font-serif text-[24px] font-semibold tracking-[0.01em] text-[#1B1A17] hover:opacity-80 transition-opacity"
         >
-          City Moto Yard<span className="text-[#7E2E32]">.</span>
+          Plein Gaz Loc<span className="text-[#7E2E32]">.</span>
         </Link>
 
         {/* Nav links */}

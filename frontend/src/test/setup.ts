@@ -5,7 +5,7 @@ import { afterEach, vi } from "vitest";
 
 afterEach(() => {
   cleanup();
-  localStorage.clear();
+  window.localStorage?.clear();
   vi.clearAllMocks();
 });
 

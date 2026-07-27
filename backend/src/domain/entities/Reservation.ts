@@ -15,11 +15,30 @@ export interface CreateReservationParams {
   paymentStatus: string
 }
 
+export interface CreateClientReservationParams {
+  motoId: string
+  userId: string
+  email: string
+  firstName?: string
+  lastName?: string
+  phone?: string
+  startDate: string
+  endDate: string
+}
+
 export interface ReservationMotoSummary {
   id: string
   brand: string
   model: string
   plate: string
+  category?: string
+  imageUrl?: string
+}
+
+export interface ReservationShopSummary {
+  id: string
+  name: string
+  city: string
 }
 
 export interface ReservationCustomerSummary {
@@ -44,6 +63,7 @@ export class Reservation {
     readonly createdAt: Date,
     readonly moto?: ReservationMotoSummary,
     readonly customer?: ReservationCustomerSummary,
+    readonly shop?: ReservationShopSummary,
   ) { }
 
   static create(id: string, params: CreateReservationParams): Reservation {

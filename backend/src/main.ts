@@ -16,7 +16,10 @@ import { PrismaMaintenanceRepository } from '@infrastructure/db/prisma-maintenan
 import { PrismaPaymentRepository } from '@infrastructure/db/prisma-payment.repository'
 import { PrismaSettingsRepository } from '@infrastructure/db/prisma-settings.repository'
 import { PrismaDashboardRepository } from '@infrastructure/db/prisma-dashboard.repository'
+import { PrismaFavoriteRepository } from '@infrastructure/db/prisma-favorite.repository'
 import { KeycloakAdminClient } from '@infrastructure/external/keycloak-admin.client'
+import { StripePaymentGateway } from '@infrastructure/external/stripe-payment.gateway'
+import { UnavailablePaymentGateway } from '@infrastructure/external/unavailable-payment.gateway'
 
 const motoRepository = new PrismaMotoRepository()
 const shopRepository = new PrismaShopRepository()
@@ -27,7 +30,11 @@ const maintenanceRepository = new PrismaMaintenanceRepository()
 const paymentRepository = new PrismaPaymentRepository()
 const settingsRepository = new PrismaSettingsRepository()
 const dashboardRepository = new PrismaDashboardRepository()
+const favoriteRepository = new PrismaFavoriteRepository()
 const iamClient = new KeycloakAdminClient()
+const paymentGateway = process.env.STRIPE_SECRET_KEY
+  ? new StripePaymentGateway(process.env.STRIPE_SECRET_KEY)
+  : new UnavailablePaymentGateway()
 
 const app = fastify({
   logger: process.env.NODE_ENV === 'production'
@@ -77,8 +84,10 @@ app.register(v1Routes, {
   customerRepository,
   maintenanceRepository,
   paymentRepository,
+  paymentGateway,
   settingsRepository,
   dashboardRepository,
+  favoriteRepository,
   iamClient,
 })
 app.register(v2Routes, { prefix: '/api/v2' })

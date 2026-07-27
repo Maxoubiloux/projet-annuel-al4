@@ -1,9 +1,25 @@
 import { ForgotPasswordUseCase } from '@domain/usecases/forgot-password.usecase'
 import { IIamClient } from '@domain/repositories/IIamClient'
 
+function createIamClientMock(overrides: Partial<IIamClient> = {}): IIamClient {
+  return {
+    login: jest.fn(),
+    refresh: jest.fn(),
+    register: jest.fn(),
+    updateUser: jest.fn(),
+    updatePassword: jest.fn(),
+    sendPasswordResetEmail: jest.fn(async () => undefined),
+    getTwoFactorStatus: jest.fn(async () => ({ enabled: false })),
+    createTwoFactorSetup: jest.fn(),
+    enableTwoFactor: jest.fn(),
+    disableTwoFactor: jest.fn(),
+    ...overrides,
+  }
+}
+
 describe('ForgotPasswordUseCase', () => {
   it('should send a reset email for a valid address', async () => {
-    const iamClient: IIamClient = { sendPasswordResetEmail: jest.fn(async () => undefined) }
+    const iamClient = createIamClientMock()
     const useCase = new ForgotPasswordUseCase(iamClient)
 
     const result = await useCase.execute('user@example.com')
@@ -13,7 +29,7 @@ describe('ForgotPasswordUseCase', () => {
   })
 
   it('should reject an invalid email without calling the IAM', async () => {
-    const iamClient: IIamClient = { sendPasswordResetEmail: jest.fn() }
+    const iamClient = createIamClientMock({ sendPasswordResetEmail: jest.fn() })
     const useCase = new ForgotPasswordUseCase(iamClient)
 
     const result = await useCase.execute('not-an-email')
@@ -26,9 +42,9 @@ describe('ForgotPasswordUseCase', () => {
   })
 
   it('should not leak whether the IAM call failed (anti user-enumeration)', async () => {
-    const iamClient: IIamClient = {
+    const iamClient = createIamClientMock({
       sendPasswordResetEmail: jest.fn(async () => { throw new Error('user not found') }),
-    }
+    })
     const useCase = new ForgotPasswordUseCase(iamClient)
 
     const result = await useCase.execute('unknown@example.com')

@@ -12,6 +12,8 @@ describe('GetAllMotosUseCase', () => {
     const repository: IMotoRepository = {
       findAll: jest.fn(async () => [motoFixture]),
       findById: jest.fn(),
+  findReservedTodayIds: jest.fn(),
+  findAvailability: jest.fn(),
       save: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
@@ -28,6 +30,8 @@ describe('GetAllMotosUseCase', () => {
     const repository: IMotoRepository = {
       findAll: jest.fn(async () => []),
       findById: jest.fn(),
+  findReservedTodayIds: jest.fn(),
+  findAvailability: jest.fn(),
       save: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),

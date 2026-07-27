@@ -23,7 +23,7 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "City Moto Yard · Location de motos premium",
+  title: "Plein Gaz Loc · Location de motos premium",
   description: "Une collection rare de motos récentes, entretenues avec soin et livrées prêtes à partir. Réservez en quelques minutes.",
 };
 

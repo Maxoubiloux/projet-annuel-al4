@@ -73,6 +73,11 @@ export class PrismaPaymentRepository implements IPaymentRepository {
     return toDomain(r)
   }
 
+  async updateStatus(id: string, status: string): Promise<Payment> {
+    const r = await prisma.payment.update({ where: { id }, data: { status }, include })
+    return toDomain(r)
+  }
+
   async refund(id: string): Promise<Payment> {
     const r = await prisma.payment.update({ where: { id }, data: { status: 'refunded' }, include })
     return toDomain(r)

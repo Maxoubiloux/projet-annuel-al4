@@ -115,9 +115,9 @@ async function main() {
   const defaultSettings: Record<string, Prisma.InputJsonValue> = {
     booking_rules: { minDays: 1, maxDays: 30, minAge: 21, freeCancelHours: 48 },
     company_info: {
-      name: 'City Moto Yard',
+      name: 'Plein Gaz Loc',
       address: '12 Rue des Motards, 75011 Paris',
-      email: 'contact@citymotoyard.fr',
+      email: 'contact@pleingazloc.fr',
       phone: '+33 1 42 00 00 00',
     },
     preferences: { emailNotifications: true },
@@ -136,13 +136,13 @@ async function main() {
     (await prisma.shop.create({
       data: {
         id: uuidv4(),
-        name: 'City Moto Yard',
+        name: 'Plein Gaz Loc',
         address: '12 Rue des Motards',
         city: 'Paris',
         zipCode: '75011',
         country: 'France',
         phone: '+33142000000',
-        email: 'contact@citymotoyard.fr',
+        email: 'contact@pleingazloc.fr',
       },
     }))
 

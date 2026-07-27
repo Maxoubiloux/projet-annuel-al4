@@ -15,5 +15,6 @@ export interface IPaymentRepository {
   findById(id: string): Promise<Payment | null>
   findByBookingId(bookingId: string): Promise<Payment | null>
   save(payment: Payment): Promise<Payment>
+  updateStatus(id: string, status: string): Promise<Payment>
   refund(id: string): Promise<Payment>
 }

@@ -62,7 +62,7 @@ export function Sidebar() {
             letterSpacing: '.01em', whiteSpace: 'nowrap', lineHeight: 1,
             color: 'var(--ink)',
           }}>
-            City Moto Yard<span style={{ color: 'var(--brand)' }}>.</span>
+            Plein Gaz Loc<span style={{ color: 'var(--brand)' }}>.</span>
           </div>
         )}
       </div>

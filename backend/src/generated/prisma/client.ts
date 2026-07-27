@@ -72,6 +72,11 @@ export type Shop = Prisma.ShopModel
  */
 export type Moto = Prisma.MotoModel
 /**
+ * Model Favorite
+ * 
+ */
+export type Favorite = Prisma.FavoriteModel
+/**
  * Model Image
  * 
  */
