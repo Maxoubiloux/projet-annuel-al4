@@ -57,6 +57,7 @@ export const ModelName = {
   User: 'User',
   Shop: 'Shop',
   Moto: 'Moto',
+  Favorite: 'Favorite',
   Image: 'Image',
   Booking: 'Booking',
   MaintenanceJob: 'MaintenanceJob',
@@ -163,6 +164,16 @@ export const MotoScalarFieldEnum = {
 } as const
 
 export type MotoScalarFieldEnum = (typeof MotoScalarFieldEnum)[keyof typeof MotoScalarFieldEnum]
+
+
+export const FavoriteScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  motoId: 'motoId',
+  createdAt: 'createdAt'
+} as const
+
+export type FavoriteScalarFieldEnum = (typeof FavoriteScalarFieldEnum)[keyof typeof FavoriteScalarFieldEnum]
 
 
 export const ImageScalarFieldEnum = {

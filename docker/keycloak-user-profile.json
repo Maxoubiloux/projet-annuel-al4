@@ -1,0 +1,121 @@
+{
+  "attributes": [
+    {
+      "name": "username",
+      "displayName": "${username}",
+      "validations": {
+        "length": { "min": 3, "max": 255 },
+        "username-prohibited-characters": {},
+        "up-username-not-idn-homograph": {}
+      },
+      "permissions": { "view": ["admin", "user"], "edit": ["admin", "user"] },
+      "multivalued": false
+    },
+    {
+      "name": "email",
+      "displayName": "${email}",
+      "validations": {
+        "email": {},
+        "length": { "max": 255 }
+      },
+      "required": { "roles": ["user"] },
+      "permissions": { "view": ["admin", "user"], "edit": ["admin", "user"] },
+      "multivalued": false
+    },
+    {
+      "name": "firstName",
+      "displayName": "${firstName}",
+      "validations": {
+        "length": { "max": 255 },
+        "person-name-prohibited-characters": {}
+      },
+      "required": { "roles": ["user"] },
+      "permissions": { "view": ["admin", "user"], "edit": ["admin", "user"] },
+      "multivalued": false
+    },
+    {
+      "name": "lastName",
+      "displayName": "${lastName}",
+      "validations": {
+        "length": { "max": 255 },
+        "person-name-prohibited-characters": {}
+      },
+      "required": { "roles": ["user"] },
+      "permissions": { "view": ["admin", "user"], "edit": ["admin", "user"] },
+      "multivalued": false
+    },
+    {
+      "name": "phone",
+      "displayName": "Téléphone",
+      "validations": { "length": { "max": 30 } },
+      "required": { "roles": ["user"] },
+      "permissions": { "view": ["admin", "user"], "edit": ["admin", "user"] },
+      "multivalued": false
+    },
+    {
+      "name": "address",
+      "displayName": "Adresse",
+      "validations": { "length": { "max": 255 } },
+      "required": { "roles": ["user"] },
+      "permissions": { "view": ["admin", "user"], "edit": ["admin", "user"] },
+      "multivalued": false
+    },
+    {
+      "name": "zipCode",
+      "displayName": "Code postal",
+      "validations": { "length": { "max": 20 } },
+      "required": { "roles": ["user"] },
+      "permissions": { "view": ["admin", "user"], "edit": ["admin", "user"] },
+      "multivalued": false
+    },
+    {
+      "name": "city",
+      "displayName": "Ville",
+      "validations": { "length": { "max": 100 } },
+      "required": { "roles": ["user"] },
+      "permissions": { "view": ["admin", "user"], "edit": ["admin", "user"] },
+      "multivalued": false
+    },
+    {
+      "name": "licenseCategory",
+      "displayName": "Catégorie de permis",
+      "validations": {
+        "options": { "options": ["A1", "A2", "A"] }
+      },
+      "required": { "roles": ["user"] },
+      "permissions": { "view": ["admin", "user"], "edit": ["admin", "user"] },
+      "multivalued": false
+    },
+    {
+      "name": "licenseNumber",
+      "displayName": "Numéro de permis",
+      "validations": { "length": { "max": 50 } },
+      "required": { "roles": ["user"] },
+      "permissions": { "view": ["admin", "user"], "edit": ["admin"] },
+      "multivalued": false
+    },
+    {
+      "name": "twoFactorEnabled",
+      "displayName": "A2F activée",
+      "validations": {
+        "options": { "options": ["true", "false"] }
+      },
+      "permissions": { "view": ["admin"], "edit": ["admin"] },
+      "multivalued": false
+    },
+    {
+      "name": "twoFactorSecret",
+      "displayName": "Secret A2F",
+      "validations": { "length": { "max": 128 } },
+      "permissions": { "view": ["admin"], "edit": ["admin"] },
+      "multivalued": false
+    }
+  ],
+  "groups": [
+    {
+      "name": "user-metadata",
+      "displayHeader": "User metadata",
+      "displayDescription": "Attributes, which refer to user metadata"
+    }
+  ]
+}

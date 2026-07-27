@@ -15,6 +15,9 @@ const makeMockReservationRepository = (reservation: Reservation | null): IReserv
   findAll: jest.fn(),
   findRecent: jest.fn(),
   findById: jest.fn(async () => reservation),
+  findMotoPricePerDay: jest.fn(),
+  hasActiveOverlap: jest.fn(),
+  ensureCustomer: jest.fn(),
   save: jest.fn(),
   updateStatus: jest.fn(),
   updatePaymentStatus: jest.fn(async (id, paymentStatus) => makeReservation(paymentStatus)),
@@ -26,6 +29,7 @@ const makeMockPaymentRepository = (payment: Payment | null): IPaymentRepository 
   findById: jest.fn(),
   findByBookingId: jest.fn(async () => payment),
   save: jest.fn(),
+  updateStatus: jest.fn(),
   refund: jest.fn(async (id) => new Payment(id, 'PAY-1', 'cust-1', 340, 500, 'card', new Date(), 'refunded')),
 })
 

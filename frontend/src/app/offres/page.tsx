@@ -24,7 +24,7 @@ const OFFERS: Offer[] = [
   {
     id: '3',
     title: 'Première Location',
-    description: 'Vingt pour cent de remise sur votre toute première réservation chez City Moto Yard.',
+    description: 'Vingt pour cent de remise sur votre toute première réservation chez Plein Gaz Loc.',
     discount: '-20%',
     code: 'BIENVENUE20',
     imageUrl: '',

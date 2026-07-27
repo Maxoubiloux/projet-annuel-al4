@@ -1,6 +1,6 @@
-# Projet Annuel AL4 - City Moto Yard (Location de Motos)
+# Projet Annuel AL4 - Plein Gaz Loc (Location de Motos)
 
-Ce projet est une plateforme de location de motos nommée City Moto Yard.
+Ce projet est une plateforme de location de motos nommée Plein Gaz Loc.
 
 ## 🏍️ Frontend (Next.js)
 

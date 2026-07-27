@@ -69,6 +69,34 @@ services:
       postgres:
         condition: service_healthy
     command: start --import-realm
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /realms/master HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && head -n 1 <&3 | grep -q '200 OK'"]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  keycloak-config:
+    image: quay.io/keycloak/keycloak:25.0.6
+    container_name: moto-keycloak-config
+    restart: "no"
+    env_file:
+      - .env.prod
+    volumes:
+      - ./docker/keycloak-user-profile.json:/config/keycloak-user-profile.json:ro
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      "/opt/keycloak/bin/kcadm.sh config credentials --server http://keycloak:8080 --realm master --user $$KEYCLOAK_ADMIN --password $$KEYCLOAK_ADMIN_PASSWORD &&
+      /opt/keycloak/bin/kcadm.sh update realms/$$KEYCLOAK_REALM/users/profile -f /config/keycloak-user-profile.json &&
+      CLIENT_ID=$$(/opt/keycloak/bin/kcadm.sh get clients -r $$KEYCLOAK_REALM -q clientId=moto-rental-frontend --fields id --format csv --noquotes | tail -n 1) &&
+      /opt/keycloak/bin/kcadm.sh update clients/$$CLIENT_ID -r $$KEYCLOAK_REALM -s directAccessGrantsEnabled=true &&
+      BACKEND_CLIENT_ID=$$(/opt/keycloak/bin/kcadm.sh get clients -r $$KEYCLOAK_REALM -q clientId=moto-rental-backend --fields id --format csv --noquotes | tail -n 1) &&
+      /opt/keycloak/bin/kcadm.sh update clients/$$BACKEND_CLIENT_ID -r $$KEYCLOAK_REALM -s fullScopeAllowed=true &&
+      /opt/keycloak/bin/kcadm.sh add-roles -r $$KEYCLOAK_REALM --uusername service-account-moto-rental-backend --cclientid realm-management --rolename manage-users || true &&
+      /opt/keycloak/bin/kcadm.sh add-roles -r $$KEYCLOAK_REALM --uusername service-account-moto-rental-backend --cclientid realm-management --rolename view-users || true"
 
   backend:
     build:
@@ -94,14 +122,17 @@ services:
       KEYCLOAK_REALM: ${KEYCLOAK_REALM}
       KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
+      KEYCLOAK_PUBLIC_CLIENT_ID: moto-rental-frontend
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      FRONTEND_URL: https://${APP_DOMAIN}
       CORS_ORIGIN: https://${APP_DOMAIN},https://${ADMIN_DOMAIN}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-      keycloak:
-        condition: service_started
+      keycloak-config:
+        condition: service_completed_successfully
 
   frontend:
     build:
@@ -109,12 +140,18 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_URL: /api
+        NEXT_PUBLIC_KEYCLOAK_URL: https://${AUTH_DOMAIN}
+        NEXT_PUBLIC_KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+        NEXT_PUBLIC_KEYCLOAK_CLIENT_ID: moto-rental-frontend
     container_name: moto-frontend
     restart: unless-stopped
     environment:
       NODE_ENV: production
       PORT: 3000
       NEXT_PUBLIC_API_URL: /api
+      NEXT_PUBLIC_KEYCLOAK_URL: https://${AUTH_DOMAIN}
+      NEXT_PUBLIC_KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      NEXT_PUBLIC_KEYCLOAK_CLIENT_ID: moto-rental-frontend
     depends_on:
       - backend
 

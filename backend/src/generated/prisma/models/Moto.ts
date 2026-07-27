@@ -370,6 +370,7 @@ export type MotoWhereInput = {
   images?: Prisma.ImageListRelationFilter
   bookings?: Prisma.BookingListRelationFilter
   maintenance?: Prisma.MaintenanceJobListRelationFilter
+  favorites?: Prisma.FavoriteListRelationFilter
 }
 
 export type MotoOrderByWithRelationInput = {
@@ -399,6 +400,7 @@ export type MotoOrderByWithRelationInput = {
   images?: Prisma.ImageOrderByRelationAggregateInput
   bookings?: Prisma.BookingOrderByRelationAggregateInput
   maintenance?: Prisma.MaintenanceJobOrderByRelationAggregateInput
+  favorites?: Prisma.FavoriteOrderByRelationAggregateInput
 }
 
 export type MotoWhereUniqueInput = Prisma.AtLeast<{
@@ -431,6 +433,7 @@ export type MotoWhereUniqueInput = Prisma.AtLeast<{
   images?: Prisma.ImageListRelationFilter
   bookings?: Prisma.BookingListRelationFilter
   maintenance?: Prisma.MaintenanceJobListRelationFilter
+  favorites?: Prisma.FavoriteListRelationFilter
 }, "id" | "serialNumber" | "registration">
 
 export type MotoOrderByWithAggregationInput = {
@@ -511,6 +514,7 @@ export type MotoCreateInput = {
   images?: Prisma.ImageCreateNestedManyWithoutMotoInput
   bookings?: Prisma.BookingCreateNestedManyWithoutMotoInput
   maintenance?: Prisma.MaintenanceJobCreateNestedManyWithoutMotoInput
+  favorites?: Prisma.FavoriteCreateNestedManyWithoutMotoInput
 }
 
 export type MotoUncheckedCreateInput = {
@@ -537,6 +541,7 @@ export type MotoUncheckedCreateInput = {
   images?: Prisma.ImageUncheckedCreateNestedManyWithoutMotoInput
   bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutMotoInput
   maintenance?: Prisma.MaintenanceJobUncheckedCreateNestedManyWithoutMotoInput
+  favorites?: Prisma.FavoriteUncheckedCreateNestedManyWithoutMotoInput
 }
 
 export type MotoUpdateInput = {
@@ -563,6 +568,7 @@ export type MotoUpdateInput = {
   images?: Prisma.ImageUpdateManyWithoutMotoNestedInput
   bookings?: Prisma.BookingUpdateManyWithoutMotoNestedInput
   maintenance?: Prisma.MaintenanceJobUpdateManyWithoutMotoNestedInput
+  favorites?: Prisma.FavoriteUpdateManyWithoutMotoNestedInput
 }
 
 export type MotoUncheckedUpdateInput = {
@@ -589,6 +595,7 @@ export type MotoUncheckedUpdateInput = {
   images?: Prisma.ImageUncheckedUpdateManyWithoutMotoNestedInput
   bookings?: Prisma.BookingUncheckedUpdateManyWithoutMotoNestedInput
   maintenance?: Prisma.MaintenanceJobUncheckedUpdateManyWithoutMotoNestedInput
+  favorites?: Prisma.FavoriteUncheckedUpdateManyWithoutMotoNestedInput
 }
 
 export type MotoCreateManyInput = {
@@ -925,6 +932,20 @@ export type NullableDateTimeFieldUpdateOperationsInput = {
   set?: Date | string | null
 }
 
+export type MotoCreateNestedOneWithoutFavoritesInput = {
+  create?: Prisma.XOR<Prisma.MotoCreateWithoutFavoritesInput, Prisma.MotoUncheckedCreateWithoutFavoritesInput>
+  connectOrCreate?: Prisma.MotoCreateOrConnectWithoutFavoritesInput
+  connect?: Prisma.MotoWhereUniqueInput
+}
+
+export type MotoUpdateOneRequiredWithoutFavoritesNestedInput = {
+  create?: Prisma.XOR<Prisma.MotoCreateWithoutFavoritesInput, Prisma.MotoUncheckedCreateWithoutFavoritesInput>
+  connectOrCreate?: Prisma.MotoCreateOrConnectWithoutFavoritesInput
+  upsert?: Prisma.MotoUpsertWithoutFavoritesInput
+  connect?: Prisma.MotoWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.MotoUpdateToOneWithWhereWithoutFavoritesInput, Prisma.MotoUpdateWithoutFavoritesInput>, Prisma.MotoUncheckedUpdateWithoutFavoritesInput>
+}
+
 export type MotoCreateNestedOneWithoutImagesInput = {
   create?: Prisma.XOR<Prisma.MotoCreateWithoutImagesInput, Prisma.MotoUncheckedCreateWithoutImagesInput>
   connectOrCreate?: Prisma.MotoCreateOrConnectWithoutImagesInput
@@ -990,6 +1011,7 @@ export type MotoCreateWithoutBrandInput = {
   images?: Prisma.ImageCreateNestedManyWithoutMotoInput
   bookings?: Prisma.BookingCreateNestedManyWithoutMotoInput
   maintenance?: Prisma.MaintenanceJobCreateNestedManyWithoutMotoInput
+  favorites?: Prisma.FavoriteCreateNestedManyWithoutMotoInput
 }
 
 export type MotoUncheckedCreateWithoutBrandInput = {
@@ -1015,6 +1037,7 @@ export type MotoUncheckedCreateWithoutBrandInput = {
   images?: Prisma.ImageUncheckedCreateNestedManyWithoutMotoInput
   bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutMotoInput
   maintenance?: Prisma.MaintenanceJobUncheckedCreateNestedManyWithoutMotoInput
+  favorites?: Prisma.FavoriteUncheckedCreateNestedManyWithoutMotoInput
 }
 
 export type MotoCreateOrConnectWithoutBrandInput = {
@@ -1092,6 +1115,7 @@ export type MotoCreateWithoutCategoryInput = {
   images?: Prisma.ImageCreateNestedManyWithoutMotoInput
   bookings?: Prisma.BookingCreateNestedManyWithoutMotoInput
   maintenance?: Prisma.MaintenanceJobCreateNestedManyWithoutMotoInput
+  favorites?: Prisma.FavoriteCreateNestedManyWithoutMotoInput
 }
 
 export type MotoUncheckedCreateWithoutCategoryInput = {
@@ -1117,6 +1141,7 @@ export type MotoUncheckedCreateWithoutCategoryInput = {
   images?: Prisma.ImageUncheckedCreateNestedManyWithoutMotoInput
   bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutMotoInput
   maintenance?: Prisma.MaintenanceJobUncheckedCreateNestedManyWithoutMotoInput
+  favorites?: Prisma.FavoriteUncheckedCreateNestedManyWithoutMotoInput
 }
 
 export type MotoCreateOrConnectWithoutCategoryInput = {
@@ -1168,6 +1193,7 @@ export type MotoCreateWithoutStatusInput = {
   images?: Prisma.ImageCreateNestedManyWithoutMotoInput
   bookings?: Prisma.BookingCreateNestedManyWithoutMotoInput
   maintenance?: Prisma.MaintenanceJobCreateNestedManyWithoutMotoInput
+  favorites?: Prisma.FavoriteCreateNestedManyWithoutMotoInput
 }
 
 export type MotoUncheckedCreateWithoutStatusInput = {
@@ -1193,6 +1219,7 @@ export type MotoUncheckedCreateWithoutStatusInput = {
   images?: Prisma.ImageUncheckedCreateNestedManyWithoutMotoInput
   bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutMotoInput
   maintenance?: Prisma.MaintenanceJobUncheckedCreateNestedManyWithoutMotoInput
+  favorites?: Prisma.FavoriteUncheckedCreateNestedManyWithoutMotoInput
 }
 
 export type MotoCreateOrConnectWithoutStatusInput = {
@@ -1221,6 +1248,126 @@ export type MotoUpdateManyWithWhereWithoutStatusInput = {
   data: Prisma.XOR<Prisma.MotoUpdateManyMutationInput, Prisma.MotoUncheckedUpdateManyWithoutStatusInput>
 }
 
+export type MotoCreateWithoutFavoritesInput = {
+  id?: string
+  model: string
+  serialNumber?: string | null
+  registration: string
+  currentKm: number
+  pricePerDay: number
+  deposit?: number
+  location?: string
+  description: string
+  style?: string | null
+  year: number
+  hp?: number | null
+  torque?: number | null
+  consumption?: number | null
+  range?: number | null
+  nextServiceDate?: Date | string | null
+  createdAt?: Date | string
+  brand: Prisma.BrandCreateNestedOneWithoutMotosInput
+  category: Prisma.CategoryCreateNestedOneWithoutMotosInput
+  status: Prisma.StatusCreateNestedOneWithoutMotosInput
+  images?: Prisma.ImageCreateNestedManyWithoutMotoInput
+  bookings?: Prisma.BookingCreateNestedManyWithoutMotoInput
+  maintenance?: Prisma.MaintenanceJobCreateNestedManyWithoutMotoInput
+}
+
+export type MotoUncheckedCreateWithoutFavoritesInput = {
+  id?: string
+  brandId: string
+  model: string
+  serialNumber?: string | null
+  registration: string
+  categoryId: string
+  statusId: string
+  currentKm: number
+  pricePerDay: number
+  deposit?: number
+  location?: string
+  description: string
+  style?: string | null
+  year: number
+  hp?: number | null
+  torque?: number | null
+  consumption?: number | null
+  range?: number | null
+  nextServiceDate?: Date | string | null
+  createdAt?: Date | string
+  images?: Prisma.ImageUncheckedCreateNestedManyWithoutMotoInput
+  bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutMotoInput
+  maintenance?: Prisma.MaintenanceJobUncheckedCreateNestedManyWithoutMotoInput
+}
+
+export type MotoCreateOrConnectWithoutFavoritesInput = {
+  where: Prisma.MotoWhereUniqueInput
+  create: Prisma.XOR<Prisma.MotoCreateWithoutFavoritesInput, Prisma.MotoUncheckedCreateWithoutFavoritesInput>
+}
+
+export type MotoUpsertWithoutFavoritesInput = {
+  update: Prisma.XOR<Prisma.MotoUpdateWithoutFavoritesInput, Prisma.MotoUncheckedUpdateWithoutFavoritesInput>
+  create: Prisma.XOR<Prisma.MotoCreateWithoutFavoritesInput, Prisma.MotoUncheckedCreateWithoutFavoritesInput>
+  where?: Prisma.MotoWhereInput
+}
+
+export type MotoUpdateToOneWithWhereWithoutFavoritesInput = {
+  where?: Prisma.MotoWhereInput
+  data: Prisma.XOR<Prisma.MotoUpdateWithoutFavoritesInput, Prisma.MotoUncheckedUpdateWithoutFavoritesInput>
+}
+
+export type MotoUpdateWithoutFavoritesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  model?: Prisma.StringFieldUpdateOperationsInput | string
+  serialNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  registration?: Prisma.StringFieldUpdateOperationsInput | string
+  currentKm?: Prisma.IntFieldUpdateOperationsInput | number
+  pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
+  deposit?: Prisma.FloatFieldUpdateOperationsInput | number
+  location?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  style?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  year?: Prisma.IntFieldUpdateOperationsInput | number
+  hp?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  torque?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  consumption?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  range?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  nextServiceDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  brand?: Prisma.BrandUpdateOneRequiredWithoutMotosNestedInput
+  category?: Prisma.CategoryUpdateOneRequiredWithoutMotosNestedInput
+  status?: Prisma.StatusUpdateOneRequiredWithoutMotosNestedInput
+  images?: Prisma.ImageUpdateManyWithoutMotoNestedInput
+  bookings?: Prisma.BookingUpdateManyWithoutMotoNestedInput
+  maintenance?: Prisma.MaintenanceJobUpdateManyWithoutMotoNestedInput
+}
+
+export type MotoUncheckedUpdateWithoutFavoritesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  brandId?: Prisma.StringFieldUpdateOperationsInput | string
+  model?: Prisma.StringFieldUpdateOperationsInput | string
+  serialNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  registration?: Prisma.StringFieldUpdateOperationsInput | string
+  categoryId?: Prisma.StringFieldUpdateOperationsInput | string
+  statusId?: Prisma.StringFieldUpdateOperationsInput | string
+  currentKm?: Prisma.IntFieldUpdateOperationsInput | number
+  pricePerDay?: Prisma.FloatFieldUpdateOperationsInput | number
+  deposit?: Prisma.FloatFieldUpdateOperationsInput | number
+  location?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  style?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  year?: Prisma.IntFieldUpdateOperationsInput | number
+  hp?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  torque?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  consumption?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  range?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  nextServiceDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  images?: Prisma.ImageUncheckedUpdateManyWithoutMotoNestedInput
+  bookings?: Prisma.BookingUncheckedUpdateManyWithoutMotoNestedInput
+  maintenance?: Prisma.MaintenanceJobUncheckedUpdateManyWithoutMotoNestedInput
+}
+
 export type MotoCreateWithoutImagesInput = {
   id?: string
   model: string
@@ -1244,6 +1391,7 @@ export type MotoCreateWithoutImagesInput = {
   status: Prisma.StatusCreateNestedOneWithoutMotosInput
   bookings?: Prisma.BookingCreateNestedManyWithoutMotoInput
   maintenance?: Prisma.MaintenanceJobCreateNestedManyWithoutMotoInput
+  favorites?: Prisma.FavoriteCreateNestedManyWithoutMotoInput
 }
 
 export type MotoUncheckedCreateWithoutImagesInput = {
@@ -1269,6 +1417,7 @@ export type MotoUncheckedCreateWithoutImagesInput = {
   createdAt?: Date | string
   bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutMotoInput
   maintenance?: Prisma.MaintenanceJobUncheckedCreateNestedManyWithoutMotoInput
+  favorites?: Prisma.FavoriteUncheckedCreateNestedManyWithoutMotoInput
 }
 
 export type MotoCreateOrConnectWithoutImagesInput = {
@@ -1310,6 +1459,7 @@ export type MotoUpdateWithoutImagesInput = {
   status?: Prisma.StatusUpdateOneRequiredWithoutMotosNestedInput
   bookings?: Prisma.BookingUpdateManyWithoutMotoNestedInput
   maintenance?: Prisma.MaintenanceJobUpdateManyWithoutMotoNestedInput
+  favorites?: Prisma.FavoriteUpdateManyWithoutMotoNestedInput
 }
 
 export type MotoUncheckedUpdateWithoutImagesInput = {
@@ -1335,6 +1485,7 @@ export type MotoUncheckedUpdateWithoutImagesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bookings?: Prisma.BookingUncheckedUpdateManyWithoutMotoNestedInput
   maintenance?: Prisma.MaintenanceJobUncheckedUpdateManyWithoutMotoNestedInput
+  favorites?: Prisma.FavoriteUncheckedUpdateManyWithoutMotoNestedInput
 }
 
 export type MotoCreateWithoutBookingsInput = {
@@ -1360,6 +1511,7 @@ export type MotoCreateWithoutBookingsInput = {
   status: Prisma.StatusCreateNestedOneWithoutMotosInput
   images?: Prisma.ImageCreateNestedManyWithoutMotoInput
   maintenance?: Prisma.MaintenanceJobCreateNestedManyWithoutMotoInput
+  favorites?: Prisma.FavoriteCreateNestedManyWithoutMotoInput
 }
 
 export type MotoUncheckedCreateWithoutBookingsInput = {
@@ -1385,6 +1537,7 @@ export type MotoUncheckedCreateWithoutBookingsInput = {
   createdAt?: Date | string
   images?: Prisma.ImageUncheckedCreateNestedManyWithoutMotoInput
   maintenance?: Prisma.MaintenanceJobUncheckedCreateNestedManyWithoutMotoInput
+  favorites?: Prisma.FavoriteUncheckedCreateNestedManyWithoutMotoInput
 }
 
 export type MotoCreateOrConnectWithoutBookingsInput = {
@@ -1426,6 +1579,7 @@ export type MotoUpdateWithoutBookingsInput = {
   status?: Prisma.StatusUpdateOneRequiredWithoutMotosNestedInput
   images?: Prisma.ImageUpdateManyWithoutMotoNestedInput
   maintenance?: Prisma.MaintenanceJobUpdateManyWithoutMotoNestedInput
+  favorites?: Prisma.FavoriteUpdateManyWithoutMotoNestedInput
 }
 
 export type MotoUncheckedUpdateWithoutBookingsInput = {
@@ -1451,6 +1605,7 @@ export type MotoUncheckedUpdateWithoutBookingsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   images?: Prisma.ImageUncheckedUpdateManyWithoutMotoNestedInput
   maintenance?: Prisma.MaintenanceJobUncheckedUpdateManyWithoutMotoNestedInput
+  favorites?: Prisma.FavoriteUncheckedUpdateManyWithoutMotoNestedInput
 }
 
 export type MotoCreateWithoutMaintenanceInput = {
@@ -1476,6 +1631,7 @@ export type MotoCreateWithoutMaintenanceInput = {
   status: Prisma.StatusCreateNestedOneWithoutMotosInput
   images?: Prisma.ImageCreateNestedManyWithoutMotoInput
   bookings?: Prisma.BookingCreateNestedManyWithoutMotoInput
+  favorites?: Prisma.FavoriteCreateNestedManyWithoutMotoInput
 }
 
 export type MotoUncheckedCreateWithoutMaintenanceInput = {
@@ -1501,6 +1657,7 @@ export type MotoUncheckedCreateWithoutMaintenanceInput = {
   createdAt?: Date | string
   images?: Prisma.ImageUncheckedCreateNestedManyWithoutMotoInput
   bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutMotoInput
+  favorites?: Prisma.FavoriteUncheckedCreateNestedManyWithoutMotoInput
 }
 
 export type MotoCreateOrConnectWithoutMaintenanceInput = {
@@ -1542,6 +1699,7 @@ export type MotoUpdateWithoutMaintenanceInput = {
   status?: Prisma.StatusUpdateOneRequiredWithoutMotosNestedInput
   images?: Prisma.ImageUpdateManyWithoutMotoNestedInput
   bookings?: Prisma.BookingUpdateManyWithoutMotoNestedInput
+  favorites?: Prisma.FavoriteUpdateManyWithoutMotoNestedInput
 }
 
 export type MotoUncheckedUpdateWithoutMaintenanceInput = {
@@ -1567,6 +1725,7 @@ export type MotoUncheckedUpdateWithoutMaintenanceInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   images?: Prisma.ImageUncheckedUpdateManyWithoutMotoNestedInput
   bookings?: Prisma.BookingUncheckedUpdateManyWithoutMotoNestedInput
+  favorites?: Prisma.FavoriteUncheckedUpdateManyWithoutMotoNestedInput
 }
 
 export type MotoCreateManyBrandInput = {
@@ -1614,6 +1773,7 @@ export type MotoUpdateWithoutBrandInput = {
   images?: Prisma.ImageUpdateManyWithoutMotoNestedInput
   bookings?: Prisma.BookingUpdateManyWithoutMotoNestedInput
   maintenance?: Prisma.MaintenanceJobUpdateManyWithoutMotoNestedInput
+  favorites?: Prisma.FavoriteUpdateManyWithoutMotoNestedInput
 }
 
 export type MotoUncheckedUpdateWithoutBrandInput = {
@@ -1639,6 +1799,7 @@ export type MotoUncheckedUpdateWithoutBrandInput = {
   images?: Prisma.ImageUncheckedUpdateManyWithoutMotoNestedInput
   bookings?: Prisma.BookingUncheckedUpdateManyWithoutMotoNestedInput
   maintenance?: Prisma.MaintenanceJobUncheckedUpdateManyWithoutMotoNestedInput
+  favorites?: Prisma.FavoriteUncheckedUpdateManyWithoutMotoNestedInput
 }
 
 export type MotoUncheckedUpdateManyWithoutBrandInput = {
@@ -1708,6 +1869,7 @@ export type MotoUpdateWithoutCategoryInput = {
   images?: Prisma.ImageUpdateManyWithoutMotoNestedInput
   bookings?: Prisma.BookingUpdateManyWithoutMotoNestedInput
   maintenance?: Prisma.MaintenanceJobUpdateManyWithoutMotoNestedInput
+  favorites?: Prisma.FavoriteUpdateManyWithoutMotoNestedInput
 }
 
 export type MotoUncheckedUpdateWithoutCategoryInput = {
@@ -1733,6 +1895,7 @@ export type MotoUncheckedUpdateWithoutCategoryInput = {
   images?: Prisma.ImageUncheckedUpdateManyWithoutMotoNestedInput
   bookings?: Prisma.BookingUncheckedUpdateManyWithoutMotoNestedInput
   maintenance?: Prisma.MaintenanceJobUncheckedUpdateManyWithoutMotoNestedInput
+  favorites?: Prisma.FavoriteUncheckedUpdateManyWithoutMotoNestedInput
 }
 
 export type MotoUncheckedUpdateManyWithoutCategoryInput = {
@@ -1802,6 +1965,7 @@ export type MotoUpdateWithoutStatusInput = {
   images?: Prisma.ImageUpdateManyWithoutMotoNestedInput
   bookings?: Prisma.BookingUpdateManyWithoutMotoNestedInput
   maintenance?: Prisma.MaintenanceJobUpdateManyWithoutMotoNestedInput
+  favorites?: Prisma.FavoriteUpdateManyWithoutMotoNestedInput
 }
 
 export type MotoUncheckedUpdateWithoutStatusInput = {
@@ -1827,6 +1991,7 @@ export type MotoUncheckedUpdateWithoutStatusInput = {
   images?: Prisma.ImageUncheckedUpdateManyWithoutMotoNestedInput
   bookings?: Prisma.BookingUncheckedUpdateManyWithoutMotoNestedInput
   maintenance?: Prisma.MaintenanceJobUncheckedUpdateManyWithoutMotoNestedInput
+  favorites?: Prisma.FavoriteUncheckedUpdateManyWithoutMotoNestedInput
 }
 
 export type MotoUncheckedUpdateManyWithoutStatusInput = {
@@ -1860,12 +2025,14 @@ export type MotoCountOutputType = {
   images: number
   bookings: number
   maintenance: number
+  favorites: number
 }
 
 export type MotoCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   images?: boolean | MotoCountOutputTypeCountImagesArgs
   bookings?: boolean | MotoCountOutputTypeCountBookingsArgs
   maintenance?: boolean | MotoCountOutputTypeCountMaintenanceArgs
+  favorites?: boolean | MotoCountOutputTypeCountFavoritesArgs
 }
 
 /**
@@ -1899,6 +2066,13 @@ export type MotoCountOutputTypeCountMaintenanceArgs<ExtArgs extends runtime.Type
   where?: Prisma.MaintenanceJobWhereInput
 }
 
+/**
+ * MotoCountOutputType without action
+ */
+export type MotoCountOutputTypeCountFavoritesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.FavoriteWhereInput
+}
+
 
 export type MotoSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1927,6 +2101,7 @@ export type MotoSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   images?: boolean | Prisma.Moto$imagesArgs<ExtArgs>
   bookings?: boolean | Prisma.Moto$bookingsArgs<ExtArgs>
   maintenance?: boolean | Prisma.Moto$maintenanceArgs<ExtArgs>
+  favorites?: boolean | Prisma.Moto$favoritesArgs<ExtArgs>
   _count?: boolean | Prisma.MotoCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["moto"]>
 
@@ -2013,6 +2188,7 @@ export type MotoInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   images?: boolean | Prisma.Moto$imagesArgs<ExtArgs>
   bookings?: boolean | Prisma.Moto$bookingsArgs<ExtArgs>
   maintenance?: boolean | Prisma.Moto$maintenanceArgs<ExtArgs>
+  favorites?: boolean | Prisma.Moto$favoritesArgs<ExtArgs>
   _count?: boolean | Prisma.MotoCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type MotoIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2035,6 +2211,7 @@ export type $MotoPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     images: Prisma.$ImagePayload<ExtArgs>[]
     bookings: Prisma.$BookingPayload<ExtArgs>[]
     maintenance: Prisma.$MaintenanceJobPayload<ExtArgs>[]
+    favorites: Prisma.$FavoritePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2457,6 +2634,7 @@ export interface Prisma__MotoClient<T, Null = never, ExtArgs extends runtime.Typ
   images<T extends Prisma.Moto$imagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Moto$imagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ImagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   bookings<T extends Prisma.Moto$bookingsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Moto$bookingsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BookingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   maintenance<T extends Prisma.Moto$maintenanceArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Moto$maintenanceArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MaintenanceJobPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  favorites<T extends Prisma.Moto$favoritesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Moto$favoritesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FavoritePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2976,6 +3154,30 @@ export type Moto$maintenanceArgs<ExtArgs extends runtime.Types.Extensions.Intern
   take?: number
   skip?: number
   distinct?: Prisma.MaintenanceJobScalarFieldEnum | Prisma.MaintenanceJobScalarFieldEnum[]
+}
+
+/**
+ * Moto.favorites
+ */
+export type Moto$favoritesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Favorite
+   */
+  select?: Prisma.FavoriteSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Favorite
+   */
+  omit?: Prisma.FavoriteOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.FavoriteInclude<ExtArgs> | null
+  where?: Prisma.FavoriteWhereInput
+  orderBy?: Prisma.FavoriteOrderByWithRelationInput | Prisma.FavoriteOrderByWithRelationInput[]
+  cursor?: Prisma.FavoriteWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.FavoriteScalarFieldEnum | Prisma.FavoriteScalarFieldEnum[]
 }
 
 /**

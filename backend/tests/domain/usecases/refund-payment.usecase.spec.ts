@@ -11,6 +11,7 @@ const makeMockRepository = (payment: Payment | null): IPaymentRepository => ({
   findById: jest.fn(async () => payment),
   findByBookingId: jest.fn(),
   save: jest.fn(),
+  updateStatus: jest.fn(),
   refund: jest.fn(async (id) => makePayment('refunded')),
 })
 

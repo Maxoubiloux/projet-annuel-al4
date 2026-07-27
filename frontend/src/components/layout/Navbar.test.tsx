@@ -1,44 +1,73 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import Navbar from "@/components/layout/Navbar";
-import { AuthProvider, useAuth } from "@/hooks/useAuth";
 
-function LoginButton() {
-  const { login } = useAuth();
+const { replaceMock, useAuthMock } = vi.hoisted(() => ({
+  replaceMock: vi.fn(),
+  useAuthMock: vi.fn(),
+}));
 
-  return <button onClick={() => login("user@example.com")}>Login test</button>;
-}
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: replaceMock,
+  }),
+}));
 
-function renderNavbar() {
-  render(
-    <AuthProvider>
-      <LoginButton />
-      <Navbar />
-    </AuthProvider>
-  );
-}
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: useAuthMock,
+}));
 
 describe("Navbar", () => {
-  it("affiche les liens de connexion quand l'utilisateur n'est pas authentifie", () => {
-    renderNavbar();
+  beforeEach(() => {
+    useAuthMock.mockReturnValue({
+      user: null,
+      isAuthenticated: false,
+      isLoading: false,
+      token: undefined,
+      login: vi.fn(),
+      register: vi.fn(),
+      resetPassword: vi.fn(),
+      accountManagement: vi.fn(),
+      logout: vi.fn(),
+    });
+  });
 
-    expect(screen.getByRole("link", { name: /se connecter/i })).toHaveAttribute(
+  it("affiche le lien de connexion quand l'utilisateur n'est pas authentifie", () => {
+    render(<Navbar />);
+
+    expect(screen.getByRole("link", { name: /connexion/i })).toHaveAttribute(
       "href",
       "/login"
     );
-    expect(screen.getByRole("link", { name: /créer un compte/i })).toHaveAttribute(
-      "href",
-      "/register"
-    );
   });
 
-  it("affiche l'etat connecte apres login", () => {
-    renderNavbar();
+  it("affiche le menu utilisateur quand l'utilisateur est authentifie", () => {
+    const logout = vi.fn();
+    useAuthMock.mockReturnValue({
+      user: {
+        id: "1",
+        email: "user@example.com",
+        firstName: "Alice",
+        lastName: "Martin",
+        role: "user",
+      },
+      isAuthenticated: true,
+      isLoading: false,
+      token: "token",
+      login: vi.fn(),
+      register: vi.fn(),
+      resetPassword: vi.fn(),
+      accountManagement: vi.fn(),
+      logout,
+    });
 
-    fireEvent.click(screen.getByRole("button", { name: /login test/i }));
+    render(<Navbar />);
 
-    expect(screen.getByText(/bonjour/i)).toBeInTheDocument();
-    expect(screen.getByText("Utilisateur")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /déconnexion/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /alice martin/i }));
+
+    expect(screen.getAllByText("Alice Martin")).toHaveLength(2);
+    fireEvent.click(screen.getByRole("menuitem", { name: /déconnexion/i }));
+    expect(logout).toHaveBeenCalled();
   });
 });

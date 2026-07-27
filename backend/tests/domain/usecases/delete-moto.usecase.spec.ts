@@ -10,6 +10,8 @@ const motoFixture = new Moto(
 const makeMockRepository = (moto: Moto | null): IMotoRepository => ({
   findAll: jest.fn(),
   findById: jest.fn(async () => moto),
+  findReservedTodayIds: jest.fn(),
+  findAvailability: jest.fn(),
   save: jest.fn(),
   update: jest.fn(),
   delete: jest.fn(),

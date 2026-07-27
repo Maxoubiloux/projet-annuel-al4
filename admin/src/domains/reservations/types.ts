@@ -27,3 +27,13 @@ export interface Reservation {
   paymentStatus: PaymentStatus;
   createdAt: string;
 }
+
+export interface ReservationRow extends Reservation {
+  customer?: Pick<Customer, 'id' | 'firstName' | 'lastName' | 'email' | 'phone'>;
+  moto?: {
+    id: string;
+    brand: string;
+    model: string;
+    plate?: string;
+  };
+}

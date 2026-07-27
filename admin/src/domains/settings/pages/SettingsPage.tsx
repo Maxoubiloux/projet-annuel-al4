@@ -80,9 +80,9 @@ export function SettingsPage() {
 
   /* Company info — controlled inputs */
   const [company, setCompany] = useState({
-    name: 'City Moto Yard',
+    name: 'Plein Gaz Loc',
     address: '12 Rue des Motards, 75011 Paris',
-    email: 'contact@citymotoyard.fr',
+    email: 'contact@pleingazloc.fr',
     phone: '+33 1 42 00 00 00',
   });
 
@@ -126,7 +126,7 @@ export function SettingsPage() {
     <div style={{ maxWidth: 780 }}>
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ margin: 0, fontFamily: "'Cormorant Garamond',serif", fontSize: 30, fontWeight: 600, letterSpacing: '.01em', lineHeight: 1.05, color: 'var(--ink)' }}>Settings</h1>
-        <p style={{ margin: '5px 0 0', fontSize: 13.5, color: 'var(--muted)' }}>Platform configuration for City Moto Yard</p>
+        <p style={{ margin: '5px 0 0', fontSize: 13.5, color: 'var(--muted)' }}>Platform configuration for Plein Gaz Loc</p>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

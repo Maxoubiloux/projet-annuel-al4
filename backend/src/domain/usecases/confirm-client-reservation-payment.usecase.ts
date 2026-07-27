@@ -1,0 +1,48 @@
+import { Reservation } from '../entities/Reservation'
+import { IReservationRepository } from '../repositories/IReservationRepository'
+import { IPaymentRepository } from '../repositories/IPaymentRepository'
+import { CheckoutSessionStatus, IPaymentGateway } from '../repositories/IPaymentGateway'
+import { Result, err, ok } from '@shared/result/Result'
+import { DomainError, ForbiddenError, NotFoundError, ValidationError } from '@shared/errors/DomainError'
+
+export class ConfirmClientReservationPaymentUseCase {
+  constructor(
+    private readonly reservationRepository: IReservationRepository,
+    private readonly paymentRepository: IPaymentRepository,
+    private readonly paymentGateway: IPaymentGateway,
+  ) { }
+
+  async execute(
+    bookingId: string,
+    userId: string,
+    sessionId: string,
+  ): Promise<Result<Reservation, DomainError>> {
+    const reservation = await this.reservationRepository.findById(bookingId)
+    if (!reservation) return err(new NotFoundError('Reservation', bookingId))
+    if (reservation.customerId !== userId) return err(new ForbiddenError('Cette réservation ne vous appartient pas'))
+    if (reservation.paymentStatus === 'paid') return ok(reservation)
+    if (reservation.status === 'cancelled') return err(new ValidationError('Cette réservation est annulée'))
+
+    let session: CheckoutSessionStatus
+    try {
+      session = await this.paymentGateway.retrieveCheckoutSession(sessionId)
+    } catch {
+      return err(new ValidationError('Service de paiement indisponible'))
+    }
+    if (session.reservationId !== bookingId) {
+      return err(new ForbiddenError('Cette session de paiement ne correspond pas à la réservation'))
+    }
+    if (session.paymentStatus !== 'paid') {
+      return err(new ValidationError('Le paiement Stripe n\'est pas validé'))
+    }
+
+    const payment = await this.paymentRepository.findByBookingId(bookingId)
+    if (!payment) return err(new NotFoundError('Payment for booking', bookingId))
+
+    await this.paymentRepository.updateStatus(payment.id, 'paid')
+    await this.reservationRepository.updatePaymentStatus(bookingId, 'paid')
+    const confirmed = await this.reservationRepository.updateStatus(bookingId, 'confirmed')
+
+    return ok(confirmed)
+  }
+}
