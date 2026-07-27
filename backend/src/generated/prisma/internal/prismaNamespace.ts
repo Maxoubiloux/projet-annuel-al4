@@ -1373,6 +1373,8 @@ export const BookingScalarFieldEnum = {
   paymentStatus: 'paymentStatus',
   totalAmount: 'totalAmount',
   depositAmount: 'depositAmount',
+  contractStatus: 'contractStatus',
+  contractPdfUrl: 'contractPdfUrl',
   createdAt: 'createdAt'
 } as const
 

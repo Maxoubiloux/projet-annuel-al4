@@ -18,6 +18,7 @@ const makeMockReservationRepository = (reservation: Reservation | null): IReserv
   save: jest.fn(),
   updateStatus: jest.fn(),
   updatePaymentStatus: jest.fn(async (id, paymentStatus) => makeReservation(paymentStatus)),
+  updateContract: jest.fn(),
 })
 
 const makeMockPaymentRepository = (payment: Payment | null): IPaymentRepository => ({

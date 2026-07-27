@@ -19,6 +19,7 @@ import { IPaymentRepository } from '@domain/repositories/IPaymentRepository'
 import { ISettingsRepository } from '@domain/repositories/ISettingsRepository'
 import { IDashboardRepository } from '@domain/repositories/IDashboardRepository'
 import { IIamClient } from '@domain/repositories/IIamClient'
+import { IContractQueuePublisher } from '@domain/ports/IContractQueuePublisher'
 
 export default async function (
   fastify: FastifyInstance,
@@ -33,6 +34,7 @@ export default async function (
     settingsRepository: ISettingsRepository
     dashboardRepository: IDashboardRepository
     iamClient: IIamClient
+    contractPublisher?: IContractQueuePublisher
   },
 ) {
   await motoroutesV1(fastify, { motoRepository: opts.motoRepository })
@@ -41,6 +43,7 @@ export default async function (
   await reservationRoutesV1(fastify, {
     reservationRepository: opts.reservationRepository,
     paymentRepository: opts.paymentRepository,
+    contractPublisher: opts.contractPublisher,
   })
   await customerRoutesV1(fastify, { customerRepository: opts.customerRepository })
   await maintenanceRoutesV1(fastify, { maintenanceRepository: opts.maintenanceRepository })

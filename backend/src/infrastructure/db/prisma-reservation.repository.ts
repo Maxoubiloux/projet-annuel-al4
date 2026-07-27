@@ -39,6 +39,8 @@ function toDomain(r: BookingRecord): Reservation {
       phone: r.user.phone ?? '',
       email: r.user.email,
     },
+    r.contractStatus,
+    r.contractPdfUrl ?? undefined,
   )
 }
 
@@ -125,6 +127,15 @@ export class PrismaReservationRepository implements IReservationRepository {
 
   async updatePaymentStatus(id: string, paymentStatus: string): Promise<Reservation> {
     const r = await prisma.booking.update({ where: { id }, data: { paymentStatus }, include })
+    return toDomain(r)
+  }
+
+  async updateContract(id: string, contractStatus: string, contractPdfUrl: string | null): Promise<Reservation> {
+    const r = await prisma.booking.update({
+      where: { id },
+      data: { contractStatus, contractPdfUrl },
+      include,
+    })
     return toDomain(r)
   }
 }

@@ -18,6 +18,9 @@ import { PrismaPaymentRepository } from '@infrastructure/db/prisma-payment.repos
 import { PrismaSettingsRepository } from '@infrastructure/db/prisma-settings.repository'
 import { PrismaDashboardRepository } from '@infrastructure/db/prisma-dashboard.repository'
 import { KeycloakAdminClient } from '@infrastructure/external/keycloak-admin.client'
+import { RabbitMqConnection } from '@infrastructure/queues/rabbitmq.connection'
+import { RabbitMqContractPublisher } from '@infrastructure/queues/rabbitmq-contract.publisher'
+import { startWorkerResponseConsumer } from '@infrastructure/queues/worker-response.consumer'
 
 const motoRepository = new PrismaMotoRepository()
 const shopRepository = new PrismaShopRepository()
@@ -29,6 +32,12 @@ const paymentRepository = new PrismaPaymentRepository()
 const settingsRepository = new PrismaSettingsRepository()
 const dashboardRepository = new PrismaDashboardRepository()
 const iamClient = new KeycloakAdminClient()
+
+// File de messages : la connexion est établie au démarrage (voir start()).
+// Le publisher est toujours injecté ; en l'absence de broker joignable, la
+// publication échoue de façon isolée sans bloquer la création de réservation.
+const rabbitConnection = new RabbitMqConnection()
+const contractPublisher = new RabbitMqContractPublisher(rabbitConnection)
 
 const app = fastify({
   logger: process.env.NODE_ENV === 'production'
@@ -81,6 +90,7 @@ app.register(v1Routes, {
   settingsRepository,
   dashboardRepository,
   iamClient,
+  contractPublisher,
 })
 app.register(v2Routes, { prefix: '/api/v2' })
 
@@ -88,6 +98,25 @@ app.setErrorHandler(errorHandler)
 app.setNotFoundHandler(notFoundHandler)
 
 const start = async () => {
+  // Connexion à RabbitMQ + démarrage du consumer de réponses worker. Non
+  // bloquant : si le broker est indisponible (dev sans RabbitMQ), on loggue un
+  // avertissement et l'API démarre quand même.
+  try {
+    await rabbitConnection.connect(app.log)
+    await startWorkerResponseConsumer(rabbitConnection, reservationRepository, app.log)
+    app.log.info('RabbitMQ connected — worker queues ready')
+  } catch (err) {
+    app.log.warn({ err }, 'RabbitMQ unavailable — worker queue features disabled')
+  }
+
+  // Arrêt gracieux : ferme proprement le canal et la connexion RabbitMQ.
+  for (const signal of ['SIGTERM', 'SIGINT'] as const) {
+    process.once(signal, () => {
+      void rabbitConnection.close().catch(() => {})
+      void app.close().finally(() => process.exit(0))
+    })
+  }
+
   try {
     await app.listen({ port: 3000, host: '0.0.0.0' })
     console.log('Backend started on http://localhost:3000')
