@@ -9,6 +9,9 @@ import { Suspense, useEffect, useState } from 'react';
 function PaymentSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const reservationId = searchParams.get('reservationId');
+  const sessionId = searchParams.get('session_id');
+  const hasIncompleteStripeReturn = !reservationId || !sessionId;
   const { isAuthenticated, isLoading } = useAuth();
   const [message, setMessage] = useState('Validation du paiement...');
   const [error, setError] = useState<string | null>(null);
@@ -20,12 +23,7 @@ function PaymentSuccessContent() {
       return;
     }
 
-    const reservationId = searchParams.get('reservationId');
-    const sessionId = searchParams.get('session_id');
-    if (!reservationId || !sessionId) {
-      setError('Retour Stripe incomplet.');
-      return;
-    }
+    if (hasIncompleteStripeReturn) return;
 
     let active = true;
     reservationsService.confirmPayment(reservationId, sessionId)
@@ -41,7 +39,9 @@ function PaymentSuccessContent() {
     return () => {
       active = false;
     };
-  }, [isAuthenticated, isLoading, router, searchParams]);
+  }, [hasIncompleteStripeReturn, isAuthenticated, isLoading, reservationId, router, sessionId]);
+
+  const displayError = error ?? (hasIncompleteStripeReturn ? 'Retour Stripe incomplet.' : null);
 
   return (
     <div className="min-h-screen flex items-center justify-center px-5">
@@ -50,12 +50,12 @@ function PaymentSuccessContent() {
           Paiement Stripe
         </p>
         <h1 className="font-serif font-semibold text-[38px] leading-none mb-4">
-          {error ? 'Validation impossible' : 'Paiement reçu'}
+          {displayError ? 'Validation impossible' : 'Paiement reçu'}
         </h1>
         <p className="text-[14.5px] leading-[1.7] text-[#7a715a] mb-7">
-          {error ?? message}
+          {displayError ?? message}
         </p>
-        {error && (
+        {displayError && (
           <Link
             href="/reservations"
             className="inline-block bg-[#7E2E32] text-[#F4F1E9] font-mono text-[13px] tracking-[0.04em] px-[30px] py-[14px] rounded-full hover:bg-[#651f23] transition-colors"

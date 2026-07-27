@@ -112,20 +112,27 @@ function mapUser(user: AuthResponse['data']['user']): AuthUser {
   };
 }
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [token, setToken] = useState<string | undefined>(undefined);
+function getStoredToken(): string | undefined {
+  if (typeof window === 'undefined') return undefined;
+  return window.localStorage.getItem(TOKEN_KEY) ?? undefined;
+}
 
-  useEffect(() => {
-    const storedToken = window.localStorage.getItem(TOKEN_KEY);
-    const storedUser = window.localStorage.getItem(USER_KEY);
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser) as AuthUser);
-    }
-    setIsLoading(false);
-  }, []);
+function getStoredUser(): AuthUser | null {
+  if (typeof window === 'undefined') return null;
+  const storedUser = window.localStorage.getItem(USER_KEY);
+  if (!storedUser) return null;
+  try {
+    return JSON.parse(storedUser) as AuthUser;
+  } catch {
+    window.localStorage.removeItem(USER_KEY);
+    return null;
+  }
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<AuthUser | null>(() => getStoredUser());
+  const [isLoading] = useState(false);
+  const [token, setToken] = useState<string | undefined>(() => getStoredToken());
 
   useEffect(() => {
     const syncRefreshedSession = () => {
