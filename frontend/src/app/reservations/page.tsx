@@ -162,11 +162,11 @@ export default function ReservationsPage() {
   useEffect(() => {
     if (isLoading || !isAuthenticated) return;
     let active = true;
-    setLoadingReservations(true);
-    setError(null);
     reservationsService.getMine()
       .then((data) => {
-        if (active) setReservations(data);
+        if (!active) return;
+        setReservations(data);
+        setError(null);
       })
       .catch((e) => {
         if (active) setError(e.message || 'Erreur lors du chargement des réservations.');

@@ -42,11 +42,11 @@ export default function FavorisPage() {
   useEffect(() => {
     if (isLoading || !isAuthenticated) return;
     let active = true;
-    setLoadingFavorites(true);
-    setError(null);
     favoritesService.getAll()
       .then((data) => {
-        if (active) setFavorites(data);
+        if (!active) return;
+        setFavorites(data);
+        setError(null);
       })
       .catch((e) => {
         if (active) setError(e.message || 'Erreur lors du chargement des favoris.');
