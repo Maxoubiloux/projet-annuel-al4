@@ -1,98 +1,156 @@
-# Moto Rental Platform - Worker
+# Moto Rental Platform — Worker
 
-Worker asynchrone écrit en **Rust** pour traitement des tâches asynchrones.
+Worker asynchrone écrit en **Rust**. Il consomme les demandes publiées par le backend sur RabbitMQ,
+génère le **contrat de location en PDF**, et publie sa réponse (succès *ou* échec) sur la file de
+réponses.
 
-## 🎯 Responsabilités
+## Isolation
 
-- Génération de contrats PDF
-- Validation et traitement de documents (permis, identité)
-- Compression et normalisation de photos
-- Envoi d'emails
-- Gestion des retries avec politique exponential backoff
+Le worker est totalement isolé du backend (cf. [ADR 0005](../backend/docs/ADR/0005-rabbitmq-2-queues-isolation-worker.md)) :
 
-## 🚀 Démarrage
+- **aucun accès à la base de données** ;
+- **aucun appel HTTP vers le backend** — tout ce qui figure sur le contrat arrive dans le message ;
+- deux files distinctes : `worker_requests` (backend → worker) et `worker_responses` (worker → backend) ;
+- les messages inexploitables partent en dead-letter (`worker_dlx` → `worker_dead_letters`).
 
-```bash
-# Installation
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+Le seul point de contact hors messages est le **volume de contrats**, partagé avec le backend : le
+worker y écrit le PDF, le backend le sert via une route authentifiée
+`GET /api/v1/reservations/:id/contract` (le contrat contient des données personnelles).
 
-# Build
-cargo build --release
+## Job supporté
 
-# Run
-cargo run
+### `GenerateRentalContractPdf`
 
-# Tests
-cargo test
-```
-
-## 🔧 Configuration
-
-Créer `.env` depuis `.env.example`
-
-```bash
-RABBITMQ_URL=amqp://guest:guest@localhost:5672
-REQUEST_QUEUE=worker_requests
-RESPONSE_QUEUE=worker_responses
-LOG_LEVEL=debug
-```
-
-## 📦 Jobs Supportés
-
-### 1. GenerateRentalContractPdf
-Génère le PDF du contrat de location.
-
-**Input:**
-```json
-{
-  "location_id": "uuid",
-  "snapshot": { ... }
-}
-```
-
-**Output:**
-```json
-{
-  "location_id": "uuid",
-  "url": "s3://bucket/contracts/..."
-}
-```
-
-**Retry Policy:** 3 tentatives (1s, 4s, 16s)
-
-### 2. ProcessCheckinPhotos
-Compresse et normalise les photos d'état des lieux.
-
-**Retry Policy:** 2 tentatives
-
-### 3. ValidateDocument
-Valide les documents uploadés (OCR, format, signatures).
-
-**Retry Policy:** 1 tentative → dead-letter si écec
-
-### 4. SendEmail
-Envoie des emails transactionnels.
-
-**Retry Policy:** 5 tentatives (attente possible)
-
-## 🐳 Docker
-
-```bash
-docker build -t moto-rental-worker:latest .
-docker run -e RABBITMQ_URL=amqp://... moto-rental-worker:latest
-```
-
-## 📊 Observabilité
-
-Logs structurés en JSON pour intégration avec système de logs centralisé :
+**Message entrant** (`worker_requests`) — miroir de `ContractJobRequest` dans
+`backend/src/infrastructure/queues/messages.ts` :
 
 ```json
 {
-  "timestamp": "2026-01-29T10:30:00Z",
-  "level": "INFO",
-  "job_type": "GenerateRentalContractPdf",
-  "location_id": "uuid",
   "correlation_id": "uuid",
-  "duration_ms": 1234
+  "job_type": "GenerateRentalContractPdf",
+  "reservation_id": "uuid",
+  "data": {
+    "moto_id": "uuid",
+    "customer_id": "uuid",
+    "start_date": "2026-08-01",
+    "end_date": "2026-08-05",
+    "total_amount": 340,
+    "deposit_amount": 500,
+
+    "customer": { "first_name": "…", "last_name": "…", "email": "…", "phone": "…" },
+    "moto": { "brand": "…", "model": "…", "plate": "…", "category": "…" },
+    "shop": { "name": "…", "city": "…" }
+  }
 }
 ```
+
+Les trois blocs `customer` / `moto` / `shop` sont **dénormalisés** (le worker ne peut rien aller
+chercher) et **optionnels** : s'ils manquent, le contrat est tout de même produit avec les
+identifiants, ce qui permet de déployer backend et worker indépendamment.
+
+**Message sortant** (`worker_responses`) :
+
+```json
+{ "correlation_id": "uuid", "reservation_id": "uuid", "success": true,  "url": "http://localhost:3000/api/v1/reservations/<uuid>/contract" }
+{ "correlation_id": "uuid", "reservation_id": "uuid", "success": false, "error": "…" }
+```
+
+**Politique de retry** : 3 reprises, backoff exponentiel de base 1 s (1 s, 2 s, 4 s), plafonné à
+30 s. Une erreur **permanente** (JSON invalide, `job_type` inconnu, `reservation_id` inexploitable)
+n'est jamais rejouée.
+
+**Politique d'acquittement** :
+
+| Cas | Action worker | Effet backend |
+|---|---|---|
+| JSON illisible / `job_type` inconnu | `nack` sans requeue, aucune réponse | message en DLQ |
+| Échec après épuisement des reprises | réponse `success: false` puis `ack` | `contract_status = 'failed'` |
+| Succès | réponse `success: true` puis `ack` | `contract_status = 'ready'` + `contract_pdf_url` |
+
+Le PDF est écrit de façon **atomique** (fichier temporaire puis `rename`) : le backend ne peut jamais
+servir un fichier partiel.
+
+## Démarrage
+
+```bash
+cp .env.example .env      # ajuster CONTRACTS_DIR et RABBITMQ_URL
+cargo run                 # nécessite un RabbitMQ joignable
+
+cargo fmt --all -- --check
+cargo clippy --all-targets -- -D warnings
+cargo test                # aucun broker requis
+```
+
+En pratique, le worker se lance avec le reste de la plateforme :
+
+```bash
+docker compose up -d --build rabbitmq backend worker
+docker compose logs -f worker
+```
+
+## Configuration
+
+| Variable | Défaut | Rôle |
+|---|---|---|
+| `RABBITMQ_URL` | `amqp://guest:guest@localhost:5672` | Connexion au broker |
+| `REQUEST_QUEUE` | `worker_requests` | File des demandes |
+| `RESPONSE_QUEUE` | `worker_responses` | File des réponses |
+| `DEAD_LETTER_QUEUE` | `worker_dead_letters` | File de rebut |
+| `DEAD_LETTER_EXCHANGE` | `worker_dlx` | Exchange fanout de rebut |
+| `CONTRACTS_DIR` | `/data/contracts` | Répertoire d'écriture des PDF |
+| `PUBLIC_BASE_URL` | `http://localhost:3000` | Racine de l'URL renvoyée |
+| `MAX_RETRIES` | `3` | Reprises par job |
+| `RETRY_BACKOFF_MS` | `1000` | Délai de base du backoff |
+| `RUST_LOG` / `LOG_LEVEL` | `info` | Niveau de log |
+
+Les noms et défauts des files sont **identiques à ceux du backend** : les deux services déclarent la
+même topologie, et RabbitMQ rejette toute redéclaration divergente.
+
+## Observabilité
+
+Logs structurés en JSON (`tracing`), avec le `correlation_id` reçu du backend propagé dans tous les
+logs du job **et** renvoyé dans la réponse — une seule recherche suffit à suivre une réservation de
+bout en bout :
+
+```json
+{
+  "timestamp": "2026-07-28T10:30:00Z",
+  "level": "INFO",
+  "fields": {
+    "message": "Contract generated",
+    "correlation_id": "uuid",
+    "reservation_id": "uuid",
+    "duration_ms": 42,
+    "url": "http://localhost:3000/api/v1/reservations/<uuid>/contract"
+  }
+}
+```
+
+## Structure
+
+```
+src/
+├── main.rs              # câblage, arrêt gracieux (SIGTERM/SIGINT), tracing
+├── config.rs            # variables d'environnement
+├── error.rs             # erreurs + classification retryable / permanent
+├── retry.rs             # backoff exponentiel plafonné
+├── jobs/
+│   ├── mod.rs           # dispatcher : parse, retry, réponse, ack/nack
+│   ├── messages.rs      # contrat d'échange (miroir de messages.ts)
+│   └── generate_contract.rs  # rendu PDF (printpdf) + écriture atomique
+└── queue/
+    ├── mod.rs           # connexion avec reprise au démarrage
+    ├── topology.rs      # déclaration miroir de celle du backend
+    ├── consumer.rs      # boucle de consommation, prefetch, ack/nack
+    └── producer.rs      # publication persistante avec confirmations
+```
+
+## Docker
+
+```bash
+docker build -t moto-rental-worker:latest ./worker
+```
+
+Image multi-stage (build `rust:1.93-slim-bookworm`, runtime `debian:bookworm-slim`), exécutée par un
+utilisateur non privilégié. `lapin` est compilé sans backend TLS — le worker ne parle qu'AMQP en
+clair au broker interne — ce qui évite toute dépendance système à l'exécution.
