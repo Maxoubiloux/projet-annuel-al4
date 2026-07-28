@@ -19,6 +19,7 @@ const makeMockRepository = (reservation: Reservation | null): IReservationReposi
   save: jest.fn(),
   updateStatus: jest.fn(async (id, status) => makeReservation(status)),
   updatePaymentStatus: jest.fn(),
+  updateContract: jest.fn(),
 })
 
 describe('CancelReservationUseCase', () => {

@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { IReservationRepository } from '@domain/repositories/IReservationRepository'
 import { IPaymentRepository } from '@domain/repositories/IPaymentRepository'
+import { IContractQueuePublisher } from '@domain/ports/IContractQueuePublisher'
 import { IPaymentGateway } from '@domain/repositories/IPaymentGateway'
 import { CreateReservationParams } from '@domain/entities/Reservation'
 import { CreateReservationUseCase } from '@domain/usecases/create-reservation.usecase'
@@ -49,13 +50,14 @@ export async function reservationRoutesV1(
   opts: {
     reservationRepository: IReservationRepository
     paymentRepository: IPaymentRepository
+    contractPublisher?: IContractQueuePublisher
     paymentGateway: IPaymentGateway
   },
 ) {
-  const { reservationRepository, paymentRepository, paymentGateway } = opts
+  const { reservationRepository, paymentRepository, contractPublisher, paymentGateway } = opts
 
   const createReservationController = new CreateReservationController(
-    new CreateReservationUseCase(reservationRepository, paymentRepository),
+    new CreateReservationUseCase(reservationRepository, paymentRepository, contractPublisher),
   )
   const createClientReservationUseCase = new CreateClientReservationUseCase(reservationRepository, paymentRepository)
   const startClientReservationPaymentUseCase = new StartClientReservationPaymentUseCase(

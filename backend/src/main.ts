@@ -5,6 +5,7 @@ import cors from '@fastify/cors'
 import multipart from '@fastify/multipart'
 import fastifyStatic from '@fastify/static'
 import { authMiddleware } from '@presentation/middleware/AuthMiddleware'
+import { errorHandler, notFoundHandler } from '@presentation/middleware/error-handler'
 import v1Routes from '@presentation/routes/v1'
 import v2Routes from '@presentation/routes/v2'
 import { PrismaMotoRepository } from '@infrastructure/db/prisma-moto.repository'
@@ -18,6 +19,9 @@ import { PrismaSettingsRepository } from '@infrastructure/db/prisma-settings.rep
 import { PrismaDashboardRepository } from '@infrastructure/db/prisma-dashboard.repository'
 import { PrismaFavoriteRepository } from '@infrastructure/db/prisma-favorite.repository'
 import { KeycloakAdminClient } from '@infrastructure/external/keycloak-admin.client'
+import { RabbitMqConnection } from '@infrastructure/queues/rabbitmq.connection'
+import { RabbitMqContractPublisher } from '@infrastructure/queues/rabbitmq-contract.publisher'
+import { startWorkerResponseConsumer } from '@infrastructure/queues/worker-response.consumer'
 import { StripePaymentGateway } from '@infrastructure/external/stripe-payment.gateway'
 import { UnavailablePaymentGateway } from '@infrastructure/external/unavailable-payment.gateway'
 
@@ -36,15 +40,21 @@ const paymentGateway = process.env.STRIPE_SECRET_KEY
   ? new StripePaymentGateway(process.env.STRIPE_SECRET_KEY)
   : new UnavailablePaymentGateway()
 
+// File de messages : la connexion est établie au démarrage (voir start()).
+// Le publisher est toujours injecté ; en l'absence de broker joignable, la
+// publication échoue de façon isolée sans bloquer la création de réservation.
+const rabbitConnection = new RabbitMqConnection()
+const contractPublisher = new RabbitMqContractPublisher(rabbitConnection)
+
 const app = fastify({
   logger: process.env.NODE_ENV === 'production'
     ? true
     : {
-        transport: {
-          target: 'pino-pretty',
-          options: { colorize: true },
-        },
+      transport: {
+        target: 'pino-pretty',
+        options: { colorize: true },
       },
+    },
 })
 
 await app.register(helmet)
@@ -89,18 +99,33 @@ app.register(v1Routes, {
   dashboardRepository,
   favoriteRepository,
   iamClient,
+  contractPublisher,
 })
-app.register(v2Routes, { prefix: '/api/v2' })
+app.register(v2Routes, { prefix: '/api/v2', motoRepository })
 
-// app.setErrorHandler((error, request, reply) => {
-//   request.log.error(error)
-//   reply.status(error.statusCode || 500).send({
-//     error: error.message || 'Internal Server Error',
-//     correlationId: request.id,
-//   })
-// })
+app.setErrorHandler(errorHandler)
+app.setNotFoundHandler(notFoundHandler)
 
 const start = async () => {
+  // Connexion à RabbitMQ + démarrage du consumer de réponses worker. Non
+  // bloquant : si le broker est indisponible (dev sans RabbitMQ), on loggue un
+  // avertissement et l'API démarre quand même.
+  try {
+    await rabbitConnection.connect(app.log)
+    await startWorkerResponseConsumer(rabbitConnection, reservationRepository, app.log)
+    app.log.info('RabbitMQ connected — worker queues ready')
+  } catch (err) {
+    app.log.warn({ err }, 'RabbitMQ unavailable — worker queue features disabled')
+  }
+
+  // Arrêt gracieux : ferme proprement le canal et la connexion RabbitMQ.
+  for (const signal of ['SIGTERM', 'SIGINT'] as const) {
+    process.once(signal, () => {
+      void rabbitConnection.close().catch(() => { })
+      void app.close().finally(() => process.exit(0))
+    })
+  }
+
   try {
     await app.listen({ port: 3000, host: '0.0.0.0' })
     console.log('Backend started on http://localhost:3000')

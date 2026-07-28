@@ -2,6 +2,11 @@ import { PAYMENT_STATUSES } from './Payment'
 
 export const RESERVATION_STATUSES = ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled'] as const
 export type ReservationStatusName = (typeof RESERVATION_STATUSES)[number]
+
+// Cycle de vie de la génération asynchrone du contrat PDF par le worker.
+export const CONTRACT_STATUSES = ['pending', 'processing', 'ready', 'failed'] as const
+export type ContractStatusName = (typeof CONTRACT_STATUSES)[number]
+
 export { PAYMENT_STATUSES }
 
 export interface CreateReservationParams {
@@ -63,6 +68,9 @@ export class Reservation {
     readonly createdAt: Date,
     readonly moto?: ReservationMotoSummary,
     readonly customer?: ReservationCustomerSummary,
+    // État du contrat PDF généré de façon asynchrone par le worker.
+    readonly contractStatus: string = 'pending',
+    readonly contractPdfUrl?: string,
     readonly shop?: ReservationShopSummary,
   ) { }
 

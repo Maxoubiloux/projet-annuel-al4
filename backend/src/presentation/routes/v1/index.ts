@@ -21,6 +21,7 @@ import { IPaymentGateway } from '@domain/repositories/IPaymentGateway'
 import { ISettingsRepository } from '@domain/repositories/ISettingsRepository'
 import { IDashboardRepository } from '@domain/repositories/IDashboardRepository'
 import { IIamClient } from '@domain/repositories/IIamClient'
+import { IContractQueuePublisher } from '@domain/ports/IContractQueuePublisher'
 import { IFavoriteRepository } from '@domain/repositories/IFavoriteRepository'
 
 export default async function (
@@ -37,6 +38,7 @@ export default async function (
     settingsRepository: ISettingsRepository
     dashboardRepository: IDashboardRepository
     iamClient: IIamClient
+    contractPublisher?: IContractQueuePublisher
     favoriteRepository: IFavoriteRepository
   },
 ) {
@@ -46,6 +48,7 @@ export default async function (
   await reservationRoutesV1(fastify, {
     reservationRepository: opts.reservationRepository,
     paymentRepository: opts.paymentRepository,
+    contractPublisher: opts.contractPublisher,
     paymentGateway: opts.paymentGateway,
   })
   await customerRoutesV1(fastify, { customerRepository: opts.customerRepository })
