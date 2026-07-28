@@ -8,6 +8,7 @@ RUN npm install
 COPY tsconfig.json ./
 COPY prisma.config.ts ./
 COPY prisma ./prisma
+COPY motos.json ./motos.json
 COPY src ./src
 
 RUN npx prisma generate
@@ -25,6 +26,7 @@ RUN npm install --omit=dev
 COPY --from=builder /build/dist ./dist
 COPY --from=builder /build/prisma ./prisma
 COPY --from=builder /build/prisma.config.ts ./prisma.config.ts
+COPY --from=builder /build/motos.json ./motos.json
 COPY --from=builder /build/src/generated ./src/generated
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
 

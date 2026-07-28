@@ -11,7 +11,8 @@ export class Ok<T> {
   }
 
   mapErr<F>(): Result<T, F> {
-    return this as any
+    // Un Ok n'a pas d'erreur : il est déjà un Result<T, F> valide quel que soit F.
+    return this as Result<T, F>
   }
 
   getOr(): T {
@@ -26,7 +27,8 @@ export class Err<E> {
   constructor(readonly error: E) { }
 
   map(): Result<never, E> {
-    return this as any
+    // Un Err ne porte pas de valeur : il est déjà un Result<never, E> valide.
+    return this as Result<never, E>
   }
 
   mapErr<F>(fn: (error: E) => F): Result<never, F> {

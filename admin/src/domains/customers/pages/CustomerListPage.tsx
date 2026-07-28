@@ -1,0 +1,366 @@
+import { useState } from 'react';
+import { Search, Plus, Mail, Phone, UserCheck, UserX, Ellipsis, X, ChevronLeft, ChevronRight, SlidersHorizontal, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import type { Customer } from '@/domains/reservations/types';
+import { useCustomers } from '../hooks/useCustomers';
+import { ConfirmDialog } from '@/core/components/ui/ConfirmDialog';
+import { Button } from '@/core/components/ui/Button';
+import { DropdownMenu, DropdownMenuItem } from '@/core/components/ui/DropdownMenu';
+import { CreateCustomerModal } from '../components/CreateCustomerModal';
+import { EditCustomerModal } from '../components/EditCustomerModal';
+import { CustomerDetailModal } from '../components/CustomerDetailModal';
+import { useToast } from '@/core/components/ToastProvider';
+import { useAsync } from '@/core/hooks/useAsync';
+import { api } from '@/core/services/api';
+import { TableSkeleton } from '@/core/components/ui/Skeleton';
+import { ErrorState } from '@/core/components/ui/ErrorState';
+
+type StatusFilter = 'all' | 'active' | 'suspended';
+type LicenceFilter = 'all' | 'verified' | 'pending';
+type SortField = 'name' | 'status' | 'licenseVerified' | 'totalRentals';
+type SortDir = 'asc' | 'desc';
+
+const PAGE_SIZE = 10;
+
+function RowActionsMenu({ customer, anchorRect, onClose, onSuspend, onEdit, onViewProfile, onViewBookings }: {
+  customer: Customer;
+  anchorRect: DOMRect;
+  onClose: () => void;
+  onSuspend: () => void;
+  onEdit: () => void;
+  onViewProfile: () => void;
+  onViewBookings: () => void;
+}) {
+  return (
+    <DropdownMenu anchorRect={anchorRect} onClose={onClose} minWidth={170}>
+      <DropdownMenuItem onClick={() => { onClose(); onViewProfile(); }}>View profile</DropdownMenuItem>
+      <DropdownMenuItem onClick={() => { onClose(); onEdit(); }}>Edit</DropdownMenuItem>
+      <DropdownMenuItem onClick={() => { onClose(); onViewBookings(); }}>View bookings</DropdownMenuItem>
+      <div style={{ borderTop: '1px solid var(--border-2)', marginTop: 4, paddingTop: 4 }}>
+        <DropdownMenuItem color="var(--cmy-amber)" onClick={() => { onClose(); onSuspend(); }}>
+          {customer.status === 'active' ? 'Suspend' : 'Reactivate'}
+        </DropdownMenuItem>
+      </div>
+    </DropdownMenu>
+  );
+}
+
+const STATUS_OPTIONS: { key: StatusFilter; label: string; color?: string }[] = [
+  { key: 'all',       label: 'All'       },
+  { key: 'active',    label: 'Active',    color: 'var(--cmy-green)' },
+  { key: 'suspended', label: 'Suspended', color: 'var(--cmy-red)'   },
+];
+
+const LICENCE_OPTIONS: { key: LicenceFilter; label: string; color?: string }[] = [
+  { key: 'all',      label: 'All'      },
+  { key: 'verified', label: 'Verified', color: 'var(--cmy-green)'  },
+  { key: 'pending',  label: 'Pending',  color: 'var(--cmy-amber)'  },
+];
+
+export function CustomerListPage() {
+  const [page, setPage] = useState(1);
+  const { data: customers, isLoading, error: fetchError, refetch } = useCustomers({ page, limit: PAGE_SIZE });
+  const { success, error } = useToast();
+
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [licenceFilter, setLicenceFilter] = useState<LicenceFilter>('all');
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [openMenu, setOpenMenu] = useState<{ id: string; rect: DOMRect } | null>(null);
+  const [suspendTarget, setSuspendTarget] = useState<Customer | null>(null);
+  const [sort, setSort] = useState<{ field: SortField; dir: SortDir }>({ field: 'name', dir: 'asc' });
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<Customer | null>(null);
+  const [detailTarget, setDetailTarget] = useState<{ customer: Customer; tab: 'profile' | 'bookings' } | null>(null);
+
+  const suspendAction = useAsync((id: string, status: Customer['status']) => api.patch(`/customers/${id}/status`, { status }));
+
+  const handleSuspendToggle = async () => {
+    if (!suspendTarget) return;
+    const nextStatus: Customer['status'] = suspendTarget.status === 'active' ? 'suspended' : 'active';
+    const result = await suspendAction.execute(suspendTarget.id, nextStatus);
+    if (result !== undefined) {
+      success(nextStatus === 'suspended' ? 'Customer suspended' : 'Customer reactivated');
+      refetch();
+      setSuspendTarget(null);
+    } else {
+      error(`Failed to ${nextStatus === 'suspended' ? 'suspend' : 'reactivate'} customer`);
+    }
+  };
+
+  const filtered = customers.filter(c => {
+    const matchSearch = !search ||
+      c.firstName.toLowerCase().includes(search.toLowerCase()) ||
+      c.lastName.toLowerCase().includes(search.toLowerCase()) ||
+      c.email.toLowerCase().includes(search.toLowerCase());
+    const matchStatus = statusFilter === 'all' || c.status === statusFilter;
+    const matchLicence = licenceFilter === 'all' ||
+      (licenceFilter === 'verified' && c.licenseVerified) ||
+      (licenceFilter === 'pending' && !c.licenseVerified);
+    return matchSearch && matchStatus && matchLicence;
+  });
+
+  const sorted = [...filtered].sort((a, b) => {
+    const d = sort.dir === 'asc' ? 1 : -1;
+    if (sort.field === 'name')
+      return d * `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`);
+    if (sort.field === 'status')
+      return d * a.status.localeCompare(b.status);
+    if (sort.field === 'licenseVerified')
+      return d * (Number(a.licenseVerified) - Number(b.licenseVerified));
+    if (sort.field === 'totalRentals')
+      return d * ((a.totalRentals ?? 0) - (b.totalRentals ?? 0));
+    return 0;
+  });
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const paginated = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const activeFilterCount = statusFilter !== 'all' ? 1 : 0;
+
+  const licenceCounts = LICENCE_OPTIONS.reduce((acc, o) => {
+    acc[o.key] = o.key === 'all' ? customers.length
+      : customers.filter(c => (o.key === 'verified') === c.licenseVerified).length;
+    return acc;
+  }, {} as Record<LicenceFilter, number>);
+
+  const toggleSort = (field: SortField) => {
+    setSort(s => s.field === field
+      ? { field, dir: s.dir === 'asc' ? 'desc' : 'asc' }
+      : { field, dir: 'asc' });
+    setPage(1);
+  };
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sort.field !== field) return <ArrowUpDown size={11} style={{ opacity: 0.4 }} />;
+    return sort.dir === 'asc' ? <ArrowUp size={11} /> : <ArrowDown size={11} />;
+  };
+
+  const colBtn: React.CSSProperties = {
+    display: 'inline-flex', alignItems: 'center', gap: 4,
+    background: 'none', border: 'none', cursor: 'pointer',
+    fontFamily: "'Geist Mono',monospace", fontSize: 10,
+    letterSpacing: '.08em', textTransform: 'uppercase',
+    color: 'var(--faint)', padding: 0,
+  };
+
+  const chipBtn = (active: boolean, color?: string): React.CSSProperties => ({
+    padding: '4px 10px', borderRadius: 7, fontSize: 12,
+    border: '1px solid var(--border)',
+    background: active ? (color || 'var(--ink)') : 'transparent',
+    color: active ? 'var(--bg)' : 'var(--muted)',
+    cursor: 'pointer',
+  });
+
+  const card: React.CSSProperties = {
+    background: 'var(--surface)', border: '1px solid var(--border)',
+    borderRadius: 16, boxShadow: 'var(--shadow)', overflow: 'hidden',
+  };
+
+  return (
+    <div>
+      {createOpen && (
+        <CreateCustomerModal onClose={() => setCreateOpen(false)} onCreated={refetch} />
+      )}
+
+      {editTarget && (
+        <EditCustomerModal customer={editTarget} onClose={() => setEditTarget(null)} onUpdated={refetch} />
+      )}
+
+      {detailTarget && (
+        <CustomerDetailModal
+          customerId={detailTarget.customer.id}
+          initialTab={detailTarget.tab}
+          onClose={() => setDetailTarget(null)}
+        />
+      )}
+
+      {suspendTarget && (
+        <ConfirmDialog
+          title={suspendTarget.status === 'active' ? 'Suspend customer' : 'Reactivate customer'}
+          message={
+            suspendTarget.status === 'active'
+              ? `Suspend ${suspendTarget.firstName} ${suspendTarget.lastName}? They will no longer be able to make reservations.`
+              : `Reactivate ${suspendTarget.firstName} ${suspendTarget.lastName}? They will be able to make reservations again.`
+          }
+          confirmLabel={suspendTarget.status === 'active' ? 'Suspend' : 'Reactivate'}
+          danger={suspendTarget.status === 'active'}
+          isLoading={suspendAction.isLoading}
+          onConfirm={handleSuspendToggle}
+          onCancel={() => setSuspendTarget(null)}
+        />
+      )}
+
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', marginBottom: 20 }}>
+        <div>
+          <h1 style={{ margin: 0, fontFamily: "'Cormorant Garamond',serif", fontSize: 30, fontWeight: 600, letterSpacing: '.01em', lineHeight: 1.05, color: 'var(--ink)' }}>Customers</h1>
+          <p style={{ margin: '5px 0 0', fontSize: 13.5, color: 'var(--muted)' }}>
+            {isLoading ? (
+              <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 12, color: 'var(--faint)' }}>Loading…</span>
+            ) : (
+              <>{customers.length} registered customers</>
+            )}
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <Button
+            variant={filtersOpen ? 'secondary' : 'outline'}
+            size="md"
+            onClick={() => setFiltersOpen(o => !o)}
+            style={filtersOpen ? { background: 'var(--surface-2)' } : undefined}
+          >
+            <SlidersHorizontal size={15} strokeWidth={1.6} />Filters
+            {activeFilterCount > 0 && (
+              <span style={{ background: 'var(--brand)', color: '#fff', borderRadius: 999, width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontFamily: "'Geist Mono',monospace" }}>{activeFilterCount}</span>
+            )}
+          </Button>
+          <Button size="md" onClick={() => setCreateOpen(true)}>
+            <Plus size={15} strokeWidth={1.6} />New customer
+          </Button>
+        </div>
+      </div>
+
+      {/* Filters panel */}
+      {filtersOpen && (
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px 18px', marginBottom: 14, display: 'flex', alignItems: 'flex-start', gap: 28, flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--faint)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Status</div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {STATUS_OPTIONS.map(o => (
+                <button key={o.key} onClick={() => { setStatusFilter(o.key); setPage(1); }} style={chipBtn(statusFilter === o.key, o.color)}>{o.label}</button>
+              ))}
+            </div>
+          </div>
+          {activeFilterCount > 0 && (
+            <button onClick={() => { setStatusFilter('all'); setPage(1); }} style={{ display: 'flex', alignItems: 'center', gap: 5, alignSelf: 'flex-end', fontSize: 12, color: 'var(--faint)', border: 'none', background: 'transparent', cursor: 'pointer' }}>
+              <X size={13} />Clear filters
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Licence tabs + Search row */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
+        <div style={{ display: 'flex', gap: 3, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 4 }}>
+          {LICENCE_OPTIONS.map(o => (
+            <button key={o.key} onClick={() => { setLicenceFilter(o.key); setPage(1); }} style={{ fontSize: 12.5, fontWeight: 500, padding: '6px 11px', borderRadius: 7, border: 'none', cursor: 'pointer', background: licenceFilter === o.key ? 'var(--ink)' : 'transparent', color: licenceFilter === o.key ? 'var(--bg)' : 'var(--muted)' }}>
+              {o.label}{' '}
+              <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10, opacity: 0.65 }}>{licenceCounts[o.key] ?? 0}</span>
+            </button>
+          ))}
+        </div>
+        <div style={{ marginLeft: 'auto' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 36, padding: '0 12px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--faint)', minWidth: 260 }}>
+            <Search size={14} strokeWidth={1.6} />
+            <input
+              value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
+              placeholder="Search by name or email…"
+              style={{ fontSize: 13, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink)', width: '100%' }}
+            />
+            {search && (
+              <button onClick={() => { setSearch(''); setPage(1); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--faint)', display: 'flex' }}><X size={13} /></button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div style={card}>
+        {/* Table header */}
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.8fr 1fr 90px 44px', gap: 12, alignItems: 'center', padding: '11px 20px', background: 'var(--surface-2)', borderBottom: '1px solid var(--border-2)' }}>
+          <button style={colBtn} onClick={() => toggleSort('name')}>Customer <SortIcon field="name" /></button>
+          <span style={{ ...colBtn, cursor: 'default' }}>Contact</span>
+          <button style={colBtn} onClick={() => toggleSort('licenseVerified')}>Licence <SortIcon field="licenseVerified" /></button>
+          <button style={colBtn} onClick={() => toggleSort('status')}>Status <SortIcon field="status" /></button>
+          <span />
+        </div>
+
+        {isLoading ? (
+          <TableSkeleton gridTemplateColumns="2fr 1.8fr 1fr 90px 44px" columns={5} />
+        ) : fetchError ? (
+          <ErrorState message="Impossible de charger les clients." onRetry={refetch} />
+        ) : paginated.length === 0 ? (
+          <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--faint)', fontSize: 13 }}>No customers found.</div>
+        ) : (
+          paginated.map(c => {
+            const initials = `${c.firstName[0]}${c.lastName[0]}`.toUpperCase();
+            return (
+              <div key={c.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1.8fr 1fr 90px 44px', gap: 12, alignItems: 'center', padding: '12px 20px', borderTop: '1px solid var(--border-2)', fontSize: 12.5 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+                  <div style={{ width: 34, height: 34, borderRadius: 8, background: 'var(--brand-tint)', color: 'var(--brand)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Geist Mono',monospace", fontSize: 11, fontWeight: 600, flexShrink: 0 }}>{initials}</div>
+                  <div>
+                    <div style={{ fontWeight: 500, color: 'var(--ink)' }}>{c.firstName} {c.lastName}</div>
+                    {c.totalRentals !== undefined && (
+                      <div style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10.5, color: 'var(--faint)' }}>
+                        {c.totalRentals} rental{c.totalRentals !== 1 ? 's' : ''} · €{c.totalSpent?.toLocaleString()}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--muted)', marginBottom: 3 }}>
+                    <Mail size={11} strokeWidth={1.6} />
+                    <a href={`mailto:${c.email}`} style={{ color: 'inherit', textDecoration: 'none' }}>{c.email}</a>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--muted)' }}>
+                    <Phone size={11} strokeWidth={1.6} />
+                    <a href={`tel:${c.phone}`} style={{ color: 'inherit', textDecoration: 'none' }}>{c.phone}</a>
+                  </div>
+                </div>
+                <div>
+                  {c.licenseVerified ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: "'Geist Mono',monospace", fontSize: 9.5, textTransform: 'uppercase', letterSpacing: '.04em', padding: '3px 7px', borderRadius: 999, color: 'var(--cmy-green)', background: 'color-mix(in srgb,var(--cmy-green) 13%,transparent)' }}>
+                      <UserCheck size={11} />Verified
+                    </span>
+                  ) : (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: "'Geist Mono',monospace", fontSize: 9.5, textTransform: 'uppercase', letterSpacing: '.04em', padding: '3px 7px', borderRadius: 999, color: 'var(--cmy-amber)', background: 'color-mix(in srgb,var(--cmy-amber) 15%,transparent)' }}>
+                      <UserX size={11} />Pending
+                    </span>
+                  )}
+                </div>
+                <div>
+                  {c.status === 'active' ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: "'Geist Mono',monospace", fontSize: 9.5, textTransform: 'uppercase', letterSpacing: '.04em', padding: '3px 7px', borderRadius: 999, color: 'var(--cmy-green)', background: 'color-mix(in srgb,var(--cmy-green) 13%,transparent)' }}>
+                      <span style={{ width: 5, height: 5, borderRadius: 999, background: 'var(--cmy-green)' }} />Active
+                    </span>
+                  ) : (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: "'Geist Mono',monospace", fontSize: 9.5, textTransform: 'uppercase', letterSpacing: '.04em', padding: '3px 7px', borderRadius: 999, color: 'var(--cmy-red)', background: 'color-mix(in srgb,var(--cmy-red) 14%,transparent)' }}>
+                      <span style={{ width: 5, height: 5, borderRadius: 999, background: 'var(--cmy-red)' }} />Suspended
+                    </span>
+                  )}
+                </div>
+                <div style={{ position: 'relative' }}>
+                  <button onClick={(e) => setOpenMenu(openMenu?.id === c.id ? null : { id: c.id, rect: e.currentTarget.getBoundingClientRect() })} aria-label="Customer actions" style={{ width: 28, height: 28, border: 'none', background: 'transparent', borderRadius: 7, color: 'var(--faint)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Ellipsis size={15} strokeWidth={1.6} />
+                  </button>
+                  {openMenu?.id === c.id && (
+                    <RowActionsMenu
+                      customer={c}
+                      anchorRect={openMenu.rect}
+                      onClose={() => setOpenMenu(null)}
+                      onSuspend={() => setSuspendTarget(c)}
+                      onEdit={() => setEditTarget(c)}
+                      onViewProfile={() => setDetailTarget({ customer: c, tab: 'profile' })}
+                      onViewBookings={() => setDetailTarget({ customer: c, tab: 'bookings' })}
+                    />
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )}
+
+        {/* Pagination */}
+        {!isLoading && totalPages > 1 && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderTop: '1px solid var(--border-2)', background: 'var(--surface-2)' }}>
+            <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 11, color: 'var(--faint)' }}>
+              {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, sorted.length)} of {sorted.length}
+            </span>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: page === 1 ? 'var(--border)' : 'var(--ink)', cursor: page === 1 ? 'default' : 'pointer' }}><ChevronLeft size={14} /></button>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: page === totalPages ? 'var(--border)' : 'var(--ink)', cursor: page === totalPages ? 'default' : 'pointer' }}><ChevronRight size={14} /></button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -2,31 +2,15 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { Motorbike } from '@/types';
+import { favoritesService } from '@/services/favorites.service';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import AccountSidebar from '@/components/ui/AccountSidebar';
 
 type Category = 'A' | 'A2' | 'A1';
-type Status = 'available' | 'rented' | 'soon';
-
-interface Favorite {
-  id: string;
-  brand: string;
-  model: string;
-  category: Category;
-  pricePerDay: number;
-  img: string;
-  agency: string;
-  status: Status;
-}
-
-const INITIAL_FAVORITES: Favorite[] = [
-  { id: 'm1000r', brand: 'BMW', model: 'M 1000 R', category: 'A', pricePerDay: 240, img: '/images/motos/m1000r.jpg', agency: 'Paris', status: 'available' },
-  { id: 'tenere700', brand: 'Yamaha', model: 'Ténéré 700', category: 'A2', pricePerDay: 115, img: '/images/motos/tenere700.jpg', agency: 'Lyon', status: 'available' },
-  { id: 'fatboy', brand: 'Harley-Davidson', model: 'Fat Boy', category: 'A', pricePerDay: 190, img: '/images/motos/fatboy.jpg', agency: 'Marseille', status: 'rented' },
-  { id: 'ninja650', brand: 'Kawasaki', model: 'Ninja 650', category: 'A2', pricePerDay: 95, img: '/images/motos/ninja_650.jpg', agency: 'Bordeaux', status: 'soon' },
-];
+type Status = Motorbike['status'];
 
 const DOT_COLOR: Record<Category, string> = {
   A: '#7E2E32',
@@ -34,25 +18,58 @@ const DOT_COLOR: Record<Category, string> = {
   A1: '#5d7a4a',
 };
 
-const STATUS_STYLE: Record<Status, { label: string; color: string; bg: string }> = {
+const STATUS_STYLE: Partial<Record<Status, { label: string; color: string; bg: string }>> = {
   available: { label: 'Disponible', color: '#3d7a52', bg: '#E6F0E8' },
-  rented: { label: 'Louée actuellement', color: '#9a3b35', bg: '#F8ECEA' },
-  soon: { label: 'Bientôt disponible', color: '#8a6d2f', bg: '#F4ECDB' },
+  reserved: { label: 'Louée actuellement', color: '#9a3b35', bg: '#F8ECEA' },
+  maintenance: { label: 'Maintenance', color: '#8a6d2f', bg: '#F4ECDB' },
+  inactive: { label: 'Indisponible', color: '#6b6254', bg: '#EEE8DD' },
+  PUBLISHED: { label: 'Disponible', color: '#3d7a52', bg: '#E6F0E8' },
 };
 
+const DEFAULT_STATUS = { label: 'Disponible', color: '#3d7a52', bg: '#E6F0E8' };
+
 export default function FavorisPage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
-  const [favorites, setFavorites] = useState<Favorite[]>(INITIAL_FAVORITES);
+  const [favorites, setFavorites] = useState<Motorbike[]>([]);
+  const [loadingFavorites, setLoadingFavorites] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isAuthenticated) router.replace('/login');
-  }, [isAuthenticated, router]);
+    if (!isLoading && !isAuthenticated) router.replace('/login');
+  }, [isAuthenticated, isLoading, router]);
 
-  if (!isAuthenticated) return null;
+  useEffect(() => {
+    if (isLoading || !isAuthenticated) return;
+    let active = true;
+    favoritesService.getAll()
+      .then((data) => {
+        if (!active) return;
+        setFavorites(data);
+        setError(null);
+      })
+      .catch((e) => {
+        if (active) setError(e.message || 'Erreur lors du chargement des favoris.');
+      })
+      .finally(() => {
+        if (active) setLoadingFavorites(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [isAuthenticated, isLoading]);
 
-  function removeFavorite(id: string) {
+  if (isLoading || !isAuthenticated) return null;
+
+  async function removeFavorite(id: string) {
+    const previous = favorites;
     setFavorites((favs) => favs.filter((f) => f.id !== id));
+    try {
+      await favoritesService.remove(id);
+    } catch (e) {
+      setFavorites(previous);
+      setError(e instanceof Error ? e.message : 'Suppression impossible.');
+    }
   }
 
   const countLabel = `${favorites.length} ${favorites.length > 1 ? 'motos enregistrées' : 'moto enregistrée'}`;
@@ -75,7 +92,29 @@ export default function FavorisPage() {
           <AccountSidebar />
 
           <div>
-            {favorites.length > 0 ? (
+            {loadingFavorites ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-[22px]">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="bg-white border border-[#ECE5D5] rounded-2xl overflow-hidden animate-pulse">
+                    <div className="h-[188px] bg-[#ece8df]" />
+                    <div className="px-[22px] py-[22px] space-y-3">
+                      <div className="h-3 bg-[#ece8df] rounded w-1/3" />
+                      <div className="h-7 bg-[#ece8df] rounded w-2/3" />
+                      <div className="h-4 bg-[#ece8df] rounded w-1/2" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : error ? (
+              <div className="text-center py-[74px] px-[30px] border border-dashed border-[#d9cfb8] rounded-[18px] bg-[#FBF9F3]">
+                <h2 className="font-serif font-semibold italic text-[28px] text-[#1B1A17] mb-3">
+                  Chargement impossible
+                </h2>
+                <p className="text-[14.5px] leading-[1.7] text-[#7a715a] max-w-[420px] mx-auto">
+                  {error}
+                </p>
+              </div>
+            ) : favorites.length > 0 ? (
               <>
                 <div className="flex items-center justify-between mb-[22px]">
                   <span className="font-mono text-[11px] tracking-[0.08em] text-[#8a7f63]">
@@ -91,7 +130,7 @@ export default function FavorisPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-[22px]">
                   {favorites.map((f) => {
-                    const status = STATUS_STYLE[f.status];
+                    const status = STATUS_STYLE[f.status] ?? DEFAULT_STATUS;
                     return (
                       <div
                         key={f.id}
@@ -104,7 +143,7 @@ export default function FavorisPage() {
                           <span className="absolute top-[14px] left-[14px] flex items-center gap-[7px] font-mono text-[10px] tracking-[0.1em] text-[#5d5749] bg-white/90 border border-[#ECE5D5] px-[10px] py-1 rounded-full">
                             <span
                               className="w-[7px] h-[7px] rounded-full"
-                              style={{ background: DOT_COLOR[f.category] }}
+                              style={{ background: DOT_COLOR[f.category as Category] }}
                             />
                             Permis {f.category}
                           </span>
@@ -116,7 +155,7 @@ export default function FavorisPage() {
                             ♥
                           </button>
                           <Image
-                            src={f.img}
+                            src={f.imageUrl}
                             alt={f.model}
                             width={220}
                             height={158}
@@ -132,7 +171,7 @@ export default function FavorisPage() {
                           </h3>
                           <div className="flex items-center gap-[10px] flex-wrap mb-4">
                             <span className="font-mono text-[11px] text-[#8a7f63]">
-                              Agence de {f.agency}
+                              {f.location || 'Agence à définir'}
                             </span>
                             <span
                               className="font-mono text-[9.5px] tracking-[0.1em] uppercase px-[11px] py-[5px] rounded-full whitespace-nowrap"

@@ -48,6 +48,11 @@ export type Shop = Prisma.ShopModel
  */
 export type Moto = Prisma.MotoModel
 /**
+ * Model Favorite
+ * 
+ */
+export type Favorite = Prisma.FavoriteModel
+/**
  * Model Image
  * 
  */
@@ -57,3 +62,18 @@ export type Image = Prisma.ImageModel
  * 
  */
 export type Booking = Prisma.BookingModel
+/**
+ * Model MaintenanceJob
+ * 
+ */
+export type MaintenanceJob = Prisma.MaintenanceJobModel
+/**
+ * Model Payment
+ * 
+ */
+export type Payment = Prisma.PaymentModel
+/**
+ * Model Setting
+ * 
+ */
+export type Setting = Prisma.SettingModel

@@ -50,7 +50,7 @@ export default function Navbar() {
           href="/"
           className="font-serif text-[24px] font-semibold tracking-[0.01em] text-[#1B1A17] hover:opacity-80 transition-opacity"
         >
-          City Moto Yard<span className="text-[#7E2E32]">.</span>
+          Plein Gaz Loc<span className="text-[#7E2E32]">.</span>
         </Link>
 
         {/* Nav links */}
@@ -76,7 +76,7 @@ export default function Navbar() {
                 onClick={() => setMenuOpen((o) => !o)}
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
-                className="flex items-center gap-[10px] px-[5px] pr-3 py-[5px] rounded-full border border-[#E4DECF] bg-white/55 hover:border-[#7E2E32] hover:bg-white transition-all focus-visible:outline-2 focus-visible:outline-[#7E2E32] focus-visible:outline-offset-2"
+                className="flex items-center gap-[10px] px-[5px] pr-3 py-[5px] rounded-full border border-[#E4DECF] bg-white/55 hover:border-[#7E2E32] hover:bg-white transition-all focus-visible:outline-2 focus-visible:outline-[#7E2E32] focus-visible:outline-offset-2 cursor-pointer"
               >
                 {/* Avatar */}
                 <span className="w-[30px] h-[30px] rounded-full bg-[#1B1A17] text-[#F4F1E9] flex items-center justify-center font-serif text-[14px] font-semibold tracking-[0.02em] select-none shrink-0">
@@ -133,7 +133,7 @@ export default function Navbar() {
                   <button
                     role="menuitem"
                     onClick={handleLogout}
-                    className="w-full text-left px-[18px] py-[13px] text-[13.5px] text-[#7a715a] border-t border-[#F0EADB] hover:bg-[#F6F1E8] hover:text-[#7E2E32] transition-colors outline-none"
+                    className="w-full text-left px-[18px] py-[13px] text-[13.5px] text-[#7a715a] border-t border-[#F0EADB] hover:bg-[#F6F1E8] hover:text-[#7E2E32] transition-colors outline-none cursor-pointer"
                   >
                     Déconnexion
                   </button>

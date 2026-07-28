@@ -5,7 +5,7 @@ const SECTIONS = [
     id: 'editeur',
     title: 'Éditeur du site',
     paragraphs: [
-      'City Moto Yard SAS au capital de 50 000 €\nSiège social : 12 avenue de la Grande Armée, 75017 Paris\nRCS Paris : 123 456 789\nDirecteur de la publication : Jean-Marc Dupont\nTéléphone : +33 1 23 45 67 89\nE-mail : contact@citymotoyard.fr',
+      'Plein Gaz Loc SAS au capital de 50 000 €\nSiège social : 12 avenue de la Grande Armée, 75017 Paris\nRCS Paris : 123 456 789\nDirecteur de la publication : Jean-Marc Dupont\nTéléphone : +33 1 23 45 67 89\nE-mail : contact@pleingazloc.fr',
     ],
   },
   {
@@ -19,8 +19,8 @@ const SECTIONS = [
     id: 'propriete',
     title: 'Propriété intellectuelle',
     paragraphs: [
-      "L'ensemble du contenu de ce site (textes, images, graphismes, logo, icônes) est la propriété exclusive de City Moto Yard SAS ou de ses partenaires et est protégé par les lois françaises et internationales relatives à la propriété intellectuelle.",
-      "Toute reproduction, représentation, modification, publication, adaptation totale ou partielle des éléments du site, quel que soit le moyen ou le procédé utilisé, est interdite sans l'autorisation préalable et écrite de City Moto Yard SAS.",
+      "L'ensemble du contenu de ce site (textes, images, graphismes, logo, icônes) est la propriété exclusive de Plein Gaz Loc SAS ou de ses partenaires et est protégé par les lois françaises et internationales relatives à la propriété intellectuelle.",
+      "Toute reproduction, représentation, modification, publication, adaptation totale ou partielle des éléments du site, quel que soit le moyen ou le procédé utilisé, est interdite sans l'autorisation préalable et écrite de Plein Gaz Loc SAS.",
     ],
   },
   {
@@ -28,8 +28,8 @@ const SECTIONS = [
     title: 'Données personnelles',
     paragraphs: [
       "Conformément au Règlement Général sur la Protection des Données (RGPD) et à la loi Informatique et Libertés du 6 janvier 1978 modifiée, vous disposez d'un droit d'accès, de rectification, d'effacement et de portabilité des données vous concernant.",
-      'Les données collectées sur ce site sont utilisées uniquement dans le cadre de votre relation contractuelle avec City Moto Yard (gestion des réservations, communication client, facturation). Elles ne sont en aucun cas cédées à des tiers sans votre consentement.',
-      'Pour exercer vos droits, adressez votre demande à : privacy@citymotoyard.fr',
+      'Les données collectées sur ce site sont utilisées uniquement dans le cadre de votre relation contractuelle avec Plein Gaz Loc (gestion des réservations, communication client, facturation). Elles ne sont en aucun cas cédées à des tiers sans votre consentement.',
+      'Pour exercer vos droits, adressez votre demande à : privacy@pleingazloc.fr',
     ],
   },
   {
@@ -44,8 +44,8 @@ const SECTIONS = [
     id: 'responsabilite',
     title: 'Responsabilité',
     paragraphs: [
-      "City Moto Yard SAS s'efforce d'assurer l'exactitude des informations publiées sur ce site. Toutefois, elle ne pourra être tenue responsable des erreurs ou omissions, ni de l'indisponibilité du service.",
-      "Les liens hypertextes présents sur le site peuvent renvoyer vers des sites externes. City Moto Yard SAS n'exerce aucun contrôle sur ces sites tiers et décline toute responsabilité quant à leur contenu.",
+      "Plein Gaz Loc SAS s'efforce d'assurer l'exactitude des informations publiées sur ce site. Toutefois, elle ne pourra être tenue responsable des erreurs ou omissions, ni de l'indisponibilité du service.",
+      "Les liens hypertextes présents sur le site peuvent renvoyer vers des sites externes. Plein Gaz Loc SAS n'exerce aucun contrôle sur ces sites tiers et décline toute responsabilité quant à leur contenu.",
     ],
   },
   {

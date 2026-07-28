@@ -7,7 +7,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <div className="font-serif text-[21px] font-semibold text-[#1B1A17]">
-              City Moto Yard<span className="text-[#7E2E32]">.</span>
+              Plein Gaz Loc<span className="text-[#7E2E32]">.</span>
             </div>
             <p className="text-[13px] text-[#8a7f63] leading-relaxed max-w-[240px] mt-3">
               Le spécialiste de la location de motos et scooters en France.
@@ -85,7 +85,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-12 pt-8 border-t border-[#E4DECF] text-center font-mono text-[11px] text-[#9a8f74] tracking-[0.06em]">
-          © {new Date().getFullYear()} City Moto Yard. Tous droits réservés.
+          © {new Date().getFullYear()} Plein Gaz Loc. Tous droits réservés.
         </div>
       </div>
     </footer>

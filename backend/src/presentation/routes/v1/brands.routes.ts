@@ -24,12 +24,10 @@ export async function brandroutesV1(app: FastifyInstance, opts: { brandRepositor
   const updateBrandController = new UpdateBrandController(new UpdateBrandUseCase(repo))
   const deleteBrandController = new DeleteBrandController(new DeleteBrandUseCase(repo))
 
-  // GET /brands
   app.get('/brands', async (request: FastifyRequest, reply: FastifyReply) => {
     await getAllBrandsController.handle(request, reply)
   })
 
-  // GET /brands/:id
   app.get('/brands/:id', async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
     const { error } = idParamSchema.validate(request.params)
     if (error) {
@@ -42,7 +40,6 @@ export async function brandroutesV1(app: FastifyInstance, opts: { brandRepositor
     await getBrandByIdController.handle(request, reply)
   })
 
-  // POST /brands
   app.post('/brands', async (request: FastifyRequest<{ Body: CreateBrandParams }>, reply: FastifyReply) => {
     const { error } = createBrandSchema.validate(request.body, { abortEarly: false })
     if (error) {
@@ -55,7 +52,6 @@ export async function brandroutesV1(app: FastifyInstance, opts: { brandRepositor
     await createBrandController.handle(request, reply)
   })
 
-  // PUT /brands/:id
   app.put('/brands/:id', async (request: FastifyRequest<{ Params: { id: string }; Body: UpdateBrandParams }>, reply: FastifyReply) => {
     const paramValidation = idParamSchema.validate(request.params)
     if (paramValidation.error) {
@@ -78,7 +74,6 @@ export async function brandroutesV1(app: FastifyInstance, opts: { brandRepositor
     await updateBrandController.handle(request, reply)
   })
 
-  // DELETE /brands/:id
   app.delete('/brands/:id', async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
     const { error } = idParamSchema.validate(request.params)
     if (error) {

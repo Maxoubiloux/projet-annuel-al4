@@ -1,0 +1,60 @@
+name: Deploy VPS
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+concurrency:
+  group: deploy-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Configure SSH
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+        run: |
+          VPS_PORT="${VPS_PORT:-22}"
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "${{ secrets.VPS_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p "$VPS_PORT" -H "$VPS_HOST" >> ~/.ssh/known_hosts
+
+      - name: Deploy on VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          VPS_APP_DIR: ${{ secrets.VPS_APP_DIR }}
+          VPS_REPOSITORY_URL: ${{ secrets.VPS_REPOSITORY_URL }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          VPS_PORT="${VPS_PORT:-22}"
+          ssh -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" \
+            "set -e;
+             APP_BASE_DIR='${VPS_APP_DIR:-/opt/pleingazloc}';
+             REPO_URL='$VPS_REPOSITORY_URL';
+             BRANCH='$BRANCH';
+             APP_DIR=\"\$APP_BASE_DIR/\$BRANCH\";
+             if [ ! -d \"\$APP_DIR/.git\" ]; then
+               if [ -z \"\$REPO_URL\" ]; then
+                 echo 'VPS_REPOSITORY_URL is required for first clone' >&2;
+                 exit 66;
+               fi;
+               mkdir -p \"\$APP_BASE_DIR\";
+               git clone \"\$REPO_URL\" \"\$APP_DIR\";
+             fi;
+             cd \"\$APP_DIR\";
+             git fetch --prune origin;
+             git checkout -B \"\$BRANCH\" \"origin/\$BRANCH\";
+             git reset --hard \"origin/\$BRANCH\";
+             chmod +x scripts/deploy/vps-deploy.sh;
+             APP_DIR=\"\$APP_DIR\" scripts/deploy/vps-deploy.sh \"\$BRANCH\""

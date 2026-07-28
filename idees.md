@@ -1,0 +1,7 @@
+- [ ] Worker -> notif/mails sur wichlist/retour de véhicule, etc.
+- [ ] Stripe -> gestion des paiements (dev)
+- [x] Back office -> interface de gestion
+- [ ] Caution -> systeme de caution
+- [ ] Litiges -> systeme de litiges dégats (avec photos, etc.), kilometrages, pleins, etc.
+- [x] Statistiques -> statistiques de location (graphiques, etc.)
+- [ ] Créer une pipeline avec les tests dans le backend

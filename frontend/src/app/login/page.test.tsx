@@ -1,34 +1,46 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import LoginPage from "@/app/login/page";
-import { AuthProvider } from "@/hooks/useAuth";
 
-const { pushMock } = vi.hoisted(() => ({
-  pushMock: vi.fn(),
+const { loginMock, resetPasswordMock } = vi.hoisted(() => ({
+  loginMock: vi.fn(),
+  resetPasswordMock: vi.fn(),
 }));
 
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    push: pushMock,
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: () => ({
+    user: null,
+    isAuthenticated: false,
+    isLoading: false,
+    token: undefined,
+    login: loginMock,
+    register: vi.fn(),
+    resetPassword: resetPasswordMock,
+    updateAccount: vi.fn(),
+    updatePassword: vi.fn(),
+    getTwoFactorStatus: vi.fn(),
+    startTwoFactorSetup: vi.fn(),
+    disableTwoFactor: vi.fn(),
+    logout: vi.fn(),
   }),
 }));
 
 describe("LoginPage", () => {
-  it("connecte l'utilisateur puis redirige vers l'accueil", async () => {
+  beforeEach(() => {
+    loginMock.mockClear();
+    resetPasswordMock.mockClear();
+    loginMock.mockResolvedValue(undefined);
+  });
+
+  it("redirige vers Keycloak avec l'email en indice de connexion", async () => {
     const user = userEvent.setup();
 
-    render(
-      <AuthProvider>
-        <LoginPage />
-      </AuthProvider>
-    );
+    render(<LoginPage />);
 
     await user.type(screen.getByLabelText(/adresse e-mail/i), "pilote@example.com");
-    await user.type(screen.getByLabelText(/mot de passe/i), "secret");
-    await user.click(screen.getByRole("button", { name: /connexion/i }));
+    await user.click(screen.getByRole("button", { name: /se connecter avec keycloak/i }));
 
-    expect(pushMock).toHaveBeenCalledWith("/");
-    expect(localStorage.getItem("user")).toContain("pilote@example.com");
+    expect(loginMock).toHaveBeenCalledWith("pilote@example.com");
   });
 });

@@ -1,0 +1,45 @@
+{
+	email {$ACME_EMAIL}
+}
+
+{$APP_DOMAIN} {
+	encode zstd gzip
+
+	redir /dev /dev/ 308
+
+	route /dev/api/* {
+		uri strip_prefix /dev
+		reverse_proxy host.docker.internal:13000
+	}
+
+	route /dev/auth* {
+		reverse_proxy host.docker.internal:18080
+	}
+
+	route /dev/* {
+		reverse_proxy host.docker.internal:13001
+	}
+
+	route /api/* {
+		reverse_proxy backend:3000
+	}
+
+	route {
+		reverse_proxy frontend:3000
+	}
+}
+
+{$ADMIN_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy admin:80
+}
+
+{$API_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy backend:3000
+}
+
+{$AUTH_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy keycloak:8080
+}

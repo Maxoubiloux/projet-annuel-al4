@@ -1,0 +1,78 @@
+services:
+  postgres:
+    container_name: moto-dev-postgres
+
+  redis:
+    container_name: moto-dev-redis
+
+  rabbitmq:
+    container_name: moto-dev-rabbitmq
+
+  pgadmin:
+    container_name: moto-dev-pgadmin
+    ports:
+      - "${DEV_PGADMIN_PORT:-15050}:80"
+
+  keycloak:
+    container_name: moto-dev-keycloak
+    environment:
+      KC_HOSTNAME: pleingazloc.fr
+      KC_HTTP_ENABLED: "true"
+      KC_HTTP_RELATIVE_PATH: /dev/auth
+      KC_PROXY_HEADERS: xforwarded
+    ports:
+      - "${DEV_KEYCLOAK_PORT:-18080}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /dev/auth/realms/master HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && head -n 1 <&3 | grep -q '200 OK'"]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  keycloak-config:
+    container_name: moto-dev-keycloak-config
+    command: >
+      "/opt/keycloak/bin/kcadm.sh config credentials --server http://keycloak:8080/dev/auth --realm master --user admin --password admin &&
+      /opt/keycloak/bin/kcadm.sh update realms/moto-rental/users/profile -f /config/keycloak-user-profile.json &&
+      CLIENT_ID=$$(/opt/keycloak/bin/kcadm.sh get clients -r moto-rental -q clientId=moto-rental-frontend --fields id --format csv --noquotes | tail -n 1) &&
+      /opt/keycloak/bin/kcadm.sh update clients/$$CLIENT_ID -r moto-rental -s standardFlowEnabled=true -s directAccessGrantsEnabled=false -s 'attributes.\"pkce.code.challenge.method\"=S256' -s 'redirectUris=[\"http://localhost:3001/*\",\"https://pleingazloc.fr/dev/*\"]' -s 'webOrigins=[\"http://localhost:3001\",\"https://pleingazloc.fr\"]' &&
+      ADMIN_CLIENT_ID=$$(/opt/keycloak/bin/kcadm.sh get clients -r moto-rental -q clientId=moto-rental-admin --fields id --format csv --noquotes | tail -n 1) &&
+      /opt/keycloak/bin/kcadm.sh update clients/$$ADMIN_CLIENT_ID -r moto-rental -s standardFlowEnabled=true -s directAccessGrantsEnabled=false -s 'attributes.\"pkce.code.challenge.method\"=S256' -s 'redirectUris=[\"http://localhost:5173/*\",\"http://localhost:5174/*\",\"http://localhost:4173/*\",\"http://localhost:3002/*\",\"http://pleingazloc.fr:13002/*\",\"https://admin.pleingazloc.fr/*\"]' -s 'webOrigins=[\"http://localhost:5173\",\"http://localhost:5174\",\"http://localhost:4173\",\"http://localhost:3002\",\"http://pleingazloc.fr:13002\",\"https://admin.pleingazloc.fr\"]' &&
+      BACKEND_CLIENT_ID=$$(/opt/keycloak/bin/kcadm.sh get clients -r moto-rental -q clientId=moto-rental-backend --fields id --format csv --noquotes | tail -n 1) &&
+      /opt/keycloak/bin/kcadm.sh update clients/$$BACKEND_CLIENT_ID -r moto-rental -s fullScopeAllowed=true &&
+      /opt/keycloak/bin/kcadm.sh add-roles -r moto-rental --uusername service-account-moto-rental-backend --cclientid realm-management --rolename manage-users || true &&
+      /opt/keycloak/bin/kcadm.sh add-roles -r moto-rental --uusername service-account-moto-rental-backend --cclientid realm-management --rolename view-users || true"
+
+  backend:
+    container_name: moto-dev-backend
+    environment:
+      KEYCLOAK_URL: http://keycloak:8080/dev/auth
+      KEYCLOAK_ISSUER_URL: ${DEV_KEYCLOAK_URL}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      FRONTEND_URL: ${DEV_FRONTEND_URL}
+      CORS_ORIGIN: ${DEV_CORS_ORIGIN}
+    ports:
+      - "${DEV_BACKEND_PORT:-13000}:3000"
+
+  frontend:
+    container_name: moto-dev-frontend
+    build:
+      args:
+        NEXT_PUBLIC_API_URL: ${DEV_PUBLIC_API_URL}
+        NEXT_PUBLIC_KEYCLOAK_URL: ${DEV_KEYCLOAK_URL}
+        NEXT_PUBLIC_BASE_PATH: ${DEV_FRONTEND_BASE_PATH:-}
+    environment:
+      - NEXT_PUBLIC_API_URL=${DEV_PUBLIC_API_URL}
+      - NEXT_PUBLIC_KEYCLOAK_URL=${DEV_KEYCLOAK_URL}
+      - NEXT_PUBLIC_BASE_PATH=${DEV_FRONTEND_BASE_PATH:-}
+    ports:
+      - "${DEV_FRONTEND_PORT:-13001}:3000"
+
+  admin:
+    container_name: moto-dev-admin
+    build:
+      args:
+        VITE_API_URL: ${DEV_ADMIN_API_URL}
+        VITE_KEYCLOAK_URL: ${DEV_KEYCLOAK_URL}
+    ports:
+      - "${DEV_ADMIN_PORT:-13002}:80"

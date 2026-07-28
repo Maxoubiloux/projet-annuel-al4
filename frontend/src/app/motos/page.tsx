@@ -2,8 +2,11 @@
 
 import { Motorbike } from '@/types';
 import { motosService } from '@/services/motos.service';
+import { favoritesService } from '@/services/favorites.service';
+import { useAuth } from '@/hooks/useAuth';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
 const categoryDot: Record<string, string> = {
@@ -14,28 +17,48 @@ const categoryDot: Record<string, string> = {
 
 const STYLES = ['Tous', 'Sportive', 'Roadster', 'Trail', 'Custom', 'Touring'] as const;
 const CATEGORIES = ['Tous', 'A', 'A2', 'A1'] as const;
+type StyleFilter = typeof STYLES[number];
+type CategoryFilter = typeof CATEGORIES[number];
+
+function isStyleFilter(value: string | null): value is StyleFilter {
+  return STYLES.includes(value as StyleFilter);
+}
+
+function isCategoryFilter(value: string | null): value is CategoryFilter {
+  return CATEGORIES.includes(value as CategoryFilter);
+}
 
 export default function MotosPage() {
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const router = useRouter();
   const [motos, setMotos] = useState<Motorbike[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedStyle, setSelectedStyle] = useState('Tous');
-  const [selectedCategory, setSelectedCategory] = useState('Tous');
+  const [selectedStyle, setSelectedStyle] = useState<StyleFilter>('Tous');
+  const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('Tous');
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+  const [savingFavoriteId, setSavingFavoriteId] = useState<string | null>(null);
+  const [reservedTodayIds, setReservedTodayIds] = useState<Set<string>>(new Set());
 
   const loadMotos = () => {
     setLoading(true);
     setError(null);
-    motosService.getAll()
-      .then(setMotos)
+    Promise.all([motosService.getAll(), motosService.getReservedTodayIds()])
+      .then(([data, reservedIds]) => {
+        setMotos(data);
+        setReservedTodayIds(new Set(reservedIds));
+      })
       .catch((e) => setError(e.message || 'Erreur lors du chargement des motos.'))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
     let active = true;
-    motosService.getAll()
-      .then((data) => {
-        if (active) setMotos(data);
+    Promise.all([motosService.getAll(), motosService.getReservedTodayIds()])
+      .then(([data, reservedIds]) => {
+        if (!active) return;
+        setMotos(data);
+        setReservedTodayIds(new Set(reservedIds));
       })
       .catch((e) => {
         if (active) setError(e.message || 'Erreur lors du chargement des motos.');
@@ -48,6 +71,35 @@ export default function MotosPage() {
     };
   }, []);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const style = params.get('style');
+    const category = params.get('category');
+
+    if (isStyleFilter(style)) setSelectedStyle(style);
+    if (isCategoryFilter(category)) setSelectedCategory(category);
+  }, []);
+
+  useEffect(() => {
+    if (authLoading || !isAuthenticated) {
+      setFavoriteIds(new Set());
+      return;
+    }
+
+    let active = true;
+    favoritesService.getIds()
+      .then((ids) => {
+        if (active) setFavoriteIds(new Set(ids));
+      })
+      .catch(() => {
+        if (active) setFavoriteIds(new Set());
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [authLoading, isAuthenticated]);
+
   const handleReset = () => {
     setSelectedStyle('Tous');
     setSelectedCategory('Tous');
@@ -58,6 +110,30 @@ export default function MotosPage() {
     const catMatch = selectedCategory === 'Tous' || m.category === selectedCategory;
     return styleMatch && catMatch;
   });
+
+  async function toggleFavorite(motoId: string) {
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+
+    const wasFavorite = favoriteIds.has(motoId);
+    const previous = new Set(favoriteIds);
+    const next = new Set(favoriteIds);
+    if (wasFavorite) next.delete(motoId);
+    else next.add(motoId);
+
+    setFavoriteIds(next);
+    setSavingFavoriteId(motoId);
+    try {
+      if (wasFavorite) await favoritesService.remove(motoId);
+      else await favoritesService.add(motoId);
+    } catch {
+      setFavoriteIds(previous);
+    } finally {
+      setSavingFavoriteId(null);
+    }
+  }
 
   return (
     <div className="min-h-screen">
@@ -84,9 +160,9 @@ export default function MotosPage() {
                   <button
                     key={s}
                     onClick={() => setSelectedStyle(s)}
-                    className={`text-[12px] tracking-[0.08em] uppercase px-[18px] py-[9px] rounded-full border transition-all ${active
-                        ? 'border-[#1B1A17] bg-[#1B1A17] text-[#F4F1E9]'
-                        : 'border-[#E4DECF] bg-white text-[#5d5749] hover:border-[#1B1A17] hover:text-[#1B1A17]'
+                    className={`text-[12px] tracking-[0.08em] uppercase px-[18px] py-[9px] rounded-full border transition-all cursor-pointer ${active
+                      ? 'border-[#1B1A17] bg-[#1B1A17] text-[#F4F1E9]'
+                      : 'border-[#E4DECF] bg-white text-[#5d5749] hover:border-[#1B1A17] hover:text-[#1B1A17]'
                       }`}
                   >
                     {s}
@@ -105,9 +181,9 @@ export default function MotosPage() {
                   <button
                     key={c}
                     onClick={() => setSelectedCategory(c)}
-                    className={`text-[12px] tracking-[0.08em] uppercase px-[18px] py-[9px] rounded-full border transition-all ${active
-                        ? 'border-[#1B1A17] bg-[#1B1A17] text-[#F4F1E9]'
-                        : 'border-[#E4DECF] bg-white text-[#5d5749] hover:border-[#1B1A17] hover:text-[#1B1A17]'
+                    className={`text-[12px] tracking-[0.08em] uppercase px-[18px] py-[9px] rounded-full border transition-all cursor-pointer ${active
+                      ? 'border-[#1B1A17] bg-[#1B1A17] text-[#F4F1E9]'
+                      : 'border-[#E4DECF] bg-white text-[#5d5749] hover:border-[#1B1A17] hover:text-[#1B1A17]'
                       }`}
                   >
                     {c === 'Tous' ? 'Tous' : `Permis ${c}`}
@@ -145,7 +221,7 @@ export default function MotosPage() {
             <p className="font-serif italic text-[24px] text-[#8a7f63] mb-4">⚠️ {error}</p>
             <button
               onClick={loadMotos}
-              className="text-[13px] text-[#7E2E32] border-b border-[#7E2E32] pb-[2px] hover:opacity-70 transition-opacity"
+              className="text-[13px] text-[#7E2E32] border-b border-[#7E2E32] pb-[2px] hover:opacity-70 transition-opacity cursor-pointer"
             >
               Réessayer
             </button>
@@ -174,6 +250,32 @@ export default function MotosPage() {
                     <span className="absolute top-3 right-3 font-mono text-[9.5px] tracking-[0.14em] uppercase text-[#9a8f74]">
                       {moto.style}
                     </span>
+                    <span
+                      className={[
+                        'absolute bottom-3 left-3 font-mono text-[9.5px] tracking-[0.12em] uppercase px-[10px] py-1 rounded-full border bg-white/90',
+                        reservedTodayIds.has(moto.id)
+                          ? 'text-[#9a3b35] border-[#e6b9b3]'
+                          : 'text-[#3d7a52] border-[#bcd9c4]',
+                      ].join(' ')}
+                    >
+                      {reservedTodayIds.has(moto.id) ? 'Indisponible' : 'Disponible'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => toggleFavorite(moto.id)}
+                      disabled={savingFavoriteId === moto.id}
+                      title={favoriteIds.has(moto.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                      aria-label={favoriteIds.has(moto.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                      className={[
+                        'absolute bottom-3 right-3 w-[36px] h-[36px] rounded-full border flex items-center justify-center text-[18px] cursor-pointer transition-colors',
+                        favoriteIds.has(moto.id)
+                          ? 'bg-[#7E2E32] border-[#7E2E32] text-white'
+                          : 'bg-white/95 border-[#ECE5D5] text-[#7E2E32] hover:bg-[#7E2E32] hover:text-white hover:border-[#7E2E32]',
+                        savingFavoriteId === moto.id ? 'opacity-60 cursor-wait' : '',
+                      ].join(' ')}
+                    >
+                      {favoriteIds.has(moto.id) ? '♥' : '♡'}
+                    </button>
                     <Image
                       src={moto.imageUrl}
                       alt={moto.model}
@@ -219,7 +321,7 @@ export default function MotosPage() {
                 </p>
                 <button
                   onClick={handleReset}
-                  className="text-[13px] text-[#7E2E32] border-b border-[#7E2E32] pb-[2px] hover:opacity-70 transition-opacity"
+                  className="text-[13px] text-[#7E2E32] border-b border-[#7E2E32] pb-[2px] hover:opacity-70 transition-opacity cursor-pointer"
                 >
                   Réinitialiser les filtres
                 </button>

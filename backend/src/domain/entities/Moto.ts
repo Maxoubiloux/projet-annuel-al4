@@ -1,79 +1,77 @@
-export interface CreateMotoParams {
-  brandId: string
-  model: string
-  serialNumber: string
-  registration: string
-  categoryId: string
-  statusId: string
-  currentKm: number
-  pricePerDay: number
-  description: string
-  style: string
-  year: number
-  hp: number
-  torque: number
-  consumption: number
-  range: number
-}
+export const MOTO_STATUSES = ['available', 'reserved', 'maintenance', 'inactive'] as const
+export type MotoStatusName = (typeof MOTO_STATUSES)[number]
 
-export interface UpdateMotoParams {
-  brandId?: string
-  model?: string
-  serialNumber?: string
-  registration?: string
-  categoryId?: string
-  statusId?: string
-  currentKm?: number
-  pricePerDay?: number
-  description?: string
+export interface CreateMotoParams {
+  brand: string
+  model: string
+  plate: string
+  year: number
+  category: string
+  mileage: number
+  pricePerDay: number
+  deposit: number
+  status: string
+  location: string
+  description: string
+  imageUrl?: string
+  nextServiceDate?: string
   style?: string
-  year?: number
   hp?: number
   torque?: number
   consumption?: number
   range?: number
 }
 
+export type UpdateMotoParams = Partial<CreateMotoParams>
+
 export class Moto {
   constructor(
     readonly id: string,
-    readonly brandId: string,
+    readonly brand: string,
     readonly model: string,
-    readonly serialNumber: string,
-    readonly registration: string,
-    readonly categoryId: string,
-    readonly statusId: string,
-    readonly currentKm: number,
-    readonly pricePerDay: number,
-    readonly description: string,
-    readonly style: string,
+    readonly plate: string,
     readonly year: number,
-    readonly hp: number,
-    readonly torque: number,
-    readonly consumption: number,
-    readonly range: number,
-    readonly createdAt: Date
+    readonly category: string,
+    readonly mileage: number,
+    readonly pricePerDay: number,
+    readonly deposit: number,
+    readonly status: string,
+    readonly location: string,
+    readonly description: string,
+    readonly createdAt: Date,
+    readonly imageUrl?: string,
+    readonly nextServiceDate?: string,
+    readonly style?: string,
+    readonly hp?: number,
+    readonly torque?: number,
+    readonly consumption?: number,
+    readonly range?: number,
+    readonly registration: string = plate,
+    readonly currentKm: number = mileage,
   ) { }
 
   static create(id: string, params: CreateMotoParams): Moto {
     return new Moto(
       id,
-      params.brandId,
+      params.brand,
       params.model,
-      params.serialNumber,
-      params.registration,
-      params.categoryId,
-      params.statusId,
-      params.currentKm,
-      params.pricePerDay,
-      params.description,
-      params.style,
+      params.plate,
       params.year,
+      params.category,
+      params.mileage,
+      params.pricePerDay,
+      params.deposit,
+      params.status,
+      params.location,
+      params.description,
+      new Date(),
+      params.imageUrl,
+      params.nextServiceDate,
+      params.style,
       params.hp,
       params.torque,
       params.consumption,
       params.range,
-      new Date()
     )
   }
 }

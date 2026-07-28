@@ -1,0 +1,150 @@
+{
+  "realm": "moto-rental",
+  "displayName": "Moto Rental",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+
+  "otpPolicyType": "totp",
+  "otpPolicyAlgorithm": "HmacSHA1",
+  "otpPolicyInitialCounter": 0,
+  "otpPolicyDigits": 6,
+  "otpPolicyLookAheadWindow": 1,
+  "otpPolicyPeriod": 30,
+
+  "roles": {
+    "realm": [
+      {
+        "name": "admin",
+        "description": "Accès complet au backoffice",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "moto-rental"
+      },
+      {
+        "name": "customer",
+        "description": "Client de la plateforme de location",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "moto-rental"
+      }
+    ],
+    "client": {}
+  },
+  "defaultRoles": ["customer"],
+
+  "clients": [
+    {
+      "clientId": "moto-rental-admin",
+      "name": "Backoffice Admin",
+      "description": "SPA admin backoffice (Vite/React)",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:5173/*",
+        "http://localhost:5174/*",
+        "http://localhost:4173/*",
+        "http://localhost:3002/*",
+        "https://admin.pleingazloc.fr/*"
+      ],
+      "webOrigins": [
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:4173",
+        "http://localhost:3002",
+        "https://admin.pleingazloc.fr"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "fullScopeAllowed": true
+    },
+    {
+      "clientId": "moto-rental-frontend",
+      "name": "Customer Frontend",
+      "description": "SPA client (Next.js)",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:3001/*",
+        "http://localhost:3000/*",
+        "https://pleingazloc.fr/*"
+      ],
+      "webOrigins": [
+        "http://localhost:3001",
+        "http://localhost:3000",
+        "https://pleingazloc.fr"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "fullScopeAllowed": true
+    },
+    {
+      "clientId": "moto-rental-backend",
+      "name": "Backend API",
+      "description": "Client confidentiel — appels à l'Admin API Keycloak",
+      "enabled": true,
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "backend-secret-dev",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "fullScopeAllowed": true
+    }
+  ],
+
+  "users": [
+    {
+      "username": "admin",
+      "email": "admin@mail.com",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "caca",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["admin"]
+    },
+    {
+      "username": "service-account-moto-rental-backend",
+      "enabled": true,
+      "serviceAccountClientId": "moto-rental-backend",
+      "clientRoles": {
+        "realm-management": ["manage-users", "view-users"]
+      }
+    }
+  ],
+
+  "defaultDefaultClientScopes": [
+    "profile",
+    "email",
+    "roles",
+    "web-origins",
+    "acr"
+  ],
+  "defaultOptionalClientScopes": [
+    "offline_access",
+    "address",
+    "phone",
+    "microprofile-jwt"
+  ]
+}

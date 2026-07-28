@@ -1,4 +1,4 @@
-import { Moto, UpdateMotoParams } from '../entities/Moto'
+import { Moto, UpdateMotoParams, MOTO_STATUSES } from '../entities/Moto'
 import { IMotoRepository } from '../repositories/IMotoRepository'
 import { Result, ok, err } from '@shared/result/Result'
 import { NotFoundError, ValidationError } from '@shared/errors/DomainError'
@@ -18,8 +18,16 @@ export class UpdateMotoUseCase {
       return err(new ValidationError('Le prix par jour doit être supérieur à 0'))
     }
 
-    if (params.currentKm !== undefined && params.currentKm < 0) {
+    if (params.mileage !== undefined && params.mileage < 0) {
       return err(new ValidationError('Le kilométrage ne peut pas être négatif'))
+    }
+
+    if (params.deposit !== undefined && params.deposit < 0) {
+      return err(new ValidationError('La caution ne peut pas être négative'))
+    }
+
+    if (params.status !== undefined && !MOTO_STATUSES.includes(params.status as never)) {
+      return err(new ValidationError(`Statut invalide, doit être l'un de : ${MOTO_STATUSES.join(', ')}`))
     }
 
     const updated = await this.motoRepository.update(id, params)

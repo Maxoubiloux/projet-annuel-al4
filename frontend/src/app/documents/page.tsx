@@ -24,8 +24,8 @@ const DOCUMENTS: Doc[] = [
   { id: 'domicile', name: 'Justificatif de domicile', type: 'Domicile', group: 'justificatif', status: 'pending', date: '02/06/2026', format: 'PDF' },
   { id: 'assurance', name: "Attestation d'assurance", type: 'Assurance', group: 'justificatif', status: 'expired', date: '15/01/2025', format: 'PDF' },
   { id: 'rib', name: 'RIB · caution', type: 'Bancaire', group: 'justificatif', status: 'missing', date: '—', format: '—' },
-  { id: 'contrat', name: 'Contrat de location · CMY-2026-5320', type: 'Contrat', group: 'location', status: 'available', date: '13/06/2026', format: 'PDF' },
-  { id: 'facture', name: 'Facture · CMY-2026-2210', type: 'Facture', group: 'location', status: 'available', date: '14/04/2026', format: 'PDF' },
+  { id: 'contrat', name: 'Contrat de location · PGL-2026-5320', type: 'Contrat', group: 'location', status: 'available', date: '13/06/2026', format: 'PDF' },
+  { id: 'facture', name: 'Facture · PGL-2026-2210', type: 'Facture', group: 'location', status: 'available', date: '14/04/2026', format: 'PDF' },
 ];
 
 const STATUS_STYLE: Record<DocStatus, { label: string; color: string; bg: string }> = {
@@ -95,15 +95,15 @@ function DocRow({ doc, dateLabel }: { doc: Doc; dateLabel: string }) {
 }
 
 export default function DocumentsPage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const [documents] = useState<Doc[]>(DOCUMENTS);
 
   useEffect(() => {
-    if (!isAuthenticated) router.replace('/login');
-  }, [isAuthenticated, router]);
+    if (!isLoading && !isAuthenticated) router.replace('/login');
+  }, [isAuthenticated, isLoading, router]);
 
-  if (!isAuthenticated) return null;
+  if (isLoading || !isAuthenticated) return null;
 
   const justificatifs = documents.filter((d) => d.group === 'justificatif');
   const locationDocs = documents.filter((d) => d.group === 'location');

@@ -24,12 +24,10 @@ export async function shoproutesV1(app: FastifyInstance, opts: { shopRepository:
   const updateShopController = new UpdateShopController(new UpdateShopUseCase(repo))
   const deleteShopController = new DeleteShopController(new DeleteShopUseCase(repo))
 
-  // GET /shops
   app.get('/shops', async (request: FastifyRequest, reply: FastifyReply) => {
     await getAllShopsController.handle(request, reply)
   })
 
-  // GET /shops/:id
   app.get('/shops/:id', async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
     const { error } = idParamSchema.validate(request.params)
     if (error) {
@@ -42,7 +40,6 @@ export async function shoproutesV1(app: FastifyInstance, opts: { shopRepository:
     await getShopByIdController.handle(request, reply)
   })
 
-  // POST /shops
   app.post('/shops', async (request: FastifyRequest<{ Body: CreateShopParams }>, reply: FastifyReply) => {
     const { error } = createShopSchema.validate(request.body, { abortEarly: false })
     if (error) {
@@ -55,7 +52,6 @@ export async function shoproutesV1(app: FastifyInstance, opts: { shopRepository:
     await createShopController.handle(request, reply)
   })
 
-  // PUT /shops/:id
   app.put('/shops/:id', async (request: FastifyRequest<{ Params: { id: string }; Body: UpdateShopParams }>, reply: FastifyReply) => {
     const paramValidation = idParamSchema.validate(request.params)
     if (paramValidation.error) {
@@ -78,7 +74,6 @@ export async function shoproutesV1(app: FastifyInstance, opts: { shopRepository:
     await updateShopController.handle(request, reply)
   })
 
-  // DELETE /shops/:id
   app.delete('/shops/:id', async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
     const { error } = idParamSchema.validate(request.params)
     if (error) {

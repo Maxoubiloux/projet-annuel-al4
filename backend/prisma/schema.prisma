@@ -35,12 +35,19 @@ model Status {
 }
 
 model User {
-  id        String    @id @default(uuid()) @db.Uuid
-  name      String    @db.VarChar(100)
-  email     String    @unique @db.VarChar(255)
-  password  String    @db.VarChar(255)
-  createdAt DateTime  @default(now()) @map("created_at")
-  bookings  Booking[]
+  id              String    @id @default(uuid()) @db.Uuid
+  name            String    @db.VarChar(100)
+  email           String    @unique @db.VarChar(255)
+  password        String    @db.VarChar(255)
+  firstName       String?   @map("first_name") @db.VarChar(100)
+  lastName        String?   @map("last_name") @db.VarChar(100)
+  phone           String?   @db.VarChar(30)
+  licenseNumber   String?   @map("license_number") @db.VarChar(50)
+  licenseVerified Boolean   @default(false) @map("license_verified")
+  status          String    @default("active") @db.VarChar(20)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  bookings        Booking[]
+  payments        Payment[]
 
   @@map("users")
 }
@@ -61,31 +68,49 @@ model Shop {
 }
 
 model Moto {
-  id           String   @id @default(uuid()) @db.Uuid
-  brandId      String   @map("brand_id") @db.Uuid
-  model        String   @db.VarChar(100)
-  serialNumber String   @unique @map("serial_number") @db.VarChar(50)
-  registration String   @unique @db.VarChar(20)
-  categoryId   String   @map("category_id") @db.Uuid
-  statusId     String   @map("status_id") @db.Uuid
-  currentKm    Int      @map("current_km")
-  pricePerDay  Float    @map("price_per_day")
-  description  String   @db.Text
-  style        String   @db.VarChar(50)
-  year         Int
-  hp           Float
-  torque       Float
-  consumption  Float
-  range        Int
-  createdAt    DateTime @default(now()) @map("created_at")
+  id              String    @id @default(uuid()) @db.Uuid
+  brandId         String    @map("brand_id") @db.Uuid
+  model           String    @db.VarChar(100)
+  serialNumber    String?   @unique @map("serial_number") @db.VarChar(50)
+  registration    String    @unique @db.VarChar(20)
+  categoryId      String    @map("category_id") @db.Uuid
+  statusId        String    @map("status_id") @db.Uuid
+  currentKm       Int       @map("current_km")
+  pricePerDay     Float     @map("price_per_day")
+  deposit         Float     @default(0)
+  location        String    @default("") @db.VarChar(255)
+  description     String    @db.Text
+  style           String?   @db.VarChar(50)
+  year            Int
+  hp              Float?
+  torque          Float?
+  consumption     Float?
+  range           Int?
+  nextServiceDate DateTime? @map("next_service_date")
+  createdAt       DateTime  @default(now()) @map("created_at")
 
-  brand    Brand     @relation(fields: [brandId], references: [id])
-  category Category  @relation(fields: [categoryId], references: [id])
-  status   Status    @relation(fields: [statusId], references: [id])
-  images   Image[]
-  bookings Booking[]
+  brand       Brand         @relation(fields: [brandId], references: [id])
+  category    Category      @relation(fields: [categoryId], references: [id])
+  status      Status        @relation(fields: [statusId], references: [id])
+  images      Image[]
+  bookings    Booking[]
+  maintenance MaintenanceJob[]
+  favorites   Favorite[]
 
   @@map("motos")
+}
+
+model Favorite {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  motoId    String   @map("moto_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  moto Moto @relation(fields: [motoId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, motoId])
+  @@index([userId])
+  @@map("favorites")
 }
 
 model Image {
@@ -100,17 +125,69 @@ model Image {
 }
 
 model Booking {
-  id        String   @id @default(uuid()) @db.Uuid
-  motoId    String   @map("moto_id") @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  shopId    String   @map("shop_id") @db.Uuid
-  startDate DateTime @map("start_date")
-  endDate   DateTime @map("end_date")
-  createdAt DateTime @default(now()) @map("created_at")
+  id            String   @id @default(uuid()) @db.Uuid
+  motoId        String   @map("moto_id") @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  shopId        String   @map("shop_id") @db.Uuid
+  startDate     DateTime @map("start_date")
+  endDate       DateTime @map("end_date")
+  status        String   @default("pending") @db.VarChar(20)
+  paymentStatus String   @default("pending") @map("payment_status") @db.VarChar(20)
+  totalAmount   Float    @default(0) @map("total_amount")
+  depositAmount Float    @default(0) @map("deposit_amount")
+  // État du traitement asynchrone de génération du contrat (worker RabbitMQ) :
+  // pending -> processing -> ready | failed. Voir ADR 0005.
+  contractStatus String  @default("pending") @map("contract_status") @db.VarChar(20)
+  contractPdfUrl String? @map("contract_pdf_url")
+  createdAt     DateTime @default(now()) @map("created_at")
 
-  moto Moto @relation(fields: [motoId], references: [id])
-  user User @relation(fields: [userId], references: [id])
-  shop Shop @relation(fields: [shopId], references: [id])
+  moto    Moto      @relation(fields: [motoId], references: [id])
+  user    User      @relation(fields: [userId], references: [id])
+  shop    Shop      @relation(fields: [shopId], references: [id])
+  payment Payment?
 
   @@map("bookings")
+}
+
+model MaintenanceJob {
+  id        String    @id @default(uuid()) @db.Uuid
+  motoId    String    @map("moto_id") @db.Uuid
+  type      String    @db.VarChar(100)
+  date      DateTime
+  km        String    @db.VarChar(20)
+  cost      Float     @default(0)
+  sev       String    @db.VarChar(20)
+  status    String    @default("open") @db.VarChar(20)
+  notes     String?   @db.Text
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  moto Moto @relation(fields: [motoId], references: [id])
+
+  @@map("maintenance_jobs")
+}
+
+model Payment {
+  id         String   @id @default(uuid()) @db.Uuid
+  ref        String   @unique @db.VarChar(30)
+  bookingId  String?  @unique @map("booking_id") @db.Uuid
+  customerId String   @map("customer_id") @db.Uuid
+  amount     Float
+  deposit    Float    @default(0)
+  method     String   @default("card") @db.VarChar(30)
+  date       DateTime @default(now())
+  status     String   @default("pending") @db.VarChar(20)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  booking  Booking? @relation(fields: [bookingId], references: [id])
+  customer User     @relation(fields: [customerId], references: [id])
+
+  @@map("payments")
+}
+
+model Setting {
+  key       String   @id @db.VarChar(50)
+  value     Json
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("settings")
 }
