@@ -68,9 +68,11 @@ await app.register(multipart, {
   limits: { fileSize: 5 * 1024 * 1024 },
 })
 
-// /uploads/* is exempted from authMiddleware's global preHandler hook (see
-// PUBLIC_PREFIXES in AuthMiddleware.ts) so images stay reachable via plain
-// <img> tags, which never send an Authorization header.
+// Sert le répertoire uploads/. Attention : le hook preHandler d'auth
+// s'applique aussi à ces routes (register() est différé, addHook ne l'est pas),
+// donc seuls les préfixes listés dans PUBLIC_GET_PREFIXES (AuthMiddleware.ts)
+// sont réellement accessibles sans token — /uploads/motos pour les <img>.
+// Les contrats PDF passent par GET /api/v1/reservations/:id/contract.
 await app.register(fastifyStatic, {
   root: join(process.cwd(), 'uploads'),
   prefix: '/uploads/',

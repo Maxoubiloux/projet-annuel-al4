@@ -7,7 +7,11 @@ const PUBLIC_AUTH_PATHS = new Set([
   '/api/v1/auth/register',
   '/api/v1/auth/forgot-password',
 ])
-const PUBLIC_GET_PREFIXES = ['/api/v1/motos', '/api/v2/motos']
+// `/uploads/motos` est public parce que les photos sont affichées par des
+// balises <img>, qui n'envoient jamais de header Authorization. Les contrats
+// PDF, eux, restent volontairement hors de cette liste : ils contiennent des
+// données personnelles et passent par GET /api/v1/reservations/:id/contract.
+const PUBLIC_GET_PREFIXES = ['/api/v1/motos', '/api/v2/motos', '/uploads/motos']
 
 const keycloakUrl = process.env.KEYCLOAK_URL ?? 'http://localhost:8080'
 const keycloakIssuerUrl = process.env.KEYCLOAK_ISSUER_URL ?? keycloakUrl
