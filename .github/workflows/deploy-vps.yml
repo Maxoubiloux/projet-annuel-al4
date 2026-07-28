@@ -50,7 +50,12 @@ jobs:
                  exit 66;
                fi;
                mkdir -p \"\$APP_BASE_DIR\";
-               git clone \"\$REPO_URL\" \"\$APP_DIR\";
+               TMP_DIR=\"\$APP_BASE_DIR/.clone-\$BRANCH-\$\$\";
+               rm -rf \"\$TMP_DIR\";
+               git clone \"\$REPO_URL\" \"\$TMP_DIR\";
+               mkdir -p \"\$APP_DIR\";
+               cp -a \"\$TMP_DIR\"/. \"\$APP_DIR\"/;
+               rm -rf \"\$TMP_DIR\";
              fi;
              cd \"\$APP_DIR\";
              git fetch --prune origin;
