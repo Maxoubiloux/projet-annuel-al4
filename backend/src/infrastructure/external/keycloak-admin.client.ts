@@ -1,12 +1,7 @@
-import { decodeJwt } from 'jose'
-import { generateSecret, generateURI, verify } from 'otplib'
-import QRCode from 'qrcode'
-import { IamAuthSession, IIamClient } from '@domain/repositories/IIamClient'
+import { IamAuthSession, IamUser, IIamClient } from '@domain/repositories/IIamClient'
 
 interface KeycloakTokenResponse {
   access_token: string
-  refresh_token?: string
-  expires_in: number
 }
 
 interface KeycloakUser {
@@ -24,15 +19,6 @@ interface KeycloakCredential {
   userLabel?: string
 }
 
-interface KeycloakJWTPayload {
-  sub?: string
-  email?: string
-  given_name?: string
-  family_name?: string
-  preferred_username?: string
-  realm_access?: { roles?: string[] }
-}
-
 async function readError(res: Response): Promise<string> {
   return await res.text().catch(() => res.statusText)
 }
@@ -48,7 +34,6 @@ export class KeycloakAdminClient implements IIamClient {
   private readonly realm = process.env.KEYCLOAK_REALM ?? 'moto-rental'
   private readonly clientId = process.env.KEYCLOAK_CLIENT_ID ?? ''
   private readonly clientSecret = process.env.KEYCLOAK_CLIENT_SECRET ?? ''
-  private readonly publicClientId = process.env.KEYCLOAK_PUBLIC_CLIENT_ID ?? 'moto-rental-frontend'
 
   private async getAdminToken(): Promise<string> {
     const res = await fetch(`${this.baseUrl}/realms/${this.realm}/protocol/openid-connect/token`, {
@@ -98,86 +83,30 @@ export class KeycloakAdminClient implements IIamClient {
     return users[0] ?? null
   }
 
-  private async mapSession(data: KeycloakTokenResponse): Promise<IamAuthSession> {
-    const token = decodeJwt(data.access_token) as KeycloakJWTPayload
-    const roles = token.realm_access?.roles ?? []
-    const userDetails = await this.getUserDetails(token.sub ?? '')
-
+  private mapUser(user: KeycloakUser, roles: string[] = []): IamUser {
     return {
-      accessToken: data.access_token,
-      refreshToken: data.refresh_token,
-      expiresIn: data.expires_in,
-      user: {
-        id: token.sub ?? '',
-        email: userDetails?.email ?? token.email ?? '',
-        firstName: userDetails?.firstName ?? token.given_name ?? token.preferred_username ?? 'Utilisateur',
-        lastName: userDetails?.lastName ?? token.family_name ?? '',
-        phone: this.firstAttribute(userDetails, 'phone'),
-        address: this.firstAttribute(userDetails, 'address'),
-        zipCode: this.firstAttribute(userDetails, 'zipCode'),
-        city: this.firstAttribute(userDetails, 'city'),
-        licenseCategory: (this.firstAttribute(userDetails, 'licenseCategory') || 'A1') as 'A1' | 'A2' | 'A',
-        licenseNumber: this.firstAttribute(userDetails, 'licenseNumber'),
-        createdAt: userDetails?.createdTimestamp ? new Date(userDetails.createdTimestamp).toISOString() : new Date().toISOString(),
-        roles,
-      },
+      id: user.id,
+      email: user.email ?? '',
+      firstName: user.firstName ?? '',
+      lastName: user.lastName ?? '',
+      phone: this.firstAttribute(user, 'phone'),
+      address: this.firstAttribute(user, 'address'),
+      zipCode: this.firstAttribute(user, 'zipCode'),
+      city: this.firstAttribute(user, 'city'),
+      licenseCategory: (this.firstAttribute(user, 'licenseCategory') || 'A1') as 'A1' | 'A2' | 'A',
+      licenseNumber: this.firstAttribute(user, 'licenseNumber'),
+      createdAt: user.createdTimestamp ? new Date(user.createdTimestamp).toISOString() : new Date().toISOString(),
+      roles,
     }
   }
 
-  async login(email: string, password: string, otp?: string): Promise<IamAuthSession> {
-    const body = new URLSearchParams({
-      grant_type: 'password',
-      client_id: this.publicClientId,
-      username: email,
-      password,
-    })
-    if (otp?.trim()) body.set('totp', otp.trim())
-
-    const res = await fetch(`${this.baseUrl}/realms/${this.realm}/protocol/openid-connect/token`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body,
-    })
-
-    if (!res.ok) {
-      const body = await readError(res)
-      if (body.toLowerCase().includes('otp') || body.toLowerCase().includes('totp')) {
-        throw new Error('Code A2F requis ou invalide')
-      }
-      throw new Error('Identifiants invalides')
+  async getUser(userId: string): Promise<IamUser> {
+    const user = await this.getUserDetails(userId)
+    if (!user) {
+      throw new Error('Utilisateur introuvable')
     }
 
-    const data = (await res.json()) as KeycloakTokenResponse
-    const token = decodeJwt(data.access_token) as KeycloakJWTPayload
-    const userDetails = await this.getUserDetails(token.sub ?? '')
-    const twoFactorEnabled = this.firstAttribute(userDetails, 'twoFactorEnabled') === 'true'
-    if (twoFactorEnabled) {
-      const secret = this.firstAttribute(userDetails, 'twoFactorSecret')
-      const result = otp?.trim() ? await verify({ secret, token: otp.trim() }) : { valid: false }
-      if (!secret || !result.valid) {
-        throw new Error('Code A2F requis ou invalide')
-      }
-    }
-
-    return this.mapSession(data)
-  }
-
-  async refresh(refreshToken: string): Promise<IamAuthSession> {
-    const res = await fetch(`${this.baseUrl}/realms/${this.realm}/protocol/openid-connect/token`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        grant_type: 'refresh_token',
-        client_id: this.publicClientId,
-        refresh_token: refreshToken,
-      }),
-    })
-
-    if (!res.ok) {
-      throw new Error('Session expirée')
-    }
-
-    return this.mapSession((await res.json()) as KeycloakTokenResponse)
+    return this.mapUser(user)
   }
 
   async register(input: {
@@ -249,7 +178,27 @@ export class KeycloakAdminClient implements IIamClient {
       }
     }
 
-    return this.login(input.email, input.password)
+    const createdUser = await this.findUserByEmail(token, input.email)
+    return {
+      accessToken: '',
+      expiresIn: 0,
+      user: createdUser
+        ? this.mapUser(createdUser, ['customer'])
+        : {
+          id: '',
+          email: input.email,
+          firstName: input.firstName,
+          lastName: input.lastName,
+          phone: input.phone,
+          address: input.address,
+          zipCode: input.zipCode,
+          city: input.city,
+          licenseCategory: input.licenseCategory,
+          licenseNumber: input.licenseNumber,
+          createdAt: new Date().toISOString(),
+          roles: ['customer'],
+        },
+    }
   }
 
   async updateUser(userId: string, input: {
@@ -292,32 +241,28 @@ export class KeycloakAdminClient implements IIamClient {
     return {
       accessToken: '',
       expiresIn: 0,
-      user: {
-        id: userId,
+      user: this.mapUser({
+        ...user,
         email: input.email,
-        firstName: user.firstName ?? '',
-        lastName: user.lastName ?? '',
-        phone: input.phone,
-        address: input.address,
-        zipCode: input.zipCode,
-        city: input.city,
-        licenseCategory: input.licenseCategory,
-        licenseNumber: this.firstAttribute(user, 'licenseNumber'),
-        createdAt: user.createdTimestamp ? new Date(user.createdTimestamp).toISOString() : new Date().toISOString(),
-        roles: [],
-      },
+        attributes: {
+          ...(user.attributes ?? {}),
+          phone: [input.phone],
+          address: [input.address],
+          zipCode: [input.zipCode],
+          city: [input.city],
+          licenseCategory: [input.licenseCategory],
+        },
+      }),
     }
   }
 
-  async updatePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+  async updatePassword(userId: string, _currentPassword: string, newPassword: string): Promise<void> {
     const token = await this.getAdminToken()
     const user = await this.getUserDetails(userId)
 
     if (!user?.email) {
       throw new Error('Utilisateur introuvable')
     }
-
-    await this.login(user.email, currentPassword)
 
     const res = await fetch(`${this.baseUrl}/admin/realms/${this.realm}/users/${userId}/reset-password`, {
       method: 'PUT',
@@ -375,67 +320,9 @@ export class KeycloakAdminClient implements IIamClient {
 
   async getTwoFactorStatus(userId: string): Promise<{ enabled: boolean }> {
     const token = await this.getAdminToken()
-    const user = await this.getUserDetails(userId)
     const credentials = await this.getUserCredentials(token, userId)
     return {
-      enabled: this.firstAttribute(user, 'twoFactorEnabled') === 'true' ||
-        credentials.some(credential => credential.type === 'otp'),
-    }
-  }
-
-  async createTwoFactorSetup(userId: string): Promise<{ secret: string; otpauthUrl: string; qrCodeDataUrl: string }> {
-    const user = await this.getUserDetails(userId)
-    if (!user?.email) {
-      throw new Error('Utilisateur introuvable')
-    }
-
-    const secret = generateSecret()
-    const otpauthUrl = generateURI({
-      issuer: 'Moto Rental',
-      label: user.email,
-      secret,
-    })
-    const qrCodeDataUrl = await QRCode.toDataURL(otpauthUrl, {
-      errorCorrectionLevel: 'M',
-      margin: 1,
-      width: 220,
-    })
-
-    return { secret, otpauthUrl, qrCodeDataUrl }
-  }
-
-  async enableTwoFactor(userId: string, secret: string, code: string): Promise<void> {
-    const result = await verify({ secret, token: code.replace(/\s/g, '') })
-    if (!result.valid) {
-      throw new Error('Code A2F invalide')
-    }
-
-    const token = await this.getAdminToken()
-    const user = await this.getUserDetails(userId)
-    if (!user) {
-      throw new Error('Utilisateur introuvable')
-    }
-    if (this.firstAttribute(user, 'twoFactorEnabled') === 'true') {
-      throw new Error('A2F déjà activée')
-    }
-
-    const attributes = { ...(user.attributes ?? {}) }
-    attributes.twoFactorEnabled = ['true']
-    attributes.twoFactorSecret = [secret]
-
-    const res = await fetch(`${this.baseUrl}/admin/realms/${this.realm}/users/${userId}`, {
-      method: 'PUT',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        attributes,
-      }),
-    })
-
-    if (!res.ok) {
-      throw new Error(`Activation A2F impossible (${res.status}): ${await readError(res)}`)
+      enabled: credentials.some(credential => credential.type === 'otp'),
     }
   }
 

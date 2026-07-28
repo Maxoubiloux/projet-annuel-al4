@@ -5,18 +5,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/hooks/useAuth';
-import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [otp, setOtp] = useState('');
-  const [otpRequested, setOtpRequested] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { login, resetPassword } = useAuth();
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,16 +19,9 @@ export default function LoginPage() {
     setInfo(null);
     setIsSubmitting(true);
     try {
-      await login(email, password, otpRequested ? otp : undefined);
-      router.push('/profile');
+      await login(email || undefined);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Connexion impossible';
-      if (message.toLowerCase().includes('a2f') || message.toLowerCase().includes('otp')) {
-        setOtpRequested(true);
-        setError('Saisissez le code A2F généré par votre application.');
-      } else {
-        setError(message);
-      }
+      setError(err instanceof Error ? err.message : 'Connexion impossible');
     } finally {
       setIsSubmitting(false);
     }
@@ -114,41 +102,6 @@ export default function LoginPage() {
               />
             </label>
 
-            {otpRequested && (
-              <label className="block">
-                <span className="block font-mono text-[9.5px] tracking-[0.16em] uppercase text-[#a0967f] mb-2">
-                  Code A2F
-                </span>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  required
-                  pattern="\d{6}"
-                  maxLength={6}
-                  placeholder="123456"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  className="w-full border border-[#E4DECF] bg-[#FBF9F3] rounded-[10px] px-[14px] py-[13px] text-[14px] text-[#1B1A17] outline-none focus:border-[#7E2E32] transition-colors"
-                />
-              </label>
-            )}
-
-            <label className="block">
-              <span className="block font-mono text-[9.5px] tracking-[0.16em] uppercase text-[#a0967f] mb-2">
-                Mot de passe
-              </span>
-              <input
-                type="password"
-                autoComplete="current-password"
-                required
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full border border-[#E4DECF] bg-[#FBF9F3] rounded-[10px] px-[14px] py-[13px] text-[14px] text-[#1B1A17] outline-none focus:border-[#7E2E32] transition-colors"
-              />
-            </label>
-
             <div className="text-right">
               <button
                 type="button"
@@ -160,7 +113,7 @@ export default function LoginPage() {
             </div>
 
             <Button type="submit" disabled={isSubmitting} variant="primary" size="lg" className="w-full mt-2">
-              {isSubmitting ? 'Connexion...' : 'Se connecter'}
+              {isSubmitting ? 'Redirection...' : 'Se connecter avec Keycloak'}
             </Button>
           </form>
 

@@ -20,15 +20,8 @@ export interface IamAuthSession {
   user: IamUser
 }
 
-export interface TwoFactorSetup {
-  secret: string
-  otpauthUrl: string
-  qrCodeDataUrl: string
-}
-
 export interface IIamClient {
-  login(email: string, password: string, otp?: string): Promise<IamAuthSession>
-  refresh(refreshToken: string): Promise<IamAuthSession>
+  getUser(userId: string): Promise<IamUser>
   register(input: {
     email: string
     password: string
@@ -52,7 +45,5 @@ export interface IIamClient {
   updatePassword(userId: string, currentPassword: string, newPassword: string): Promise<void>
   sendPasswordResetEmail(email: string): Promise<void>
   getTwoFactorStatus(userId: string): Promise<{ enabled: boolean }>
-  createTwoFactorSetup(userId: string): Promise<TwoFactorSetup>
-  enableTwoFactor(userId: string, secret: string, code: string): Promise<void>
   disableTwoFactor(userId: string): Promise<void>
 }
