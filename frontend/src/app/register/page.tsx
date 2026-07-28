@@ -5,13 +5,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/hooks/useAuth';
-import { useRouter } from 'next/navigation';
 
 type LicenseCategory = 'A1' | 'A2' | 'A';
 
 export default function RegisterPage() {
   const { register } = useAuth();
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<{
@@ -66,7 +64,6 @@ export default function RegisterPage() {
         licenseNumber: formData.licenseNumber,
         password: formData.password,
       });
-      router.push('/profile');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Création du compte impossible');
     } finally {

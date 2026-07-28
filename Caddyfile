@@ -5,6 +5,21 @@
 {$APP_DOMAIN} {
 	encode zstd gzip
 
+	redir /dev /dev/ 308
+
+	route /dev/api/* {
+		uri strip_prefix /dev
+		reverse_proxy host.docker.internal:13000
+	}
+
+	route /dev/auth* {
+		reverse_proxy host.docker.internal:18080
+	}
+
+	route /dev/* {
+		reverse_proxy host.docker.internal:13001
+	}
+
 	route /api/* {
 		reverse_proxy backend:3000
 	}

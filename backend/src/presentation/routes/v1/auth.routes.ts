@@ -7,29 +7,6 @@ import { forgotPasswordSchema } from '@presentation/validators/forgot-password.v
 export async function authRoutesV1(app: FastifyInstance, opts: { iamClient: IIamClient }) {
   const forgotPasswordController = new ForgotPasswordController(new ForgotPasswordUseCase(opts.iamClient))
 
-  app.post('/auth/login', async (request: FastifyRequest<{ Body: { email: string; password: string; otp?: string } }>, reply: FastifyReply) => {
-    const email = request.body.email?.trim()
-    const password = request.body.password
-    const otp = request.body.otp?.trim()
-    if (!email?.includes('@') || !password) {
-      reply.status(400).send({
-        success: false,
-        error: { code: 'VALIDATION_ERROR', message: 'Email et mot de passe requis' },
-      })
-      return
-    }
-
-    try {
-      const session = await opts.iamClient.login(email, password, otp)
-      reply.send({ success: true, data: session })
-    } catch (error) {
-      reply.status(401).send({
-        success: false,
-        error: { code: 'INVALID_CREDENTIALS', message: error instanceof Error ? error.message : 'Identifiants invalides' },
-      })
-    }
-  })
-
   app.post(
     '/auth/register',
     async (request: FastifyRequest<{ Body: {
@@ -78,30 +55,6 @@ export async function authRoutesV1(app: FastifyInstance, opts: { iamClient: IIam
     },
   )
 
-  app.post('/auth/refresh', async (
-    request: FastifyRequest<{ Body: { refreshToken: string } }>,
-    reply: FastifyReply,
-  ) => {
-    const refreshToken = request.body.refreshToken?.trim()
-    if (!refreshToken) {
-      reply.status(400).send({
-        success: false,
-        error: { code: 'VALIDATION_ERROR', message: 'Refresh token requis' },
-      })
-      return
-    }
-
-    try {
-      const session = await opts.iamClient.refresh(refreshToken)
-      reply.send({ success: true, data: session })
-    } catch {
-      reply.status(401).send({
-        success: false,
-        error: { code: 'SESSION_EXPIRED', message: 'Session expirée, reconnectez-vous' },
-      })
-    }
-  })
-
   app.get('/auth/me/2fa', async (request: FastifyRequest, reply: FastifyReply) => {
     if (!request.user?.id) {
       reply.status(401).send({
@@ -122,59 +75,6 @@ export async function authRoutesV1(app: FastifyInstance, opts: { iamClient: IIam
     }
   })
 
-  app.post('/auth/me/2fa/setup', async (request: FastifyRequest, reply: FastifyReply) => {
-    if (!request.user?.id) {
-      reply.status(401).send({
-        success: false,
-        error: { code: 'UNAUTHORIZED', message: 'Bearer token requis' },
-      })
-      return
-    }
-
-    try {
-      const setup = await opts.iamClient.createTwoFactorSetup(request.user.id)
-      reply.send({ success: true, data: setup })
-    } catch (error) {
-      reply.status(400).send({
-        success: false,
-        error: { code: 'TWO_FACTOR_SETUP_FAILED', message: error instanceof Error ? error.message : 'Initialisation A2F impossible' },
-      })
-    }
-  })
-
-  app.post('/auth/me/2fa/enable', async (
-    request: FastifyRequest<{ Body: { secret: string; code: string } }>,
-    reply: FastifyReply,
-  ) => {
-    if (!request.user?.id) {
-      reply.status(401).send({
-        success: false,
-        error: { code: 'UNAUTHORIZED', message: 'Bearer token requis' },
-      })
-      return
-    }
-
-    const secret = request.body.secret?.trim()
-    const code = request.body.code?.trim()
-    if (!secret || !/^\d{6}$/.test(code ?? '')) {
-      reply.status(400).send({
-        success: false,
-        error: { code: 'VALIDATION_ERROR', message: 'Secret et code A2F à 6 chiffres requis' },
-      })
-      return
-    }
-
-    try {
-      await opts.iamClient.enableTwoFactor(request.user.id, secret, code)
-      reply.send({ success: true, data: { enabled: true } })
-    } catch (error) {
-      reply.status(400).send({
-        success: false,
-        error: { code: 'TWO_FACTOR_ENABLE_FAILED', message: error instanceof Error ? error.message : 'Activation A2F impossible' },
-      })
-    }
-  })
-
   app.delete('/auth/me/2fa', async (request: FastifyRequest, reply: FastifyReply) => {
     if (!request.user?.id) {
       reply.status(401).send({
@@ -191,6 +91,26 @@ export async function authRoutesV1(app: FastifyInstance, opts: { iamClient: IIam
       reply.status(400).send({
         success: false,
         error: { code: 'TWO_FACTOR_DISABLE_FAILED', message: error instanceof Error ? error.message : 'Désactivation A2F impossible' },
+      })
+    }
+  })
+
+  app.get('/auth/me', async (request: FastifyRequest, reply: FastifyReply) => {
+    if (!request.user?.id) {
+      reply.status(401).send({
+        success: false,
+        error: { code: 'UNAUTHORIZED', message: 'Bearer token requis' },
+      })
+      return
+    }
+
+    try {
+      const user = await opts.iamClient.getUser(request.user.id)
+      reply.send({ success: true, data: { user } })
+    } catch (error) {
+      reply.status(400).send({
+        success: false,
+        error: { code: 'ACCOUNT_READ_FAILED', message: error instanceof Error ? error.message : 'Lecture du compte impossible' },
       })
     }
   })

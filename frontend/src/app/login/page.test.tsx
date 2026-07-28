@@ -3,16 +3,9 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import LoginPage from "@/app/login/page";
 
-const { loginMock, resetPasswordMock, pushMock } = vi.hoisted(() => ({
+const { loginMock, resetPasswordMock } = vi.hoisted(() => ({
   loginMock: vi.fn(),
   resetPasswordMock: vi.fn(),
-  pushMock: vi.fn(),
-}));
-
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    push: pushMock,
-  }),
 }));
 
 vi.mock("@/hooks/useAuth", () => ({
@@ -24,6 +17,11 @@ vi.mock("@/hooks/useAuth", () => ({
     login: loginMock,
     register: vi.fn(),
     resetPassword: resetPasswordMock,
+    updateAccount: vi.fn(),
+    updatePassword: vi.fn(),
+    getTwoFactorStatus: vi.fn(),
+    startTwoFactorSetup: vi.fn(),
+    disableTwoFactor: vi.fn(),
     logout: vi.fn(),
   }),
 }));
@@ -32,20 +30,17 @@ describe("LoginPage", () => {
   beforeEach(() => {
     loginMock.mockClear();
     resetPasswordMock.mockClear();
-    pushMock.mockClear();
     loginMock.mockResolvedValue(undefined);
   });
 
-  it("connecte avec le formulaire frontend puis ouvre le profil", async () => {
+  it("redirige vers Keycloak avec l'email en indice de connexion", async () => {
     const user = userEvent.setup();
 
     render(<LoginPage />);
 
     await user.type(screen.getByLabelText(/adresse e-mail/i), "pilote@example.com");
-    await user.type(screen.getByLabelText(/mot de passe/i), "motdepasse");
-    await user.click(screen.getByRole("button", { name: /se connecter/i }));
+    await user.click(screen.getByRole("button", { name: /se connecter avec keycloak/i }));
 
-    expect(loginMock).toHaveBeenCalledWith("pilote@example.com", "motdepasse", undefined);
-    expect(pushMock).toHaveBeenCalledWith("/profile");
+    expect(loginMock).toHaveBeenCalledWith("pilote@example.com");
   });
 });

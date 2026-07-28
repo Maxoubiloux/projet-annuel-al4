@@ -12,6 +12,8 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - frontend
       - admin
@@ -92,7 +94,7 @@ services:
       "/opt/keycloak/bin/kcadm.sh config credentials --server http://keycloak:8080 --realm master --user $$KEYCLOAK_ADMIN --password $$KEYCLOAK_ADMIN_PASSWORD &&
       /opt/keycloak/bin/kcadm.sh update realms/$$KEYCLOAK_REALM/users/profile -f /config/keycloak-user-profile.json &&
       CLIENT_ID=$$(/opt/keycloak/bin/kcadm.sh get clients -r $$KEYCLOAK_REALM -q clientId=moto-rental-frontend --fields id --format csv --noquotes | tail -n 1) &&
-      /opt/keycloak/bin/kcadm.sh update clients/$$CLIENT_ID -r $$KEYCLOAK_REALM -s directAccessGrantsEnabled=true &&
+      /opt/keycloak/bin/kcadm.sh update clients/$$CLIENT_ID -r $$KEYCLOAK_REALM -s standardFlowEnabled=true -s directAccessGrantsEnabled=false -s 'attributes.\"pkce.code.challenge.method\"=S256' &&
       BACKEND_CLIENT_ID=$$(/opt/keycloak/bin/kcadm.sh get clients -r $$KEYCLOAK_REALM -q clientId=moto-rental-backend --fields id --format csv --noquotes | tail -n 1) &&
       /opt/keycloak/bin/kcadm.sh update clients/$$BACKEND_CLIENT_ID -r $$KEYCLOAK_REALM -s fullScopeAllowed=true &&
       /opt/keycloak/bin/kcadm.sh add-roles -r $$KEYCLOAK_REALM --uusername service-account-moto-rental-backend --cclientid realm-management --rolename manage-users || true &&
@@ -122,7 +124,6 @@ services:
       KEYCLOAK_REALM: ${KEYCLOAK_REALM}
       KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
-      KEYCLOAK_PUBLIC_CLIENT_ID: moto-rental-frontend
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
       FRONTEND_URL: https://${APP_DOMAIN}
       CORS_ORIGIN: https://${APP_DOMAIN},https://${ADMIN_DOMAIN}
@@ -152,145 +153,6 @@ services:
       NEXT_PUBLIC_KEYCLOAK_URL: https://${AUTH_DOMAIN}
       NEXT_PUBLIC_KEYCLOAK_REALM: ${KEYCLOAK_REALM}
       NEXT_PUBLIC_KEYCLOAK_CLIENT_ID: moto-rental-frontend
-    depends_on:
-      - backend
-
-  admin:
-    build:
-      context: ./admin
-      dockerfile: Dockerfile
-      args:
-        VITE_API_URL: https://${API_DOMAIN}/api/v1
-        VITE_KEYCLOAK_URL: https://${AUTH_DOMAIN}
-        VITE_KEYCLOAK_REALM: ${KEYCLOAK_REALM}
-        VITE_KEYCLOAK_CLIENT_ID: moto-rental-admin
-    container_name: moto-admin
-    restart: unless-stopped
-    depends_on:
-      - backend
-      - keycloak
-
-volumes:
-  postgres_data:
-  caddy_data:
-  caddy_config:
-services:
-  caddy:
-    image: caddy:2.8-alpine
-    container_name: moto-caddy
-    restart: unless-stopped
-    env_file:
-      - .env.prod
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      - frontend
-      - admin
-      - backend
-      - keycloak
-
-  postgres:
-    image: postgres:15-alpine
-    container_name: moto-postgres
-    restart: unless-stopped
-    env_file:
-      - .env.prod
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  redis:
-    image: redis:7-alpine
-    container_name: moto-redis
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  keycloak:
-    image: quay.io/keycloak/keycloak:25.0.6
-    container_name: moto-keycloak
-    restart: unless-stopped
-    env_file:
-      - .env.prod
-    environment:
-      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
-      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
-      KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
-      KC_DB_USERNAME: ${POSTGRES_USER}
-      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
-      KC_HOSTNAME: ${AUTH_DOMAIN}
-      KC_HTTP_ENABLED: "true"
-      KC_PROXY_HEADERS: xforwarded
-    volumes:
-      - ./docker/keycloak-realm.json:/opt/keycloak/data/import/realm.json:ro
-    depends_on:
-      postgres:
-        condition: service_healthy
-    command: start --import-realm
-
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: moto-backend
-    restart: unless-stopped
-    env_file:
-      - .env.prod
-    environment:
-      NODE_ENV: production
-      PORT: 3000
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
-      DATABASE_HOST: postgres
-      DATABASE_PORT: 5432
-      DATABASE_NAME: ${POSTGRES_DB}
-      DATABASE_USER: ${POSTGRES_USER}
-      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      KEYCLOAK_URL: https://${AUTH_DOMAIN}
-      KEYCLOAK_ISSUER_URL: https://${AUTH_DOMAIN}
-      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
-      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
-      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
-      CORS_ORIGIN: https://${APP_DOMAIN},https://${ADMIN_DOMAIN}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      keycloak:
-        condition: service_started
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        NEXT_PUBLIC_API_URL: /api
-    container_name: moto-frontend
-    restart: unless-stopped
-    environment:
-      NODE_ENV: production
-      PORT: 3000
-      NEXT_PUBLIC_API_URL: /api
     depends_on:
       - backend
 

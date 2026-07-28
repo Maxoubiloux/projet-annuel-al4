@@ -68,7 +68,6 @@ export default function ProfilePage() {
     updatePassword,
     getTwoFactorStatus,
     startTwoFactorSetup,
-    enableTwoFactor,
     disableTwoFactor,
   } = useAuth();
   const router = useRouter();
@@ -81,8 +80,6 @@ export default function ProfilePage() {
   const [isSavingPassword, setIsSavingPassword] = useState(false);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [twoFactorLoading, setTwoFactorLoading] = useState(false);
-  const [twoFactorSetup, setTwoFactorSetup] = useState<{ secret: string; qrCodeDataUrl: string } | null>(null);
-  const [twoFactorCode, setTwoFactorCode] = useState('');
 
   const personal: PersonalData = {
     firstName: user?.firstName ?? '',
@@ -223,30 +220,9 @@ export default function ProfilePage() {
     setAccountError(null);
     setTwoFactorLoading(true);
     try {
-      const setup = await startTwoFactorSetup();
-      setTwoFactorSetup({ secret: setup.secret, qrCodeDataUrl: setup.qrCodeDataUrl });
-      setTwoFactorCode('');
+      await startTwoFactorSetup();
     } catch (err) {
       setAccountError(err instanceof Error ? err.message : 'Initialisation A2F impossible');
-    } finally {
-      setTwoFactorLoading(false);
-    }
-  }
-
-  async function confirmA2fSetup(e: React.FormEvent) {
-    e.preventDefault();
-    if (!twoFactorSetup) return;
-    setAccountMsg(null);
-    setAccountError(null);
-    setTwoFactorLoading(true);
-    try {
-      await enableTwoFactor(twoFactorSetup.secret, twoFactorCode);
-      setTwoFactorEnabled(true);
-      setTwoFactorSetup(null);
-      setTwoFactorCode('');
-      setAccountMsg('Authentification forte activée.');
-    } catch (err) {
-      setAccountError(err instanceof Error ? err.message : 'Activation A2F impossible');
     } finally {
       setTwoFactorLoading(false);
     }
@@ -259,8 +235,6 @@ export default function ProfilePage() {
     try {
       await disableTwoFactor();
       setTwoFactorEnabled(false);
-      setTwoFactorSetup(null);
-      setTwoFactorCode('');
       setAccountMsg('Authentification forte désactivée.');
     } catch (err) {
       setAccountError(err instanceof Error ? err.message : 'Désactivation A2F impossible');
@@ -414,56 +388,17 @@ export default function ProfilePage() {
                   </span>
                 </div>
 
-                {!twoFactorSetup && (
-                  <div className="flex flex-wrap gap-3 mt-4">
-                    {!twoFactorEnabled ? (
-                      <Button type="button" variant="primary" size="md" disabled={twoFactorLoading} onClick={startA2fSetup}>
-                        {twoFactorLoading ? 'Préparation...' : 'Activer l’A2F'}
-                      </Button>
-                    ) : (
-                      <Button type="button" variant="ghost" size="md" disabled={twoFactorLoading} onClick={removeA2f}>
-                        {twoFactorLoading ? 'Suppression...' : 'Désactiver l’A2F'}
-                      </Button>
-                    )}
-                  </div>
-                )}
-
-                {twoFactorSetup && (
-                  <form onSubmit={confirmA2fSetup} className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-5 mt-5 items-start">
-                    <div className="bg-white border border-[#E4DECF] rounded-[12px] p-3 w-fit">
-                      <img src={twoFactorSetup.qrCodeDataUrl} alt="QR code A2F" width={220} height={220} />
-                    </div>
-                    <div>
-                      <label className="block mb-3">
-                        <span className="block font-mono text-[9.5px] tracking-[0.16em] uppercase text-[#a0967f] mb-2">
-                          Code de vérification
-                        </span>
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          required
-                          pattern="\d{6}"
-                          maxLength={6}
-                          value={twoFactorCode}
-                          onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                          placeholder="123456"
-                          className="w-full max-w-[220px] border border-[#E4DECF] bg-white rounded-[10px] px-[13px] py-3 text-[14px] text-[#1B1A17] outline-none focus:border-[#7E2E32] transition-colors"
-                        />
-                      </label>
-                      <p className="text-[12.5px] text-[#8a7f63] leading-[1.6] mb-4">
-                        Scannez le QR code avec Aegis puis saisissez le code généré.
-                      </p>
-                      <div className="flex gap-3">
-                        <Button type="submit" variant="primary" size="md" disabled={twoFactorCode.length !== 6 || twoFactorLoading}>
-                          {twoFactorLoading ? 'Activation...' : 'Valider'}
-                        </Button>
-                        <Button type="button" variant="ghost" size="md" onClick={() => setTwoFactorSetup(null)}>
-                          Annuler
-                        </Button>
-                      </div>
-                    </div>
-                  </form>
-                )}
+                <div className="flex flex-wrap gap-3 mt-4">
+                  {!twoFactorEnabled ? (
+                    <Button type="button" variant="primary" size="md" disabled={twoFactorLoading} onClick={startA2fSetup}>
+                      {twoFactorLoading ? 'Redirection...' : 'Activer l’A2F'}
+                    </Button>
+                  ) : (
+                    <Button type="button" variant="ghost" size="md" disabled={twoFactorLoading} onClick={removeA2f}>
+                      {twoFactorLoading ? 'Suppression...' : 'Désactiver l’A2F'}
+                    </Button>
+                  )}
+                </div>
               </div>
 
               <div className="flex items-center justify-between gap-[18px] px-5 py-[18px] border border-[#EFE9DD] rounded-xl bg-[#FBF9F3]">

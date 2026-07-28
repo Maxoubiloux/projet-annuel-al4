@@ -3,15 +3,12 @@ import { IIamClient } from '@domain/repositories/IIamClient'
 
 function createIamClientMock(overrides: Partial<IIamClient> = {}): IIamClient {
   return {
-    login: jest.fn(),
-    refresh: jest.fn(),
+    getUser: jest.fn(),
     register: jest.fn(),
     updateUser: jest.fn(),
     updatePassword: jest.fn(),
     sendPasswordResetEmail: jest.fn(async () => undefined),
     getTwoFactorStatus: jest.fn(async () => ({ enabled: false })),
-    createTwoFactorSetup: jest.fn(),
-    enableTwoFactor: jest.fn(),
     disableTwoFactor: jest.fn(),
     ...overrides,
   }

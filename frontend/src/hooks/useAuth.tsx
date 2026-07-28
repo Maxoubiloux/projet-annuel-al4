@@ -1,22 +1,22 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import { AuthUser } from '@/types';
 import { apiClient } from '@/services/api.client';
+import keycloak from '@/services/keycloak';
 
 interface AuthContextType {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   token: string | undefined;
-  login: (email: string, password: string, otp?: string) => Promise<void>;
+  login: (loginHint?: string) => Promise<void>;
   register: (input: RegisterInput) => Promise<void>;
   updateAccount: (input: AccountUpdateInput) => Promise<void>;
   updatePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   getTwoFactorStatus: () => Promise<{ enabled: boolean }>;
-  startTwoFactorSetup: () => Promise<TwoFactorSetup>;
-  enableTwoFactor: (secret: string, code: string) => Promise<void>;
+  startTwoFactorSetup: () => Promise<void>;
   disableTwoFactor: () => Promise<void>;
   logout: () => void;
 }
@@ -24,8 +24,13 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const TOKEN_KEY = 'auth_token';
-const REFRESH_TOKEN_KEY = 'auth_refresh_token';
 const USER_KEY = 'auth_user';
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+
+function appUrl(path: string): string {
+  if (typeof window === 'undefined') return `${BASE_PATH}${path}`;
+  return `${window.location.origin}${BASE_PATH}${path}`;
+}
 
 interface RegisterInput {
   email: string;
@@ -53,36 +58,54 @@ interface AuthResponse {
   success: boolean;
   data: {
     accessToken: string;
-    refreshToken?: string;
     expiresIn: number;
-    user: {
-      id: string;
-      email: string;
-      firstName: string;
-      lastName: string;
-      phone: string;
-      address: string;
-      zipCode: string;
-      city: string;
-      licenseCategory: 'A1' | 'A2' | 'A';
-      licenseNumber: string;
-      createdAt: string;
-      roles: string[];
-    };
+    user: IamUserPayload;
   };
 }
+
+interface IamUserPayload {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  address: string;
+  zipCode: string;
+  city: string;
+  licenseCategory: 'A1' | 'A2' | 'A';
+  licenseNumber: string;
+  createdAt: string;
+  roles: string[];
+}
+
+type TokenClaims = {
+  sub?: string;
+  email?: string;
+  given_name?: string;
+  family_name?: string;
+  preferred_username?: string;
+  realm_access?: { roles?: string[] };
+  phone?: string;
+  address?: string;
+  zipCode?: string;
+  city?: string;
+  licenseCategory?: 'A1' | 'A2' | 'A';
+  licenseNumber?: string;
+  createdAt?: string;
+};
 
 interface AccountUpdateResponse {
   success: boolean;
   data: {
-    user: AuthResponse['data']['user'];
+    user: IamUserPayload;
   };
 }
 
-interface TwoFactorSetup {
-  secret: string;
-  otpauthUrl: string;
-  qrCodeDataUrl: string;
+interface AccountResponse {
+  success: boolean;
+  data: {
+    user: IamUserPayload;
+  };
 }
 
 interface TwoFactorStatusResponse {
@@ -90,12 +113,25 @@ interface TwoFactorStatusResponse {
   data: { enabled: boolean };
 }
 
-interface TwoFactorSetupResponse {
-  success: boolean;
-  data: TwoFactorSetup;
+function mapKeycloakUser(claims: TokenClaims): AuthUser {
+  const roles = claims.realm_access?.roles ?? [];
+  return {
+    id: claims.sub ?? '',
+    email: claims.email ?? '',
+    firstName: claims.given_name ?? claims.preferred_username ?? '',
+    lastName: claims.family_name ?? '',
+    phone: claims.phone ?? '',
+    address: claims.address ?? '',
+    zipCode: claims.zipCode ?? '',
+    city: claims.city ?? '',
+    licenseCategory: claims.licenseCategory ?? 'A1',
+    licenseNumber: claims.licenseNumber ?? '',
+    createdAt: claims.createdAt ?? new Date().toISOString(),
+    role: roles.includes('admin') ? 'admin' : 'user',
+  };
 }
 
-function mapUser(user: AuthResponse['data']['user']): AuthUser {
+function mapIamUser(user: IamUserPayload): AuthUser {
   return {
     id: user.id,
     email: user.email,
@@ -131,42 +167,81 @@ function getStoredUser(): AuthUser | null {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(() => getStoredUser());
-  const [isLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [token, setToken] = useState<string | undefined>(() => getStoredToken());
+  const didInit = useRef(false);
 
   useEffect(() => {
-    const syncRefreshedSession = () => {
-      const storedToken = window.localStorage.getItem(TOKEN_KEY);
-      const storedUser = window.localStorage.getItem(USER_KEY);
-      if (!storedToken || !storedUser) return;
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser) as AuthUser);
+    if (didInit.current) return;
+    didInit.current = true;
+
+    const clearSession = () => {
+      setToken(undefined);
+      setUser(null);
+      window.localStorage.removeItem(TOKEN_KEY);
+      window.localStorage.removeItem(USER_KEY);
     };
 
-    window.addEventListener('auth:refreshed', syncRefreshedSession);
-    return () => window.removeEventListener('auth:refreshed', syncRefreshedSession);
+    const persistKeycloakSession = () => {
+      if (!keycloak.token || !keycloak.tokenParsed) {
+        clearSession();
+        return;
+      }
+
+      const nextUser = mapKeycloakUser(keycloak.tokenParsed as TokenClaims);
+      window.localStorage.setItem(TOKEN_KEY, keycloak.token);
+      window.localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
+      setToken(keycloak.token);
+      setUser(nextUser);
+
+      apiClient
+        .get<AccountResponse>('/v1/auth/me')
+        .then((res) => {
+          const hydratedUser = mapIamUser(res.data.user);
+          window.localStorage.setItem(USER_KEY, JSON.stringify(hydratedUser));
+          setUser(hydratedUser);
+        })
+        .catch(() => undefined);
+    };
+
+    keycloak
+      .init({
+        onLoad: 'check-sso',
+        pkceMethod: 'S256',
+        checkLoginIframe: false,
+      })
+      .then((authenticated) => {
+        if (authenticated) {
+          persistKeycloakSession();
+        } else {
+          clearSession();
+        }
+        setIsLoading(false);
+      })
+      .catch(() => {
+        clearSession();
+        setIsLoading(false);
+      });
+
+    keycloak.onAuthSuccess = persistKeycloakSession;
+    keycloak.onAuthRefreshSuccess = persistKeycloakSession;
+    keycloak.onAuthLogout = clearSession;
+    keycloak.onTokenExpired = () => {
+      keycloak.updateToken(60).catch(clearSession);
+    };
   }, []);
 
-  const persistSession = useCallback((data: AuthResponse['data']) => {
-    const nextUser = mapUser(data.user);
-    window.localStorage.setItem(TOKEN_KEY, data.accessToken);
-    if (data.refreshToken) {
-      window.localStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
-    }
-    window.localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
-    setToken(data.accessToken);
-    setUser(nextUser);
+  const login = useCallback(async (loginHint?: string) => {
+    await keycloak.login({
+      redirectUri: appUrl('/profile'),
+      loginHint,
+    });
   }, []);
-
-  const login = useCallback(async (email: string, password: string, otp?: string) => {
-    const res = await apiClient.post<AuthResponse>('/v1/auth/login', { email, password, otp });
-    persistSession(res.data);
-  }, [persistSession]);
 
   const register = useCallback(async (input: RegisterInput) => {
-    const res = await apiClient.post<AuthResponse>('/v1/auth/register', input);
-    persistSession(res.data);
-  }, [persistSession]);
+    await apiClient.post<AuthResponse>('/v1/auth/register', input);
+    await login(input.email);
+  }, [login]);
 
   const updateAccount = useCallback(async (input: AccountUpdateInput) => {
     const res = await apiClient.patch<AccountUpdateResponse>('/v1/auth/me', input);
@@ -200,12 +275,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const startTwoFactorSetup = useCallback(async () => {
-    const res = await apiClient.post<TwoFactorSetupResponse>('/v1/auth/me/2fa/setup', {});
-    return res.data;
-  }, []);
-
-  const enableTwoFactor = useCallback(async (secret: string, code: string) => {
-    await apiClient.post('/v1/auth/me/2fa/enable', { secret, code });
+    await keycloak.login({
+      redirectUri: appUrl('/profile'),
+      action: 'CONFIGURE_TOTP',
+    });
   }, []);
 
   const disableTwoFactor = useCallback(async () => {
@@ -216,8 +289,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setToken(undefined);
     window.localStorage.removeItem(TOKEN_KEY);
-    window.localStorage.removeItem(REFRESH_TOKEN_KEY);
     window.localStorage.removeItem(USER_KEY);
+    keycloak.logout({ redirectUri: appUrl('/') });
   }, []);
 
   return (
@@ -234,7 +307,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         resetPassword,
         getTwoFactorStatus,
         startTwoFactorSetup,
-        enableTwoFactor,
         disableTwoFactor,
         logout,
       }}
