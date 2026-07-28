@@ -61,6 +61,9 @@ export class CreateReservationUseCase {
             endDate: saved.endDate,
             totalAmount: saved.totalAmount,
             depositAmount: saved.depositAmount,
+            customer: saved.customer,
+            moto: saved.moto,
+            shop: saved.shop,
           },
         })
       } catch {

@@ -7,6 +7,12 @@
  * format d'échange sur la file est la responsabilité de l'implémentation
  * d'infrastructure.
  */
+import {
+  ReservationCustomerSummary,
+  ReservationMotoSummary,
+  ReservationShopSummary,
+} from '../entities/Reservation'
+
 export interface ContractGenerationRequest {
   correlationId: string
   reservation: {
@@ -17,6 +23,15 @@ export interface ContractGenerationRequest {
     endDate: string
     totalAmount: number
     depositAmount: number
+    /**
+     * Données dénormalisées jointes à la demande : le worker est isolé (aucun
+     * accès BDD, aucun appel HTTP vers le backend, cf. ADR 0005), il ne peut
+     * donc composer un contrat lisible que si le message porte tout. Optionnel
+     * car ces relations le sont sur l'entité Reservation.
+     */
+    customer?: ReservationCustomerSummary
+    moto?: ReservationMotoSummary
+    shop?: ReservationShopSummary
   }
 }
 

@@ -3,6 +3,7 @@ import { CreateClientReservationParams, Reservation } from '../entities/Reservat
 import { Payment } from '../entities/Payment'
 import { IReservationRepository } from '../repositories/IReservationRepository'
 import { IPaymentRepository } from '../repositories/IPaymentRepository'
+import { IContractQueuePublisher } from '../ports/IContractQueuePublisher'
 import { Result, ok, err } from '@shared/result/Result'
 import { NotFoundError, ValidationError } from '@shared/errors/DomainError'
 
@@ -23,6 +24,7 @@ export class CreateClientReservationUseCase {
   constructor(
     private readonly reservationRepository: IReservationRepository,
     private readonly paymentRepository: IPaymentRepository,
+    private readonly contractPublisher?: IContractQueuePublisher,
   ) { }
 
   async execute(params: CreateClientReservationParams): Promise<Result<Reservation, ValidationError | NotFoundError>> {
@@ -77,6 +79,32 @@ export class CreateClientReservationUseCase {
       status: saved.paymentStatus,
     })
     await this.paymentRepository.save(payment)
+
+    // Déclenche la génération asynchrone du contrat (fire-and-forget) : un échec
+    // de publication ne doit jamais annuler une réservation déjà persistée. Le
+    // contrat reste alors en statut "pending" et pourra être régénéré.
+    if (this.contractPublisher) {
+      try {
+        await this.contractPublisher.publishContractGeneration({
+          correlationId: uuidv4(),
+          reservation: {
+            id: saved.id,
+            motoId: saved.motoId,
+            customerId: saved.customerId,
+            startDate: saved.startDate,
+            endDate: saved.endDate,
+            totalAmount: saved.totalAmount,
+            depositAmount: saved.depositAmount,
+            customer: saved.customer,
+            moto: saved.moto,
+            shop: saved.shop,
+          },
+        })
+      } catch {
+        // Erreur de publication ignorée volontairement (voir commentaire ci-dessus).
+        // L'implémentation d'infrastructure loggue le détail de l'échec.
+      }
+    }
 
     return ok(saved)
   }
