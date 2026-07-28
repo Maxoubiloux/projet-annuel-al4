@@ -4,6 +4,7 @@ import { IPaymentRepository } from '@domain/repositories/IPaymentRepository'
 import { IContractQueuePublisher } from '@domain/ports/IContractQueuePublisher'
 import { Reservation } from '@domain/entities/Reservation'
 import { Payment } from '@domain/entities/Payment'
+import { customerSummary, hydrate, motoSummary, shopSummary } from '../../helpers/reservation-fixtures'
 
 const makeMockReservationRepository = (): IReservationRepository => ({
   findAll: jest.fn(),
@@ -101,6 +102,27 @@ describe('CreateReservationUseCase', () => {
     expect(publishedJob.reservation.motoId).toBe(validParams.motoId)
     expect(publishedJob.reservation.customerId).toBe(validParams.customerId)
     expect(publishedJob.reservation.totalAmount).toBe(validParams.totalAmount)
+  })
+
+  it('should join the denormalized customer, moto and shop data to the contract job', async () => {
+    // Le worker est isolé (aucun accès BDD) : tout ce qui doit figurer sur le
+    // contrat doit partir dans le message, à partir de la réservation hydratée
+    // renvoyée par le repository.
+    const reservationRepository = makeMockReservationRepository()
+    reservationRepository.save = jest.fn(async (r: Reservation) => hydrate(r))
+    const contractPublisher: IContractQueuePublisher = { publishContractGeneration: jest.fn() }
+    const useCase = new CreateReservationUseCase(
+      reservationRepository,
+      makeMockPaymentRepository(),
+      contractPublisher,
+    )
+
+    await useCase.execute(validParams)
+
+    const publishedJob = (contractPublisher.publishContractGeneration as jest.Mock).mock.calls[0][0]
+    expect(publishedJob.reservation.customer).toEqual(customerSummary)
+    expect(publishedJob.reservation.moto).toEqual(motoSummary)
+    expect(publishedJob.reservation.shop).toEqual(shopSummary)
   })
 
   it('should still create the reservation when publishing the contract job fails', async () => {
