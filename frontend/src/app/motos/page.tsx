@@ -258,7 +258,7 @@ export default function MotosPage() {
                           : 'text-[#3d7a52] border-[#bcd9c4]',
                       ].join(' ')}
                     >
-                      {reservedTodayIds.has(moto.id) ? 'Indisponible' : 'Disponible'}
+                      {reservedTodayIds.has(moto.id) ? "Indisponible aujourd'hui" : 'Disponible'}
                     </span>
                     <button
                       type="button"
