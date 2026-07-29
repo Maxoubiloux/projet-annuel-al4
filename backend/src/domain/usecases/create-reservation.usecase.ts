@@ -46,10 +46,7 @@ export class CreateReservationUseCase {
     })
     await this.paymentRepository.save(payment)
 
-    // Déclenche la génération asynchrone du contrat (fire-and-forget) : un échec
-    // de publication ne doit jamais annuler une réservation déjà persistée. Le
-    // contrat reste alors en statut "pending" et pourra être régénéré.
-    if (this.contractPublisher) {
+    if (this.contractPublisher && saved.paymentStatus === 'paid') {
       try {
         await this.contractPublisher.publishContractGeneration({
           correlationId: uuidv4(),
@@ -67,8 +64,6 @@ export class CreateReservationUseCase {
           },
         })
       } catch {
-        // Erreur de publication ignorée volontairement (voir commentaire ci-dessus).
-        // L'implémentation d'infrastructure loggue le détail de l'échec.
       }
     }
 

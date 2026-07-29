@@ -187,7 +187,7 @@ function ReservationCard({
             Voir la moto →
           </Link>
         )}
-        {onDownloadContract ? (
+        {onDownloadContract && reservation.paymentStatus === 'paid' ? (
           <ContractAction
             reservation={reservation}
             onDownload={onDownloadContract}

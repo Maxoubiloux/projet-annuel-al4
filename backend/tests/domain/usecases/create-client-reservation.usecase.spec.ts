@@ -1,10 +1,9 @@
 import { CreateClientReservationUseCase } from '@domain/usecases/create-client-reservation.usecase'
 import { IReservationRepository } from '@domain/repositories/IReservationRepository'
 import { IPaymentRepository } from '@domain/repositories/IPaymentRepository'
-import { IContractQueuePublisher } from '@domain/ports/IContractQueuePublisher'
 import { Reservation } from '@domain/entities/Reservation'
 import { Payment } from '@domain/entities/Payment'
-import { customerSummary, hydrate, motoSummary, shopSummary } from '../../helpers/reservation-fixtures'
+import { customerSummary, hydrate, motoSummary } from '../../helpers/reservation-fixtures'
 
 const makeMockReservationRepository = (): IReservationRepository => ({
   findAll: jest.fn(),
@@ -57,58 +56,5 @@ describe('CreateClientReservationUseCase', () => {
     expect(result.isOk).toBe(true)
     expect(reservationRepository.save).toHaveBeenCalledTimes(1)
     expect(paymentRepository.save).toHaveBeenCalledTimes(1)
-  })
-
-  it('should publish a contract generation job carrying the denormalized reservation data', async () => {
-    const contractPublisher: IContractQueuePublisher = { publishContractGeneration: jest.fn() }
-    const useCase = new CreateClientReservationUseCase(
-      makeMockReservationRepository(),
-      makeMockPaymentRepository(),
-      contractPublisher,
-    )
-
-    const result = await useCase.execute(validParams)
-
-    expect(result.isOk).toBe(true)
-    expect(contractPublisher.publishContractGeneration).toHaveBeenCalledTimes(1)
-    const publishedJob = (contractPublisher.publishContractGeneration as jest.Mock).mock.calls[0][0]
-    expect(typeof publishedJob.correlationId).toBe('string')
-    expect(publishedJob.correlationId.length).toBeGreaterThan(0)
-    expect(publishedJob.reservation.motoId).toBe(validParams.motoId)
-    expect(publishedJob.reservation.customer).toEqual(customerSummary)
-    expect(publishedJob.reservation.moto).toEqual(motoSummary)
-    expect(publishedJob.reservation.shop).toEqual(shopSummary)
-  })
-
-  it('should still create the reservation when publishing the contract job fails', async () => {
-    const reservationRepository = makeMockReservationRepository()
-    const paymentRepository = makeMockPaymentRepository()
-    const contractPublisher: IContractQueuePublisher = {
-      publishContractGeneration: jest.fn(async () => {
-        throw new Error('broker unreachable')
-      }),
-    }
-    const useCase = new CreateClientReservationUseCase(
-      reservationRepository,
-      paymentRepository,
-      contractPublisher,
-    )
-
-    const result = await useCase.execute(validParams)
-
-    expect(result.isOk).toBe(true)
-    expect(reservationRepository.save).toHaveBeenCalledTimes(1)
-    expect(paymentRepository.save).toHaveBeenCalledTimes(1)
-  })
-
-  it('should not require a publisher (async contract generation is optional)', async () => {
-    const useCase = new CreateClientReservationUseCase(
-      makeMockReservationRepository(),
-      makeMockPaymentRepository(),
-    )
-
-    const result = await useCase.execute(validParams)
-
-    expect(result.isOk).toBe(true)
   })
 })

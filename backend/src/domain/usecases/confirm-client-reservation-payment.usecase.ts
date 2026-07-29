@@ -1,7 +1,9 @@
+import { v4 as uuidv4 } from 'uuid'
 import { Reservation } from '../entities/Reservation'
 import { IReservationRepository } from '../repositories/IReservationRepository'
 import { IPaymentRepository } from '../repositories/IPaymentRepository'
 import { CheckoutSessionStatus, IPaymentGateway } from '../repositories/IPaymentGateway'
+import { IContractQueuePublisher } from '../ports/IContractQueuePublisher'
 import { Result, err, ok } from '@shared/result/Result'
 import { DomainError, ForbiddenError, NotFoundError, ValidationError } from '@shared/errors/DomainError'
 
@@ -10,6 +12,7 @@ export class ConfirmClientReservationPaymentUseCase {
     private readonly reservationRepository: IReservationRepository,
     private readonly paymentRepository: IPaymentRepository,
     private readonly paymentGateway: IPaymentGateway,
+    private readonly contractPublisher?: IContractQueuePublisher,
   ) { }
 
   async execute(
@@ -42,6 +45,27 @@ export class ConfirmClientReservationPaymentUseCase {
     await this.paymentRepository.updateStatus(payment.id, 'paid')
     await this.reservationRepository.updatePaymentStatus(bookingId, 'paid')
     const confirmed = await this.reservationRepository.updateStatus(bookingId, 'confirmed')
+
+    if (this.contractPublisher) {
+      try {
+        await this.contractPublisher.publishContractGeneration({
+          correlationId: uuidv4(),
+          reservation: {
+            id: confirmed.id,
+            motoId: confirmed.motoId,
+            customerId: confirmed.customerId,
+            startDate: confirmed.startDate,
+            endDate: confirmed.endDate,
+            totalAmount: confirmed.totalAmount,
+            depositAmount: confirmed.depositAmount,
+            customer: confirmed.customer,
+            moto: confirmed.moto,
+            shop: confirmed.shop,
+          },
+        })
+      } catch {
+      }
+    }
 
     return ok(confirmed)
   }

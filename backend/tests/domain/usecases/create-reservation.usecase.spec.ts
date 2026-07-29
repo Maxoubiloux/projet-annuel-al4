@@ -83,7 +83,7 @@ describe('CreateReservationUseCase', () => {
     expect(result.isErr).toBe(true)
   })
 
-  it('should publish a contract generation job with a correlation id and the reservation data', async () => {
+  it('should not publish a contract generation job when payment is not paid', async () => {
     const reservationRepository = makeMockReservationRepository()
     const contractPublisher: IContractQueuePublisher = { publishContractGeneration: jest.fn() }
     const useCase = new CreateReservationUseCase(
@@ -95,6 +95,21 @@ describe('CreateReservationUseCase', () => {
     const result = await useCase.execute(validParams)
 
     expect(result.isOk).toBe(true)
+    expect(contractPublisher.publishContractGeneration).not.toHaveBeenCalled()
+  })
+
+  it('should publish a contract generation job with a correlation id and the reservation data when payment is already paid', async () => {
+    const reservationRepository = makeMockReservationRepository()
+    const contractPublisher: IContractQueuePublisher = { publishContractGeneration: jest.fn() }
+    const useCase = new CreateReservationUseCase(
+      reservationRepository,
+      makeMockPaymentRepository(),
+      contractPublisher,
+    )
+
+    const result = await useCase.execute({ ...validParams, paymentStatus: 'paid' })
+
+    expect(result.isOk).toBe(true)
     expect(contractPublisher.publishContractGeneration).toHaveBeenCalledTimes(1)
     const publishedJob = (contractPublisher.publishContractGeneration as jest.Mock).mock.calls[0][0]
     expect(typeof publishedJob.correlationId).toBe('string')
@@ -104,10 +119,7 @@ describe('CreateReservationUseCase', () => {
     expect(publishedJob.reservation.totalAmount).toBe(validParams.totalAmount)
   })
 
-  it('should join the denormalized customer, moto and shop data to the contract job', async () => {
-    // Le worker est isolé (aucun accès BDD) : tout ce qui doit figurer sur le
-    // contrat doit partir dans le message, à partir de la réservation hydratée
-    // renvoyée par le repository.
+  it('should join the denormalized customer, moto and shop data to the contract job when payment is already paid', async () => {
     const reservationRepository = makeMockReservationRepository()
     reservationRepository.save = jest.fn(async (r: Reservation) => hydrate(r))
     const contractPublisher: IContractQueuePublisher = { publishContractGeneration: jest.fn() }
@@ -117,7 +129,7 @@ describe('CreateReservationUseCase', () => {
       contractPublisher,
     )
 
-    await useCase.execute(validParams)
+    await useCase.execute({ ...validParams, paymentStatus: 'paid' })
 
     const publishedJob = (contractPublisher.publishContractGeneration as jest.Mock).mock.calls[0][0]
     expect(publishedJob.reservation.customer).toEqual(customerSummary)
@@ -135,7 +147,7 @@ describe('CreateReservationUseCase', () => {
     }
     const useCase = new CreateReservationUseCase(reservationRepository, paymentRepository, contractPublisher)
 
-    const result = await useCase.execute(validParams)
+    const result = await useCase.execute({ ...validParams, paymentStatus: 'paid' })
 
     expect(result.isOk).toBe(true)
     expect(reservationRepository.save).toHaveBeenCalledTimes(1)
@@ -145,7 +157,7 @@ describe('CreateReservationUseCase', () => {
   it('should not require a publisher (async contract generation is optional)', async () => {
     const useCase = new CreateReservationUseCase(makeMockReservationRepository(), makeMockPaymentRepository())
 
-    const result = await useCase.execute(validParams)
+    const result = await useCase.execute({ ...validParams, paymentStatus: 'paid' })
 
     expect(result.isOk).toBe(true)
   })
