@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from 'uuid'
 import { Reservation } from '../entities/Reservation'
 import { IReservationRepository } from '../repositories/IReservationRepository'
 import { IPaymentRepository } from '../repositories/IPaymentRepository'
@@ -19,6 +18,7 @@ export class ConfirmClientReservationPaymentUseCase {
     bookingId: string,
     userId: string,
     sessionId: string,
+    correlationId: string,
   ): Promise<Result<Reservation, DomainError>> {
     const reservation = await this.reservationRepository.findById(bookingId)
     if (!reservation) return err(new NotFoundError('Reservation', bookingId))
@@ -49,7 +49,7 @@ export class ConfirmClientReservationPaymentUseCase {
     if (this.contractPublisher) {
       try {
         await this.contractPublisher.publishContractGeneration({
-          correlationId: uuidv4(),
+          correlationId,
           reservation: {
             id: confirmed.id,
             motoId: confirmed.motoId,

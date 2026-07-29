@@ -1,5 +1,6 @@
 import { join } from 'path'
 import fastify from 'fastify'
+import { v4 as uuidv4 } from 'uuid'
 import helmet from '@fastify/helmet'
 import cors from '@fastify/cors'
 import multipart from '@fastify/multipart'
@@ -55,6 +56,7 @@ const app = fastify({
         options: { colorize: true },
       },
     },
+  genReqId: (req) => (req.headers['x-correlation-id'] as string) || uuidv4(),
 })
 
 await app.register(helmet)
@@ -68,17 +70,15 @@ await app.register(multipart, {
   limits: { fileSize: 5 * 1024 * 1024 },
 })
 
-// Sert le répertoire uploads/. Attention : le hook preHandler d'auth
-// s'applique aussi à ces routes (register() est différé, addHook ne l'est pas),
-// donc seuls les préfixes listés dans PUBLIC_GET_PREFIXES (AuthMiddleware.ts)
-// sont réellement accessibles sans token — /uploads/motos pour les <img>.
-// Les contrats PDF passent par GET /api/v1/reservations/:id/contract.
+app.addHook('onSend', async (request, reply, payload) => {
+  reply.header('X-Correlation-Id', request.id)
+  return payload
+})
+
 await app.register(fastifyStatic, {
   root: join(process.cwd(), 'uploads'),
   prefix: '/uploads/',
   setHeaders: (res) => {
-    // helmet's default Cross-Origin-Resource-Policy is same-origin, which
-    // would block the admin app (different origin) from rendering these.
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin')
   },
 })
@@ -109,9 +109,6 @@ app.setErrorHandler(errorHandler)
 app.setNotFoundHandler(notFoundHandler)
 
 const start = async () => {
-  // Connexion à RabbitMQ + démarrage du consumer de réponses worker. Non
-  // bloquant : si le broker est indisponible (dev sans RabbitMQ), on loggue un
-  // avertissement et l'API démarre quand même.
   try {
     await rabbitConnection.connect(app.log)
     await startWorkerResponseConsumer(rabbitConnection, reservationRepository, app.log)
@@ -120,7 +117,6 @@ const start = async () => {
     app.log.warn({ err }, 'RabbitMQ unavailable — worker queue features disabled')
   }
 
-  // Arrêt gracieux : ferme proprement le canal et la connexion RabbitMQ.
   for (const signal of ['SIGTERM', 'SIGINT'] as const) {
     process.once(signal, () => {
       void rabbitConnection.close().catch(() => { })

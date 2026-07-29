@@ -14,7 +14,7 @@ export class CreateReservationUseCase {
     private readonly contractPublisher?: IContractQueuePublisher,
   ) { }
 
-  async execute(params: CreateReservationParams): Promise<Result<Reservation, ValidationError>> {
+  async execute(params: CreateReservationParams, correlationId: string): Promise<Result<Reservation, ValidationError>> {
     if (!params.motoId?.trim()) return err(new ValidationError('La moto est requise'))
     if (!params.customerId?.trim()) return err(new ValidationError('Le client est requis'))
     if (!params.startDate || !params.endDate) {
@@ -49,7 +49,7 @@ export class CreateReservationUseCase {
     if (this.contractPublisher && saved.paymentStatus === 'paid') {
       try {
         await this.contractPublisher.publishContractGeneration({
-          correlationId: uuidv4(),
+          correlationId,
           reservation: {
             id: saved.id,
             motoId: saved.motoId,

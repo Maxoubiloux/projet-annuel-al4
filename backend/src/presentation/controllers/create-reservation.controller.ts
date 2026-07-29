@@ -8,7 +8,7 @@ export class CreateReservationController {
   async handle(request: FastifyRequest<{ Body: CreateReservationParams }>, reply: FastifyReply): Promise<void> {
     request.log.info({ correlationId: request.id }, 'POST /reservations — creating reservation')
 
-    const result = await this.createReservationUseCase.execute(request.body)
+    const result = await this.createReservationUseCase.execute(request.body, request.id)
 
     if (result.isErr) {
       reply.status(400).send({

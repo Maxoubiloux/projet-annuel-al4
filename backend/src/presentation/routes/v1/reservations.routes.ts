@@ -241,6 +241,7 @@ export async function reservationRoutesV1(
         request.params.id,
         request.user.id,
         request.body.sessionId,
+        request.id,
       )
       if (result.isErr) {
         const status = result.error.code === 'NOT_FOUND'
