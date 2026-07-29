@@ -64,6 +64,7 @@ export class CreateReservationUseCase {
           },
         })
       } catch {
+        // contract generation is best-effort: publish failure must not block reservation creation
       }
     }
 

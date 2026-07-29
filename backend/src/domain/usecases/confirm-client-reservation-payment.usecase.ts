@@ -64,6 +64,7 @@ export class ConfirmClientReservationPaymentUseCase {
           },
         })
       } catch {
+        // contract generation is best-effort: publish failure must not block payment confirmation
       }
     }
 
