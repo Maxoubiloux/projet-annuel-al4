@@ -76,11 +76,12 @@ describe('ConfirmClientReservationPaymentUseCase', () => {
       contractPublisher,
     )
 
-    const result = await useCase.execute(bookingId, customerSummary.id, sessionId)
+    const result = await useCase.execute(bookingId, customerSummary.id, sessionId, 'corr-1')
 
     expect(result.isOk).toBe(true)
     expect(contractPublisher.publishContractGeneration).toHaveBeenCalledTimes(1)
     const publishedJob = (contractPublisher.publishContractGeneration as jest.Mock).mock.calls[0][0]
+    expect(publishedJob.correlationId).toBe('corr-1')
     expect(publishedJob.reservation.id).toBe(bookingId)
     expect(publishedJob.reservation.customer).toEqual(customerSummary)
     expect(publishedJob.reservation.moto).toEqual(motoSummary)
@@ -104,7 +105,7 @@ describe('ConfirmClientReservationPaymentUseCase', () => {
       contractPublisher,
     )
 
-    const result = await useCase.execute(bookingId, customerSummary.id, sessionId)
+    const result = await useCase.execute(bookingId, customerSummary.id, sessionId, 'corr-1')
 
     expect(result.isErr).toBe(true)
     expect(contractPublisher.publishContractGeneration).not.toHaveBeenCalled()
@@ -123,7 +124,7 @@ describe('ConfirmClientReservationPaymentUseCase', () => {
       contractPublisher,
     )
 
-    const result = await useCase.execute(bookingId, customerSummary.id, sessionId)
+    const result = await useCase.execute(bookingId, customerSummary.id, sessionId, 'corr-1')
 
     expect(result.isOk).toBe(true)
   })
@@ -135,7 +136,7 @@ describe('ConfirmClientReservationPaymentUseCase', () => {
       makeMockPaymentGateway(),
     )
 
-    const result = await useCase.execute(bookingId, customerSummary.id, sessionId)
+    const result = await useCase.execute(bookingId, customerSummary.id, sessionId, 'corr-1')
 
     expect(result.isOk).toBe(true)
   })
