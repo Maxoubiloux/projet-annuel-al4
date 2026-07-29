@@ -10,6 +10,8 @@ export interface ReservationSummary {
   depositAmount: number;
   status: string;
   paymentStatus: string;
+  contractStatus?: string;
+  contractPdfUrl?: string;
   createdAt: string;
   moto?: {
     id: string;
@@ -55,5 +57,9 @@ export const reservationsService = {
   confirmPayment: async (reservationId: string, sessionId: string): Promise<ReservationSummary> => {
     const res = await apiClient.post<ApiResponse<ReservationSummary>>(`/v1/reservations/me/${reservationId}/confirm-payment`, { sessionId });
     return res.data;
+  },
+
+  getContractPdf: async (reservationId: string): Promise<Blob> => {
+    return apiClient.getBlob(`/v1/reservations/${reservationId}/contract`);
   },
 };
