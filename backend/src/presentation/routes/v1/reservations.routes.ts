@@ -74,7 +74,6 @@ export async function reservationRoutesV1(
   const createClientReservationUseCase = new CreateClientReservationUseCase(
     reservationRepository,
     paymentRepository,
-    contractPublisher,
   )
   const startClientReservationPaymentUseCase = new StartClientReservationPaymentUseCase(
     reservationRepository,
@@ -84,6 +83,7 @@ export async function reservationRoutesV1(
     reservationRepository,
     paymentRepository,
     paymentGateway,
+    contractPublisher,
   )
   const getReservationsController = new GetReservationsController(
     new GetAllReservationsUseCase(reservationRepository),
