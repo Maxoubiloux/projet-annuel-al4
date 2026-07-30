@@ -8,7 +8,6 @@ interface ApiMotoResponse {
 
 export interface MotoAvailability {
   motoId: string;
-  isAvailableToday: boolean;
   unavailableRanges: { startDate: string; endDate: string }[];
 }
 
@@ -45,11 +44,6 @@ export const motosService = {
   getById: async (id: string): Promise<Motorbike> => {
     const res = await apiClient.get<ApiMotoResponse>(`/v1/motos/${id}`);
     return mapToMotorbike(res.data as Record<string, unknown>);
-  },
-
-  getReservedTodayIds: async (): Promise<string[]> => {
-    const res = await apiClient.get<{ success: boolean; data: string[] }>('/v1/motos/availability/today');
-    return res.data;
   },
 
   getAvailability: async (id: string): Promise<MotoAvailability> => {

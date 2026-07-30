@@ -38,27 +38,22 @@ export default function MotosPage() {
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('Tous');
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [savingFavoriteId, setSavingFavoriteId] = useState<string | null>(null);
-  const [reservedTodayIds, setReservedTodayIds] = useState<Set<string>>(new Set());
 
   const loadMotos = () => {
     setLoading(true);
     setError(null);
-    Promise.all([motosService.getAll(), motosService.getReservedTodayIds()])
-      .then(([data, reservedIds]) => {
-        setMotos(data);
-        setReservedTodayIds(new Set(reservedIds));
-      })
+    motosService.getAll()
+      .then((data) => setMotos(data))
       .catch((e) => setError(e.message || 'Erreur lors du chargement des motos.'))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
     let active = true;
-    Promise.all([motosService.getAll(), motosService.getReservedTodayIds()])
-      .then(([data, reservedIds]) => {
+    motosService.getAll()
+      .then((data) => {
         if (!active) return;
         setMotos(data);
-        setReservedTodayIds(new Set(reservedIds));
       })
       .catch((e) => {
         if (active) setError(e.message || 'Erreur lors du chargement des motos.');
@@ -253,12 +248,12 @@ export default function MotosPage() {
                     <span
                       className={[
                         'absolute bottom-3 left-3 font-mono text-[9.5px] tracking-[0.12em] uppercase px-[10px] py-1 rounded-full border bg-white/90',
-                        reservedTodayIds.has(moto.id)
+                        moto.status !== 'available'
                           ? 'text-[#9a3b35] border-[#e6b9b3]'
                           : 'text-[#3d7a52] border-[#bcd9c4]',
                       ].join(' ')}
                     >
-                      {reservedTodayIds.has(moto.id) ? "Indisponible aujourd'hui" : 'Disponible'}
+                      {moto.status !== 'available' ? 'Indisponible' : 'Disponible'}
                     </span>
                     <button
                       type="button"
