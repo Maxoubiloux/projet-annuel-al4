@@ -1,4 +1,4 @@
-# ADR 0004: Versioning d'API par URL pour les breaking changes
+# ADR 004: Versioning d'API par URL pour les breaking changes
 
 **Date** : 2026-07-24
 **Statut** : Accepté

@@ -5,7 +5,7 @@ import { ContractGenerationRequest } from '@domain/ports/IContractQueuePublisher
  *
  * Le format "wire" est en snake_case pour rester idiomatique côté worker Rust
  * (serde) et cohérent avec worker/README.md. Ces types sont volontairement
- * un miroir 1:1 du JSON transmis — voir ADR 0005. Toute évolution doit être
+ * un miroir 1:1 du JSON transmis — voir ADR 007. Toute évolution doit être
  * synchronisée avec l'équipe Worker.
  */
 
