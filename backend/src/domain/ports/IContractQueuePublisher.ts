@@ -25,7 +25,7 @@ export interface ContractGenerationRequest {
     depositAmount: number
     /**
      * Données dénormalisées jointes à la demande : le worker est isolé (aucun
-     * accès BDD, aucun appel HTTP vers le backend, cf. ADR 0005), il ne peut
+     * accès BDD, aucun appel HTTP vers le backend, cf. ADR 007), il ne peut
      * donc composer un contrat lisible que si le message porte tout. Optionnel
      * car ces relations le sont sur l'entité Reservation.
      */

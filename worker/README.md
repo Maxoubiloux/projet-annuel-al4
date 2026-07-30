@@ -6,7 +6,7 @@ réponses.
 
 ## Isolation
 
-Le worker est totalement isolé du backend (cf. [ADR 0005](../backend/docs/ADR/0005-rabbitmq-2-queues-isolation-worker.md)) :
+Le worker est totalement isolé du backend (cf. [ADR 007](../backend/docs/ADR/007-rabbitmq-2-queues-isolation-worker.md)) :
 
 - **aucun accès à la base de données** ;
 - **aucun appel HTTP vers le backend** — tout ce qui figure sur le contrat arrive dans le message ;

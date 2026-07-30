@@ -3,7 +3,7 @@
 ## Journal des breaking changes
 
 > Chaque rupture de compatibilité ascendante est consignée ici **avant merge**.
-> Stratégie de versioning : voir ADR `docs/ADR/0004-versioning-par-url-breaking-change.md`.
+> Stratégie de versioning : voir ADR `docs/ADR/004-versioning-par-url-breaking-change.md`.
 
 ### [v2] 2026-07-24 — Prix moto en centimes entiers
 

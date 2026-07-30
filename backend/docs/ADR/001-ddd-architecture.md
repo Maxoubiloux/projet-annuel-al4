@@ -1,4 +1,4 @@
-# ADR 0001: Architecture Domain-Driven Design
+# ADR 001: Architecture Domain-Driven Design
 
 **Date**: 2026-03-26  
 **Status**: ACCEPTED  
