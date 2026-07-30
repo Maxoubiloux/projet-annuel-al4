@@ -479,7 +479,7 @@ export default function MotoDetails() {
                 <span className="text-[13px] text-[#9a8f74]"> /jour</span>
               </div>
               <span className={`font-mono text-[11px] tracking-[0.08em] ${isAvailableToday ? 'text-[#5d9a6a]' : 'text-[#9a3b35]'}`}>
-                {isAvailableToday ? '✓ Disponible' : 'Indisponible'}
+                {isAvailableToday ? '✓ Disponible' : "Indisponible aujourd'hui"}
               </span>
             </div>
 

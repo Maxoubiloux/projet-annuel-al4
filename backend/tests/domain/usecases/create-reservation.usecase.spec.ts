@@ -4,6 +4,7 @@ import { IPaymentRepository } from '@domain/repositories/IPaymentRepository'
 import { IContractQueuePublisher } from '@domain/ports/IContractQueuePublisher'
 import { Reservation } from '@domain/entities/Reservation'
 import { Payment } from '@domain/entities/Payment'
+import { customerSummary, hydrate, motoSummary, shopSummary } from '../../helpers/reservation-fixtures'
 
 const makeMockReservationRepository = (): IReservationRepository => ({
   findAll: jest.fn(),
@@ -44,7 +45,7 @@ describe('CreateReservationUseCase', () => {
     const paymentRepository = makeMockPaymentRepository()
     const useCase = new CreateReservationUseCase(reservationRepository, paymentRepository)
 
-    const result = await useCase.execute(validParams)
+    const result = await useCase.execute(validParams, 'corr-1')
 
     expect(result.isOk).toBe(true)
     if (result.isOk) {
@@ -58,7 +59,7 @@ describe('CreateReservationUseCase', () => {
   it('should reject an end date before the start date', async () => {
     const useCase = new CreateReservationUseCase(makeMockReservationRepository(), makeMockPaymentRepository())
 
-    const result = await useCase.execute({ ...validParams, endDate: '2026-07-31' })
+    const result = await useCase.execute({ ...validParams, endDate: '2026-07-31' }, 'corr-1')
 
     expect(result.isErr).toBe(true)
     if (result.isErr) {
@@ -69,7 +70,7 @@ describe('CreateReservationUseCase', () => {
   it('should reject a zero total amount', async () => {
     const useCase = new CreateReservationUseCase(makeMockReservationRepository(), makeMockPaymentRepository())
 
-    const result = await useCase.execute({ ...validParams, totalAmount: 0 })
+    const result = await useCase.execute({ ...validParams, totalAmount: 0 }, 'corr-1')
 
     expect(result.isErr).toBe(true)
   })
@@ -77,12 +78,12 @@ describe('CreateReservationUseCase', () => {
   it('should reject a negative deposit', async () => {
     const useCase = new CreateReservationUseCase(makeMockReservationRepository(), makeMockPaymentRepository())
 
-    const result = await useCase.execute({ ...validParams, depositAmount: -1 })
+    const result = await useCase.execute({ ...validParams, depositAmount: -1 }, 'corr-1')
 
     expect(result.isErr).toBe(true)
   })
 
-  it('should publish a contract generation job with a correlation id and the reservation data', async () => {
+  it('should not publish a contract generation job when payment is not paid', async () => {
     const reservationRepository = makeMockReservationRepository()
     const contractPublisher: IContractQueuePublisher = { publishContractGeneration: jest.fn() }
     const useCase = new CreateReservationUseCase(
@@ -91,16 +92,48 @@ describe('CreateReservationUseCase', () => {
       contractPublisher,
     )
 
-    const result = await useCase.execute(validParams)
+    const result = await useCase.execute(validParams, 'corr-1')
+
+    expect(result.isOk).toBe(true)
+    expect(contractPublisher.publishContractGeneration).not.toHaveBeenCalled()
+  })
+
+  it('should publish a contract generation job carrying the caller-provided correlation id and the reservation data when payment is already paid', async () => {
+    const reservationRepository = makeMockReservationRepository()
+    const contractPublisher: IContractQueuePublisher = { publishContractGeneration: jest.fn() }
+    const useCase = new CreateReservationUseCase(
+      reservationRepository,
+      makeMockPaymentRepository(),
+      contractPublisher,
+    )
+
+    const result = await useCase.execute({ ...validParams, paymentStatus: 'paid' }, 'corr-42')
 
     expect(result.isOk).toBe(true)
     expect(contractPublisher.publishContractGeneration).toHaveBeenCalledTimes(1)
     const publishedJob = (contractPublisher.publishContractGeneration as jest.Mock).mock.calls[0][0]
-    expect(typeof publishedJob.correlationId).toBe('string')
-    expect(publishedJob.correlationId.length).toBeGreaterThan(0)
+    expect(publishedJob.correlationId).toBe('corr-42')
     expect(publishedJob.reservation.motoId).toBe(validParams.motoId)
     expect(publishedJob.reservation.customerId).toBe(validParams.customerId)
     expect(publishedJob.reservation.totalAmount).toBe(validParams.totalAmount)
+  })
+
+  it('should join the denormalized customer, moto and shop data to the contract job when payment is already paid', async () => {
+    const reservationRepository = makeMockReservationRepository()
+    reservationRepository.save = jest.fn(async (r: Reservation) => hydrate(r))
+    const contractPublisher: IContractQueuePublisher = { publishContractGeneration: jest.fn() }
+    const useCase = new CreateReservationUseCase(
+      reservationRepository,
+      makeMockPaymentRepository(),
+      contractPublisher,
+    )
+
+    await useCase.execute({ ...validParams, paymentStatus: 'paid' }, 'corr-1')
+
+    const publishedJob = (contractPublisher.publishContractGeneration as jest.Mock).mock.calls[0][0]
+    expect(publishedJob.reservation.customer).toEqual(customerSummary)
+    expect(publishedJob.reservation.moto).toEqual(motoSummary)
+    expect(publishedJob.reservation.shop).toEqual(shopSummary)
   })
 
   it('should still create the reservation when publishing the contract job fails', async () => {
@@ -113,7 +146,7 @@ describe('CreateReservationUseCase', () => {
     }
     const useCase = new CreateReservationUseCase(reservationRepository, paymentRepository, contractPublisher)
 
-    const result = await useCase.execute(validParams)
+    const result = await useCase.execute({ ...validParams, paymentStatus: 'paid' }, 'corr-1')
 
     expect(result.isOk).toBe(true)
     expect(reservationRepository.save).toHaveBeenCalledTimes(1)
@@ -123,7 +156,7 @@ describe('CreateReservationUseCase', () => {
   it('should not require a publisher (async contract generation is optional)', async () => {
     const useCase = new CreateReservationUseCase(makeMockReservationRepository(), makeMockPaymentRepository())
 
-    const result = await useCase.execute(validParams)
+    const result = await useCase.execute({ ...validParams, paymentStatus: 'paid' }, 'corr-1')
 
     expect(result.isOk).toBe(true)
   })

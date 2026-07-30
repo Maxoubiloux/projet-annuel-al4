@@ -64,16 +64,63 @@ function PaymentStatusBadge({ status }: { status: string }) {
   return <span className={`${base} text-[#7E2E32] bg-[#F6E9E6]`}>{label}</span>;
 }
 
+function ContractAction({
+  reservation,
+  onDownload,
+  downloading,
+}: {
+  reservation: ReservationSummary;
+  onDownload: (reservation: ReservationSummary) => void;
+  downloading: boolean;
+}) {
+  const status = reservation.contractStatus;
+
+  if (status === 'ready') {
+    return (
+      <button
+        type="button"
+        disabled={downloading}
+        onClick={() => onDownload(reservation)}
+        className="inline-block text-[12px] text-[#7E2E32] border-b border-[#7E2E32] pb-[2px] mt-2 hover:text-[#1B1A17] hover:border-[#1B1A17] transition-colors disabled:opacity-60"
+      >
+        {downloading ? 'Ouverture...' : 'Contrat PDF →'}
+      </button>
+    );
+  }
+
+  if (status === 'pending' || status === 'processing') {
+    return (
+      <p className="font-mono text-[10px] tracking-[0.08em] uppercase text-[#a0967f] mt-2">
+        Contrat en préparation…
+      </p>
+    );
+  }
+
+  if (status === 'failed') {
+    return (
+      <p className="font-mono text-[10px] tracking-[0.08em] uppercase text-[#9a3b35] mt-2">
+        Contrat indisponible
+      </p>
+    );
+  }
+
+  return null;
+}
+
 function ReservationCard({
   reservation,
   compact = false,
   onPay,
   paying,
+  onDownloadContract,
+  downloadingContract,
 }: {
   reservation: ReservationSummary;
   compact?: boolean;
   onPay?: (reservation: ReservationSummary) => void;
   paying?: boolean;
+  onDownloadContract?: (reservation: ReservationSummary) => void;
+  downloadingContract?: boolean;
 }) {
   const moto = reservation.moto;
   const shop = reservation.shop;
@@ -140,6 +187,13 @@ function ReservationCard({
             Voir la moto →
           </Link>
         )}
+        {onDownloadContract && reservation.paymentStatus === 'paid' ? (
+          <ContractAction
+            reservation={reservation}
+            onDownload={onDownloadContract}
+            downloading={!!downloadingContract}
+          />
+        ) : null}
       </div>
     </div>
   );
@@ -152,6 +206,7 @@ export default function ReservationsPage() {
   const [loadingReservations, setLoadingReservations] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [payingReservationId, setPayingReservationId] = useState<string | null>(null);
+  const [downloadingContractId, setDownloadingContractId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -180,6 +235,24 @@ export default function ReservationsPage() {
     };
   }, [isAuthenticated, isLoading]);
 
+  // Le contrat PDF est généré de façon asynchrone par le worker (cf. ADR
+  // 0005) : on repasse périodiquement chercher les réservations tant que
+  // certaines ont un contrat encore en préparation, pour refléter la
+  // transition pending/processing → ready sans que le client recharge la page.
+  useEffect(() => {
+    if (isLoading || !isAuthenticated) return;
+    const hasPendingContract = reservations.some((r) =>
+      ['pending', 'processing'].includes(r.contractStatus ?? ''),
+    );
+    if (!hasPendingContract) return;
+
+    const interval = setInterval(() => {
+      reservationsService.getMine().then(setReservations).catch(() => undefined);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [reservations, isAuthenticated, isLoading]);
+
   if (isLoading || !isAuthenticated) return null;
 
   const firstName = user?.firstName ?? 'vous';
@@ -197,6 +270,21 @@ export default function ReservationsPage() {
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Paiement impossible.');
       setPayingReservationId(null);
+    }
+  }
+
+  async function downloadContract(reservation: ReservationSummary) {
+    setError(null);
+    setDownloadingContractId(reservation.id);
+    try {
+      const blob = await reservationsService.getContractPdf(reservation.id);
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Contrat indisponible pour le moment.');
+    } finally {
+      setDownloadingContractId(null);
     }
   }
 
@@ -274,6 +362,8 @@ export default function ReservationsPage() {
                         reservation={r}
                         onPay={resumePayment}
                         paying={payingReservationId === r.id}
+                        onDownloadContract={downloadContract}
+                        downloadingContract={downloadingContractId === r.id}
                       />
                     ))
                   ) : (
@@ -286,7 +376,15 @@ export default function ReservationsPage() {
                 <h2 className="font-serif font-semibold text-[28px] mb-[18px]">Historique</h2>
                 <div className="flex flex-col gap-[14px]">
                   {past.length > 0 ? (
-                    past.map((r) => <ReservationCard key={r.id} reservation={r} compact />)
+                    past.map((r) => (
+                      <ReservationCard
+                        key={r.id}
+                        reservation={r}
+                        compact
+                        onDownloadContract={downloadContract}
+                        downloadingContract={downloadingContractId === r.id}
+                      />
+                    ))
                   ) : (
                     <div className="text-[14px] text-[#8a7f63] border border-dashed border-[#d9cfb8] rounded-[14px] px-5 py-6 bg-[#FBF9F3]">
                       Aucun historique pour le moment.

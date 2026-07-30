@@ -13,6 +13,7 @@ import { GetRecentReservationsUseCase } from '@domain/usecases/get-recent-reserv
 import { ConfirmReservationUseCase } from '@domain/usecases/confirm-reservation.usecase'
 import { CancelReservationUseCase } from '@domain/usecases/cancel-reservation.usecase'
 import { RefundReservationUseCase } from '@domain/usecases/refund-reservation.usecase'
+import { GetReservationContractUseCase } from '@domain/usecases/get-reservation-contract.usecase'
 import { CreateReservationController } from '@presentation/controllers/create-reservation.controller'
 import { GetReservationsController } from '@presentation/controllers/get-reservations.controller'
 import { ConfirmReservationController } from '@presentation/controllers/confirm-reservation.controller'
@@ -21,6 +22,17 @@ import { RefundReservationController } from '@presentation/controllers/refund-re
 import { createReservationSchema } from '@presentation/validators/create-reservation.validator'
 import { idParamSchema } from '@presentation/validators/id-param.validator'
 import Joi from 'joi'
+import { createReadStream } from 'node:fs'
+import { stat } from 'node:fs/promises'
+import { join } from 'node:path'
+
+/**
+ * Répertoire des contrats PDF produits par le worker (volume partagé, cf. ADR
+ * 0005). Il est délibérément servi par cette route authentifiée plutôt que par
+ * la route statique publique `/uploads/` : un contrat contient des données
+ * personnelles.
+ */
+const CONTRACTS_DIR = join(process.cwd(), 'uploads', 'contracts')
 
 const createClientReservationSchema = Joi.object({
   motoId: Joi.string().uuid().required(),
@@ -59,7 +71,10 @@ export async function reservationRoutesV1(
   const createReservationController = new CreateReservationController(
     new CreateReservationUseCase(reservationRepository, paymentRepository, contractPublisher),
   )
-  const createClientReservationUseCase = new CreateClientReservationUseCase(reservationRepository, paymentRepository)
+  const createClientReservationUseCase = new CreateClientReservationUseCase(
+    reservationRepository,
+    paymentRepository,
+  )
   const startClientReservationPaymentUseCase = new StartClientReservationPaymentUseCase(
     reservationRepository,
     paymentGateway,
@@ -68,6 +83,7 @@ export async function reservationRoutesV1(
     reservationRepository,
     paymentRepository,
     paymentGateway,
+    contractPublisher,
   )
   const getReservationsController = new GetReservationsController(
     new GetAllReservationsUseCase(reservationRepository),
@@ -82,6 +98,7 @@ export async function reservationRoutesV1(
   const refundReservationController = new RefundReservationController(
     new RefundReservationUseCase(reservationRepository, paymentRepository),
   )
+  const getReservationContractUseCase = new GetReservationContractUseCase(reservationRepository)
 
   app.get('/reservations', async (request: FastifyRequest, reply: FastifyReply) => {
     await getReservationsController.handle(request as never, reply)
@@ -224,6 +241,7 @@ export async function reservationRoutesV1(
         request.params.id,
         request.user.id,
         request.body.sessionId,
+        request.id,
       )
       if (result.isErr) {
         const status = result.error.code === 'NOT_FOUND'
@@ -288,5 +306,61 @@ export async function reservationRoutesV1(
       return
     }
     await refundReservationController.handle(request, reply)
+  })
+
+  app.get('/reservations/:id/contract', async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+    if (!request.user?.id) {
+      reply.status(401).send({
+        success: false,
+        error: { code: 'UNAUTHORIZED', message: 'Bearer token requis' },
+      })
+      return
+    }
+
+    const { error } = idParamSchema.validate(request.params)
+    if (error) {
+      reply.status(400).send({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: error.details.map(d => d.message).join(', ') },
+      })
+      return
+    }
+
+    const result = await getReservationContractUseCase.execute({
+      reservationId: request.params.id,
+      requester: { id: request.user.id, isAdmin: request.user.roles.includes('admin') },
+    })
+
+    if (result.isErr) {
+      reply.status(result.error.code === 'FORBIDDEN' ? 403 : 404).send({
+        success: false,
+        error: { code: result.error.code, message: result.error.message },
+      })
+      return
+    }
+
+    // Le nom de fichier vient du cas d'usage (donc de la base), jamais du
+    // paramètre d'URL : aucune valeur contrôlée par l'appelant n'entre dans le
+    // chemin.
+    const filePath = join(CONTRACTS_DIR, result.value.fileName)
+    try {
+      await stat(filePath)
+    } catch {
+      // La réservation est marquée `ready` mais le fichier a disparu du volume.
+      request.log.warn({ reservationId: result.value.reservationId }, 'Contract file missing on disk')
+      reply.status(404).send({
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'Contrat introuvable sur le stockage' },
+      })
+      return
+    }
+
+    // `return reply` est obligatoire ici : dans un handler async, Fastify
+    // résout la promesse avec `undefined` et écrase le payload déjà envoyé —
+    // la réponse partait en 200 avec content-length: 0.
+    return reply
+      .header('Content-Type', 'application/pdf')
+      .header('Content-Disposition', `inline; filename="contrat-${result.value.reservationId}.pdf"`)
+      .send(createReadStream(filePath))
   })
 }

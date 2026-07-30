@@ -11,6 +11,28 @@ import { ContractGenerationRequest } from '@domain/ports/IContractQueuePublisher
 
 export const CONTRACT_JOB_TYPE = 'GenerateRentalContractPdf' as const
 
+/** Identité du locataire, telle que rendue sur le contrat PDF. */
+export interface ContractCustomerData {
+  first_name: string
+  last_name: string
+  email: string
+  phone: string
+}
+
+/** Véhicule loué, tel que rendu sur le contrat PDF. */
+export interface ContractMotoData {
+  brand: string
+  model: string
+  plate: string
+  category?: string
+}
+
+/** Agence émettrice, telle que rendue sur le contrat PDF. */
+export interface ContractShopData {
+  name: string
+  city: string
+}
+
 /** Message publié par le backend sur la file de demandes (backend -> worker). */
 export interface ContractJobRequest {
   correlation_id: string
@@ -23,6 +45,15 @@ export interface ContractJobRequest {
     end_date: string
     total_amount: number
     deposit_amount: number
+    /**
+     * Blocs dénormalisés : le worker n'a aucun accès à la base, tout ce qui
+     * doit apparaître sur le contrat transite ici. Optionnels côté wire — le
+     * worker retombe sur les identifiants si un bloc est absent, ce qui rend
+     * les déploiements backend/worker indépendants.
+     */
+    customer?: ContractCustomerData
+    moto?: ContractMotoData
+    shop?: ContractShopData
   }
 }
 
@@ -39,17 +70,41 @@ export interface ContractJobResponse {
 
 /** Traduit une demande métier vers le message d'échange (wire format). */
 export function toContractJobRequest(request: ContractGenerationRequest): ContractJobRequest {
+  const { reservation } = request
+
   return {
     correlation_id: request.correlationId,
     job_type: CONTRACT_JOB_TYPE,
-    reservation_id: request.reservation.id,
+    reservation_id: reservation.id,
     data: {
-      moto_id: request.reservation.motoId,
-      customer_id: request.reservation.customerId,
-      start_date: request.reservation.startDate,
-      end_date: request.reservation.endDate,
-      total_amount: request.reservation.totalAmount,
-      deposit_amount: request.reservation.depositAmount,
+      moto_id: reservation.motoId,
+      customer_id: reservation.customerId,
+      start_date: reservation.startDate,
+      end_date: reservation.endDate,
+      total_amount: reservation.totalAmount,
+      deposit_amount: reservation.depositAmount,
+      ...(reservation.customer && {
+        customer: {
+          first_name: reservation.customer.firstName,
+          last_name: reservation.customer.lastName,
+          email: reservation.customer.email,
+          phone: reservation.customer.phone,
+        },
+      }),
+      ...(reservation.moto && {
+        moto: {
+          brand: reservation.moto.brand,
+          model: reservation.moto.model,
+          plate: reservation.moto.plate,
+          ...(reservation.moto.category && { category: reservation.moto.category }),
+        },
+      }),
+      ...(reservation.shop && {
+        shop: {
+          name: reservation.shop.name,
+          city: reservation.shop.city,
+        },
+      }),
     },
   }
 }

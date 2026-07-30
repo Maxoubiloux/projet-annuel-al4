@@ -26,8 +26,21 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
+async function requestBlob(path: string): Promise<Blob> {
+  const token = typeof window !== 'undefined' ? window.localStorage.getItem(TOKEN_KEY) : undefined;
+  const res = await doRequest(path, undefined, token);
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ message: 'Erreur réseau' }));
+    throw new Error(error?.message || error?.error?.message || `HTTP ${res.status}`);
+  }
+
+  return res.blob();
+}
+
 export const apiClient = {
   get: <T>(path: string) => request<T>(path),
+  getBlob: (path: string) => requestBlob(path),
   post: <T>(path: string, body: unknown) =>
     request<T>(path, { method: 'POST', body: JSON.stringify(body) }),
   put: <T>(path: string, body: unknown) =>

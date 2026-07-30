@@ -1,92 +1,137 @@
 pub mod generate_contract;
-pub mod process_photos;
-pub mod send_email;
-pub mod validate_document;
+pub mod messages;
 
-use crate::error::Result;
+use crate::config::Config;
+use crate::error::{Result, WorkerError};
+use crate::jobs::messages::{ContractJobRequest, ContractJobResponse, CONTRACT_JOB_TYPE};
+use crate::queue::consumer::Outcome;
 use crate::queue::producer::Producer;
 use crate::retry::RetryPolicy;
-use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 use std::sync::Arc;
-use tracing::info;
+use std::time::Instant;
+use tracing::{error, info, warn};
 
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(tag = "type", content = "payload")]
-pub enum JobRequest {
-    GenerateRentalContractPdf { reservation_id: String },
-    ProcessCheckinPhotos { location_id: String, image_urls: Vec<String> },
-    ValidateDocument { user_id: String, document_url: String },
-    SendEmail { to: String, subject: String, body: String },
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(tag = "type", content = "payload")]
-pub enum JobResponse {
-    Success { job_type: String, result: serde_json::Value },
-    Failure { job_type: String, error: String },
-}
-
-pub struct JobDispatcher {
+pub struct ContractJobHandler {
     producer: Arc<Producer>,
     retry_policy: RetryPolicy,
+    contracts_dir: PathBuf,
+    public_base_url: String,
 }
 
-impl JobDispatcher {
-    pub fn new(producer: Arc<Producer>) -> Self {
+impl ContractJobHandler {
+    pub fn new(producer: Arc<Producer>, config: &Config) -> Self {
         Self {
             producer,
-            retry_policy: RetryPolicy::new(3, 1000),
+            retry_policy: RetryPolicy::new(config.max_retries, config.retry_backoff_ms),
+            contracts_dir: config.contracts_dir.clone(),
+            public_base_url: config.public_base_url.clone(),
         }
     }
 
-    pub async fn dispatch(&self, raw_data: Vec<u8>) -> Result<()> {
-        let request: JobRequest = match serde_json::from_slice(&raw_data) {
-            Ok(req) => req,
-            Err(e) => {
-                tracing::error!("Failed to parse job request: {}", e);
-                return Err(e.into());
+    pub async fn handle(&self, raw: Vec<u8>) -> Outcome {
+        let request = match parse_request(&raw) {
+            Ok(request) => request,
+            Err(err) => {
+                warn!(error = %err, "Unprocessable message, dead-lettering");
+                return Outcome::DeadLetter;
             }
         };
 
-        info!("Received job: {:?}", request);
+        let started = Instant::now();
+        info!(
+            correlation_id = %request.correlation_id,
+            reservation_id = %request.reservation_id,
+            job_type = %request.job_type,
+            "Job received"
+        );
 
-        let producer = self.producer.clone();
-        let job_type = match &request {
-            JobRequest::GenerateRentalContractPdf { .. } => "GenerateRentalContractPdf",
-            JobRequest::ProcessCheckinPhotos { .. } => "ProcessCheckinPhotos",
-            JobRequest::ValidateDocument { .. } => "ValidateDocument",
-            JobRequest::SendEmail { .. } => "SendEmail",
-        };
+        let result = self
+            .retry_policy
+            .execute(|| async { self.run_job(&request).await })
+            .await;
 
-        let result = self.retry_policy.execute(|| async {
-            match &request {
-                JobRequest::GenerateRentalContractPdf { reservation_id } => {
-                     generate_contract::handle(reservation_id).await
-                }
-                JobRequest::ProcessCheckinPhotos { location_id, image_urls } => {
-                     process_photos::handle(location_id, image_urls).await
-                }
-                JobRequest::ValidateDocument { user_id, document_url } => {
-                     validate_document::handle(user_id, document_url).await
-                }
-                JobRequest::SendEmail { to, subject, body } => {
-                     send_email::handle(to, subject, body).await
-                }
-            }
-        }).await;
+        let duration_ms = started.elapsed().as_millis();
 
         let response = match result {
-            Ok(res) => JobResponse::Success {
-                job_type: job_type.to_string(),
-                result: res,
-            },
-            Err(e) => JobResponse::Failure {
-                job_type: job_type.to_string(),
-                error: e.to_string(),
-            },
+            Ok(url) => {
+                info!(
+                    correlation_id = %request.correlation_id,
+                    reservation_id = %request.reservation_id,
+                    duration_ms,
+                    url = %url,
+                    "Contract generated"
+                );
+                ContractJobResponse::success(&request.correlation_id, &request.reservation_id, url)
+            }
+            Err(err) => {
+                error!(
+                    correlation_id = %request.correlation_id,
+                    reservation_id = %request.reservation_id,
+                    duration_ms,
+                    error = %err,
+                    "Contract generation failed definitively"
+                );
+                ContractJobResponse::failure(
+                    &request.correlation_id,
+                    &request.reservation_id,
+                    err.to_string(),
+                )
+            }
         };
 
-        producer.publish(&response).await?;
-        Ok(())
+        match self
+            .producer
+            .publish(&response, &request.correlation_id)
+            .await
+        {
+            Ok(()) => Outcome::Ack,
+            Err(err) => {
+                error!(
+                    correlation_id = %request.correlation_id,
+                    error = %err,
+                    "Failed to publish response, dead-lettering the request"
+                );
+                Outcome::DeadLetter
+            }
+        }
     }
+
+    async fn run_job(&self, request: &ContractJobRequest) -> Result<String> {
+        let reservation_id = request.reservation_id.clone();
+        let request = request.clone();
+        let contracts_dir = self.contracts_dir.clone();
+
+        tokio::task::spawn_blocking(move || generate_contract::generate(&request, &contracts_dir))
+            .await
+            .map_err(|e| {
+                WorkerError::JobFailed(format!("tâche de génération interrompue: {e}"))
+            })??;
+
+        // Route authentifiée du backend, et non le répertoire statique public :
+        // le contrat contient des données personnelles.
+        Ok(format!(
+            "{}/api/v1/reservations/{}/contract",
+            self.public_base_url, reservation_id
+        ))
+    }
+}
+
+pub fn parse_request(raw: &[u8]) -> Result<ContractJobRequest> {
+    let request: ContractJobRequest = serde_json::from_slice(raw)?;
+
+    if request.job_type != CONTRACT_JOB_TYPE {
+        return Err(WorkerError::InvalidPayload(format!(
+            "job_type inconnu: {} (attendu: {CONTRACT_JOB_TYPE})",
+            request.job_type
+        )));
+    }
+
+    if request.reservation_id.trim().is_empty() {
+        return Err(WorkerError::InvalidPayload(
+            "reservation_id manquant".to_string(),
+        ));
+    }
+
+    Ok(request)
 }

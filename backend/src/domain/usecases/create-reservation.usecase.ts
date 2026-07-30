@@ -14,7 +14,7 @@ export class CreateReservationUseCase {
     private readonly contractPublisher?: IContractQueuePublisher,
   ) { }
 
-  async execute(params: CreateReservationParams): Promise<Result<Reservation, ValidationError>> {
+  async execute(params: CreateReservationParams, correlationId: string): Promise<Result<Reservation, ValidationError>> {
     if (!params.motoId?.trim()) return err(new ValidationError('La moto est requise'))
     if (!params.customerId?.trim()) return err(new ValidationError('Le client est requis'))
     if (!params.startDate || !params.endDate) {
@@ -46,13 +46,10 @@ export class CreateReservationUseCase {
     })
     await this.paymentRepository.save(payment)
 
-    // Déclenche la génération asynchrone du contrat (fire-and-forget) : un échec
-    // de publication ne doit jamais annuler une réservation déjà persistée. Le
-    // contrat reste alors en statut "pending" et pourra être régénéré.
-    if (this.contractPublisher) {
+    if (this.contractPublisher && saved.paymentStatus === 'paid') {
       try {
         await this.contractPublisher.publishContractGeneration({
-          correlationId: uuidv4(),
+          correlationId,
           reservation: {
             id: saved.id,
             motoId: saved.motoId,
@@ -61,11 +58,13 @@ export class CreateReservationUseCase {
             endDate: saved.endDate,
             totalAmount: saved.totalAmount,
             depositAmount: saved.depositAmount,
+            customer: saved.customer,
+            moto: saved.moto,
+            shop: saved.shop,
           },
         })
       } catch {
-        // Erreur de publication ignorée volontairement (voir commentaire ci-dessus).
-        // L'implémentation d'infrastructure loggue le détail de l'échec.
+        // contract generation is best-effort: publish failure must not block reservation creation
       }
     }
 
