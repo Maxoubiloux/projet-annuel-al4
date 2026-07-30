@@ -7,6 +7,7 @@ const makeMockRepository = (updateImpl?: () => Promise<Reservation>): IReservati
   findRecent: jest.fn(),
   findById: jest.fn(),
   findMotoPricePerDay: jest.fn(),
+  findMotoStatus: jest.fn(),
   hasActiveOverlap: jest.fn(),
   ensureCustomer: jest.fn(),
   save: jest.fn(),

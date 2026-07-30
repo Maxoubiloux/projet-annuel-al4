@@ -24,6 +24,7 @@ export interface IReservationRepository {
   findRecent(limit: number): Promise<Reservation[]>
   findById(id: string): Promise<Reservation | null>
   findMotoPricePerDay(motoId: string): Promise<number | null>
+  findMotoStatus(motoId: string): Promise<string | null>
   hasActiveOverlap(motoId: string, startDate: string, endDate: string): Promise<boolean>
   ensureCustomer(params: ReservationCustomerUpsertParams): Promise<void>
   save(reservation: Reservation): Promise<Reservation>

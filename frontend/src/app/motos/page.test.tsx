@@ -75,6 +75,7 @@ vi.mock("@/services/motos.service", () => ({
   motosService: {
     getAll: getAllMock,
   },
+  isMotoUnavailable: (status: string) => status === "maintenance" || status === "inactive",
 }));
 
 vi.mock("@/services/favorites.service", () => ({

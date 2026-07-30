@@ -116,6 +116,15 @@ export class PrismaReservationRepository implements IReservationRepository {
     return moto?.pricePerDay ?? null
   }
 
+  async findMotoStatus(motoId: string): Promise<string | null> {
+    const moto = await prisma.moto.findUnique({
+      where: { id: motoId },
+      select: { status: { select: { name: true } } },
+    })
+
+    return moto?.status.name ?? null
+  }
+
   async hasActiveOverlap(motoId: string, startDate: string, endDate: string): Promise<boolean> {
     const count = await prisma.booking.count({
       where: {

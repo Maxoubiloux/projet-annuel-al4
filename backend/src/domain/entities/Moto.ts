@@ -1,6 +1,12 @@
 export const MOTO_STATUSES = ['available', 'reserved', 'maintenance', 'inactive'] as const
 export type MotoStatusName = (typeof MOTO_STATUSES)[number]
 
+const UNBOOKABLE_MOTO_STATUSES: readonly string[] = ['maintenance', 'inactive']
+
+export function isMotoBookable(status: string): boolean {
+  return !UNBOOKABLE_MOTO_STATUSES.includes(status)
+}
+
 export interface CreateMotoParams {
   brand: string
   model: string
