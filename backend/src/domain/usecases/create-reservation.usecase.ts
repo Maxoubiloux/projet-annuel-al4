@@ -64,7 +64,14 @@ export class CreateReservationUseCase {
           },
         })
       } catch {
-        // contract generation is best-effort: publish failure must not block reservation creation
+        // La publication est best-effort : son échec ne doit pas bloquer la
+        // création de la réservation. On acte quand même l'échec au lieu de
+        // laisser le contrat bloqué indéfiniment sur son statut par défaut.
+        try {
+          await this.reservationRepository.updateContract(saved.id, 'failed', null)
+        } catch {
+          // best-effort également : une erreur ici ne doit pas remonter
+        }
       }
     }
 

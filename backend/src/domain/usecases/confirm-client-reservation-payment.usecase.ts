@@ -64,7 +64,14 @@ export class ConfirmClientReservationPaymentUseCase {
           },
         })
       } catch {
-        // contract generation is best-effort: publish failure must not block payment confirmation
+        // La publication est best-effort : son échec ne doit pas bloquer la
+        // confirmation du paiement. On acte quand même l'échec au lieu de
+        // laisser le contrat bloqué indéfiniment sur son statut par défaut.
+        try {
+          await this.reservationRepository.updateContract(confirmed.id, 'failed', null)
+        } catch {
+          // best-effort également : une erreur ici ne doit pas remonter
+        }
       }
     }
 
