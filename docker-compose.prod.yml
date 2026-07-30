@@ -49,6 +49,19 @@ services:
       timeout: 5s
       retries: 5
 
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: moto-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   keycloak:
     image: quay.io/keycloak/keycloak:25.0.6
     container_name: moto-keycloak
@@ -119,6 +132,11 @@ services:
       DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      REQUEST_QUEUE: worker_requests
+      RESPONSE_QUEUE: worker_responses
+      DEAD_LETTER_QUEUE: worker_dead_letters
+      DEAD_LETTER_EXCHANGE: worker_dlx
       KEYCLOAK_URL: https://${AUTH_DOMAIN}
       KEYCLOAK_ISSUER_URL: https://${AUTH_DOMAIN}
       KEYCLOAK_REALM: ${KEYCLOAK_REALM}
@@ -132,8 +150,33 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
       keycloak-config:
         condition: service_completed_successfully
+    volumes:
+      - contracts_data:/app/uploads/contracts
+
+  worker:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    container_name: moto-worker
+    restart: unless-stopped
+    environment:
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      REQUEST_QUEUE: worker_requests
+      RESPONSE_QUEUE: worker_responses
+      DEAD_LETTER_QUEUE: worker_dead_letters
+      DEAD_LETTER_EXCHANGE: worker_dlx
+      CONTRACTS_DIR: /data/contracts
+      PUBLIC_BASE_URL: https://${API_DOMAIN}
+      RUST_LOG: info
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    volumes:
+      - contracts_data:/data/contracts
 
   frontend:
     build:
@@ -175,3 +218,4 @@ volumes:
   postgres_data:
   caddy_data:
   caddy_config:
+  contracts_data:

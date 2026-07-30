@@ -57,6 +57,21 @@ const occupancy = [
   { name: 'Kawasaki Z900',    l: '0%',  w: '100%', c: 'var(--cmy-amber)', dashed: true, dim: 0.35 },
 ];
 
+interface KpiCard {
+  label: string;
+  value: string;
+  Icon?: typeof TrendingUp;
+  delta?: string;
+  deltaColor?: string;
+  vs?: string;
+  sparkData?: number[];
+  sparkColor?: string;
+  footL?: string;
+  footLColor?: string;
+  footR?: string;
+  footRColor?: string;
+}
+
 /* ── sub-components ───────────────────────────────────────── */
 function Sparkline({ data, color }: { data: number[]; color: string }) {
   const W = 120, H = 40;
@@ -97,6 +112,7 @@ function Pill({ status }: { status: string }) {
 
 /* ── CSV export ───────────────────────────────────────────── */
 function exportDashboard(
+  kpis: { label: string; value: string; delta?: string; vs?: string }[],
   reservations: DashboardRecentReservation[],
   alerts: DashboardMaintenanceAlert[],
 ) {
@@ -106,10 +122,7 @@ function exportDashboard(
     '',
     'KPIs',
     'Metric,Value,Delta,vs',
-    'Fleet utilization,87.4%,+4.2,vs 83.2%',
-    'Active rentals,142,+12,vs 130',
-    'Revenue MTD,€90.2k,+9.8%,vs €82.1k',
-    'Maintenance due,7,−2,vs 9',
+    ...kpis.map(k => [k.label, k.value, k.delta ?? '', k.vs ?? ''].join(',')),
     '',
     'Recent reservations',
     'ID,Customer,Motorcycle,Period,Days,Amount,Status',
@@ -170,32 +183,50 @@ export function DashboardPage() {
     borderRadius: 16, boxShadow: 'var(--shadow)',
   };
 
-  const kpis = [
+  const revenueMTDk = (apiKpis?.revenueMTD ?? 90200) / 1000;
+  const revenuePrevMonthK = (apiKpis?.revenuePrevMonth ?? 82100) / 1000;
+  const revenueDeltaPct = apiKpis
+    ? apiKpis.revenuePrevMonth > 0
+      ? ((apiKpis.revenueMTD - apiKpis.revenuePrevMonth) / apiKpis.revenuePrevMonth) * 100
+      : (apiKpis.revenueMTD > 0 ? 100 : 0)
+    : 9.8;
+  const revenueUp = revenueDeltaPct >= 0;
+
+  const kpis: KpiCard[] = [
     {
-      label: 'Fleet utilization', value: '87.4%',
-      Icon: TrendingUp, delta: '+4.2', deltaColor: 'var(--cmy-green)',
-      vs: 'vs 83.2%', sparkData: [60,65,70,68,72,75,78,74,80,82,85,87.4],
-      sparkColor: 'var(--brand)', footL: '142 / 163 on road', footR: 'target 85%', footRColor: 'var(--faint)',
+      label: 'Fleet utilization',
+      value: `${apiKpis?.fleetUtilization ?? 87}%`,
+      footL: `${apiKpis?.onRoad ?? 142} / ${totalFleet} on road`,
+      footR: 'target 85%', footRColor: 'var(--faint)',
     },
     {
-      label: 'Active rentals', value: '142',
-      Icon: TrendingUp, delta: '+12', deltaColor: 'var(--cmy-green)',
-      vs: 'vs 130', sparkData: [100,108,112,115,118,122,125,128,130,132,138,142],
-      sparkColor: 'var(--brand)', footL: '38 due back today', footR: '6 overdue', footRColor: 'var(--cmy-red)',
+      label: 'Active rentals',
+      value: String(apiKpis?.activeRentals ?? 142),
+      sparkData: rentalsData.length ? rentalsData.map(r => r.v) : undefined,
+      sparkColor: 'var(--brand)',
+      footL: `${apiKpis?.dueTodayCount ?? 38} due back today`,
+      footR: `${apiKpis?.overdueCount ?? 6} overdue`, footRColor: 'var(--cmy-red)',
     },
     {
-      label: 'Revenue · MTD', value: '€90.2k',
-      Icon: TrendingUp, delta: '+9.8%', deltaColor: 'var(--cmy-green)',
-      vs: 'vs €82.1k', sparkData: [55,62,65,60,68,72,75,78,80,83,85,90.2],
-      sparkColor: 'var(--brand)', footL: '€3.0k/day avg', footR: 'fcst €112k', footRColor: 'var(--faint)',
+      label: 'Revenue · MTD',
+      value: `€${revenueMTDk.toFixed(1)}k`,
+      Icon: revenueUp ? TrendingUp : TrendingDown,
+      delta: `${revenueUp ? '+' : ''}${revenueDeltaPct.toFixed(1)}%`,
+      deltaColor: revenueUp ? 'var(--cmy-green)' : 'var(--cmy-red)',
+      vs: `vs €${revenuePrevMonthK.toFixed(1)}k`,
+      sparkData: revenueData.length ? revenueData.map(r => r.v) : undefined,
+      sparkColor: 'var(--brand)',
+      footL: `€${((apiKpis?.dailyAvgRevenue ?? 3000) / 1000).toFixed(1)}k/day avg`,
+      footR: `fcst €${((apiKpis?.forecastRevenue ?? 112000) / 1000).toFixed(0)}k`, footRColor: 'var(--faint)',
     },
     {
-      label: 'Maintenance due', value: '7',
-      Icon: TrendingDown, delta: '−2', deltaColor: 'var(--cmy-green)',
-      vs: 'vs 9', sparkData: [12,11,10,11,9,10,9,8,9,7,8,7],
-      sparkColor: 'var(--cmy-amber)', footL: '2 critical', footLColor: 'var(--cmy-red)', footR: '5 scheduled', footRColor: 'var(--faint)',
+      label: 'Maintenance due',
+      value: String(maintenanceDue),
+      footL: `${apiKpis?.maintenanceCritical ?? 2} critical`, footLColor: 'var(--cmy-red)',
+      footR: `${apiKpis?.maintenanceScheduled ?? 5} scheduled`, footRColor: 'var(--faint)',
     },
-  ] as const;
+  ];
+  const RevenueDeltaIcon = kpis[2].Icon ?? TrendingUp;
 
   return (
     <div>
@@ -242,7 +273,7 @@ export function DashboardPage() {
               </button>
             ))}
           </div>
-          <Button size="md" onClick={() => exportDashboard(reservations, alerts)}>
+          <Button size="md" onClick={() => exportDashboard(kpis, reservations, alerts)}>
             <Download size={14} strokeWidth={1.6} />Export
           </Button>
         </div>
@@ -262,20 +293,24 @@ export function DashboardPage() {
                   <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 29, fontWeight: 500, letterSpacing: '-.02em', color: 'var(--ink)' }}>
                     {k.value}
                   </span>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, fontSize: 11.5, fontWeight: 500, color: k.deltaColor }}>
-                    <k.Icon size={11} />{k.delta}
-                  </span>
-                  <span style={{ marginLeft: 'auto', fontFamily: "'Geist Mono',monospace", fontSize: 10.5, color: 'var(--faint)' }}>
-                    {k.vs}
-                  </span>
+                  {k.delta && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, fontSize: 11.5, fontWeight: 500, color: k.deltaColor }}>
+                      {k.Icon && <k.Icon size={11} />}{k.delta}
+                    </span>
+                  )}
+                  {k.vs && (
+                    <span style={{ marginLeft: 'auto', fontFamily: "'Geist Mono',monospace", fontSize: 10.5, color: 'var(--faint)' }}>
+                      {k.vs}
+                    </span>
+                  )}
                 </div>
-                <Sparkline data={[...k.sparkData]} color={k.sparkColor} />
+                {k.sparkData && <Sparkline data={k.sparkData} color={k.sparkColor ?? 'var(--brand)'} />}
                 <div style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  marginTop: 11, paddingTop: 10, borderTop: '1px solid var(--border-2)',
+                  marginTop: k.sparkData ? 11 : 22, paddingTop: 10, borderTop: '1px solid var(--border-2)',
                   fontFamily: "'Geist Mono',monospace", fontSize: 10.5,
                 }}>
-                  <span style={{ color: ('footLColor' in k ? k.footLColor : 'var(--muted)') as string }}>{k.footL}</span>
+                  <span style={{ color: k.footLColor ?? 'var(--muted)' }}>{k.footL}</span>
                   <span style={{ color: k.footRColor }}>{k.footR}</span>
                 </div>
               </div>
@@ -295,8 +330,8 @@ export function DashboardPage() {
                 <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 25, fontWeight: 500, letterSpacing: '-.02em', color: 'var(--ink)' }}>
                   {kpis[2].value}
                 </span>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11.5, color: 'var(--cmy-green)' }}>
-                  <TrendingUp size={11} />{kpis[2].delta}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11.5, color: kpis[2].deltaColor }}>
+                  <RevenueDeltaIcon size={11} />{kpis[2].delta}
                 </span>
                 {apiKpis && (
                   <span style={{ marginLeft: 'auto', fontFamily: "'Geist Mono',monospace", fontSize: 10.5, color: 'var(--faint)' }}>
