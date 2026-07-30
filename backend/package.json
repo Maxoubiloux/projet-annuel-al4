@@ -17,7 +17,8 @@
     "typecheck": "tsc --noEmit",
     "db:migrate": "typeorm migration:run -d src/infrastructure/database/data-source.ts",
     "db:migrate:generate": "typeorm migration:generate -d src/infrastructure/database/data-source.ts",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "contracts:republish": "node dist/scripts/republish-pending-contracts.js"
   },
   "dependencies": {
     "@fastify/cors": "^11.2.0",
