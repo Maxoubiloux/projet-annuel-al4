@@ -10,6 +10,7 @@ const makeMockReservationRepository = (): IReservationRepository => ({
   findRecent: jest.fn(),
   findById: jest.fn(),
   findMotoPricePerDay: jest.fn(async () => 85),
+  findMotoStatus: jest.fn(async () => 'available'),
   hasActiveOverlap: jest.fn(async () => false),
   ensureCustomer: jest.fn(),
   save: jest.fn(async (r: Reservation) => hydrate(r)),
@@ -56,5 +57,40 @@ describe('CreateClientReservationUseCase', () => {
     expect(result.isOk).toBe(true)
     expect(reservationRepository.save).toHaveBeenCalledTimes(1)
     expect(paymentRepository.save).toHaveBeenCalledTimes(1)
+  })
+
+  it('should reject a moto under maintenance', async () => {
+    const reservationRepository = makeMockReservationRepository()
+    reservationRepository.findMotoStatus = jest.fn(async () => 'maintenance')
+    const useCase = new CreateClientReservationUseCase(reservationRepository, makeMockPaymentRepository())
+
+    const result = await useCase.execute(validParams)
+
+    expect(result.isErr).toBe(true)
+    if (result.isErr) {
+      expect(result.error.code).toBe('VALIDATION_ERROR')
+    }
+    expect(reservationRepository.save).not.toHaveBeenCalled()
+  })
+
+  it('should reject an inactive moto', async () => {
+    const reservationRepository = makeMockReservationRepository()
+    reservationRepository.findMotoStatus = jest.fn(async () => 'inactive')
+    const useCase = new CreateClientReservationUseCase(reservationRepository, makeMockPaymentRepository())
+
+    const result = await useCase.execute(validParams)
+
+    expect(result.isErr).toBe(true)
+    expect(reservationRepository.save).not.toHaveBeenCalled()
+  })
+
+  it('should allow a reserved moto (only maintenance/inactive block booking)', async () => {
+    const reservationRepository = makeMockReservationRepository()
+    reservationRepository.findMotoStatus = jest.fn(async () => 'reserved')
+    const useCase = new CreateClientReservationUseCase(reservationRepository, makeMockPaymentRepository())
+
+    const result = await useCase.execute(validParams)
+
+    expect(result.isOk).toBe(true)
   })
 })

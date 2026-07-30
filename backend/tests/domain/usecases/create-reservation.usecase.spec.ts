@@ -11,6 +11,7 @@ const makeMockReservationRepository = (): IReservationRepository => ({
   findRecent: jest.fn(),
   findById: jest.fn(),
   findMotoPricePerDay: jest.fn(),
+  findMotoStatus: jest.fn(async () => 'available'),
   hasActiveOverlap: jest.fn(),
   ensureCustomer: jest.fn(),
   save: jest.fn(async (r: Reservation) => r),
@@ -81,6 +82,41 @@ describe('CreateReservationUseCase', () => {
     const result = await useCase.execute({ ...validParams, depositAmount: -1 }, 'corr-1')
 
     expect(result.isErr).toBe(true)
+  })
+
+  it('should reject a moto under maintenance', async () => {
+    const reservationRepository = makeMockReservationRepository()
+    reservationRepository.findMotoStatus = jest.fn(async () => 'maintenance')
+    const useCase = new CreateReservationUseCase(reservationRepository, makeMockPaymentRepository())
+
+    const result = await useCase.execute(validParams, 'corr-1')
+
+    expect(result.isErr).toBe(true)
+    if (result.isErr) {
+      expect(result.error.code).toBe('VALIDATION_ERROR')
+    }
+    expect(reservationRepository.save).not.toHaveBeenCalled()
+  })
+
+  it('should reject an inactive moto', async () => {
+    const reservationRepository = makeMockReservationRepository()
+    reservationRepository.findMotoStatus = jest.fn(async () => 'inactive')
+    const useCase = new CreateReservationUseCase(reservationRepository, makeMockPaymentRepository())
+
+    const result = await useCase.execute(validParams, 'corr-1')
+
+    expect(result.isErr).toBe(true)
+    expect(reservationRepository.save).not.toHaveBeenCalled()
+  })
+
+  it('should allow a reserved moto (only maintenance/inactive block booking)', async () => {
+    const reservationRepository = makeMockReservationRepository()
+    reservationRepository.findMotoStatus = jest.fn(async () => 'reserved')
+    const useCase = new CreateReservationUseCase(reservationRepository, makeMockPaymentRepository())
+
+    const result = await useCase.execute(validParams, 'corr-1')
+
+    expect(result.isOk).toBe(true)
   })
 
   it('should not publish a contract generation job when payment is not paid', async () => {

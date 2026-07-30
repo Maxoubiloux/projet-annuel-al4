@@ -11,6 +11,10 @@ export interface MotoAvailability {
   unavailableRanges: { startDate: string; endDate: string }[];
 }
 
+export function isMotoUnavailable(status: Motorbike['status']): boolean {
+  return status === 'maintenance' || status === 'inactive';
+}
+
 export function mapToMotorbike(raw: Record<string, unknown>): Motorbike {
   return {
     id: raw.id as string,

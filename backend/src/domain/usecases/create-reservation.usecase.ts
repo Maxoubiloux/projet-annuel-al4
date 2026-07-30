@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
+import { isMotoBookable } from '../entities/Moto'
 import { Reservation, CreateReservationParams, RESERVATION_STATUSES, PAYMENT_STATUSES } from '../entities/Reservation'
 import { Payment } from '../entities/Payment'
 import { IReservationRepository } from '../repositories/IReservationRepository'
@@ -30,6 +31,11 @@ export class CreateReservationUseCase {
     }
     if (!PAYMENT_STATUSES.includes(params.paymentStatus as never)) {
       return err(new ValidationError('Statut de paiement invalide'))
+    }
+
+    const motoStatus = await this.reservationRepository.findMotoStatus(params.motoId)
+    if (motoStatus !== null && !isMotoBookable(motoStatus)) {
+      return err(new ValidationError('Cette moto n\'est pas disponible à la réservation'))
     }
 
     const reservation = Reservation.create(uuidv4(), params)

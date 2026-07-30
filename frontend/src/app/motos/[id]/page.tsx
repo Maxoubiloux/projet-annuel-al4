@@ -2,7 +2,7 @@
 
 import { Motorbike } from '@/types';
 import { Button } from '@/components/ui/Button';
-import { MotoAvailability, motosService } from '@/services/motos.service';
+import { isMotoUnavailable, MotoAvailability, motosService } from '@/services/motos.service';
 import { favoritesService } from '@/services/favorites.service';
 import { reservationsService } from '@/services/reservations.service';
 import { useAuth } from '@/hooks/useAuth';
@@ -271,7 +271,7 @@ export default function MotoDetails() {
 
   const subtotal = moto ? days * moto.pricePerDay : 0;
   const unavailableRanges = availability?.unavailableRanges ?? [];
-  const isAvailable = moto?.status === 'available';
+  const isAvailable = !!moto && !isMotoUnavailable(moto.status);
 
   async function toggleFavorite() {
     if (!moto) return;

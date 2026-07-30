@@ -1,7 +1,7 @@
 'use client';
 
 import { Motorbike } from '@/types';
-import { motosService } from '@/services/motos.service';
+import { isMotoUnavailable, motosService } from '@/services/motos.service';
 import { favoritesService } from '@/services/favorites.service';
 import { useAuth } from '@/hooks/useAuth';
 import Image from 'next/image';
@@ -248,12 +248,12 @@ export default function MotosPage() {
                     <span
                       className={[
                         'absolute bottom-3 left-3 font-mono text-[9.5px] tracking-[0.12em] uppercase px-[10px] py-1 rounded-full border bg-white/90',
-                        moto.status !== 'available'
+                        isMotoUnavailable(moto.status)
                           ? 'text-[#9a3b35] border-[#e6b9b3]'
                           : 'text-[#3d7a52] border-[#bcd9c4]',
                       ].join(' ')}
                     >
-                      {moto.status !== 'available' ? 'Indisponible' : 'Disponible'}
+                      {isMotoUnavailable(moto.status) ? 'Indisponible' : 'Disponible'}
                     </span>
                     <button
                       type="button"

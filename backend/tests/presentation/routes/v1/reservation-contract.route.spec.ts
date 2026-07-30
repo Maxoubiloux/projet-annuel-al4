@@ -58,6 +58,7 @@ const reservationRepository: IReservationRepository = {
       : null,
   ),
   findMotoPricePerDay: jest.fn(),
+  findMotoStatus: jest.fn(),
   hasActiveOverlap: jest.fn(),
   ensureCustomer: jest.fn(),
   save: jest.fn(),

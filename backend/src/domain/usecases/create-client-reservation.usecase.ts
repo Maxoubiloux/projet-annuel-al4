@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
+import { isMotoBookable } from '../entities/Moto'
 import { CreateClientReservationParams, Reservation } from '../entities/Reservation'
 import { Payment } from '../entities/Payment'
 import { IReservationRepository } from '../repositories/IReservationRepository'
@@ -40,6 +41,11 @@ export class CreateClientReservationUseCase {
 
     const pricePerDay = await this.reservationRepository.findMotoPricePerDay(params.motoId)
     if (pricePerDay === null) return err(new NotFoundError('Moto', params.motoId))
+
+    const motoStatus = await this.reservationRepository.findMotoStatus(params.motoId)
+    if (motoStatus !== null && !isMotoBookable(motoStatus)) {
+      return err(new ValidationError('Cette moto n\'est pas disponible à la réservation'))
+    }
 
     const hasOverlap = await this.reservationRepository.hasActiveOverlap(params.motoId, params.startDate, params.endDate)
     if (hasOverlap) {

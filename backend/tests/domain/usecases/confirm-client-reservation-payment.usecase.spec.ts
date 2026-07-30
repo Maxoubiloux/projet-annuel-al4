@@ -32,6 +32,7 @@ const makeMockReservationRepository = (): IReservationRepository => ({
   findRecent: jest.fn(),
   findById: jest.fn(async () => makePendingReservation()),
   findMotoPricePerDay: jest.fn(),
+  findMotoStatus: jest.fn(),
   hasActiveOverlap: jest.fn(),
   ensureCustomer: jest.fn(),
   save: jest.fn(),
