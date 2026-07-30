@@ -46,15 +46,19 @@ const confirmClientReservationPaymentSchema = Joi.object({
 
 function resolveFrontendUrl(request: FastifyRequest): string {
   const fallback = process.env.FRONTEND_URL ?? 'http://localhost:3001'
-  const origin = request.headers.origin
-  if (!origin) return fallback
+  const configuredFrontendUrl = fallback.replace(/\/$/, '')
+  const hasBasePath = new URL(configuredFrontendUrl).pathname !== '/'
+  if (hasBasePath) return configuredFrontendUrl
 
-  const allowedOrigins = (process.env.CORS_ORIGIN ?? fallback)
+  const origin = request.headers.origin
+  if (!origin) return configuredFrontendUrl
+
+  const allowedOrigins = (process.env.CORS_ORIGIN ?? configuredFrontendUrl)
     .split(',')
     .map(value => value.trim())
     .filter(Boolean)
 
-  return allowedOrigins.includes(origin) ? origin : fallback
+  return allowedOrigins.includes(origin) ? origin : configuredFrontendUrl
 }
 
 export async function reservationRoutesV1(
