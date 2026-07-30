@@ -16,14 +16,14 @@ services:
   keycloak:
     container_name: moto-dev-keycloak
     environment:
-      KC_HOSTNAME: pleingazloc.fr
+      KC_HOSTNAME: dev.pleingazloc.fr
       KC_HTTP_ENABLED: "true"
-      KC_HTTP_RELATIVE_PATH: /dev/auth
+      KC_HTTP_RELATIVE_PATH: /auth
       KC_PROXY_HEADERS: xforwarded
     ports:
       - "${DEV_KEYCLOAK_PORT:-18080}:8080"
     healthcheck:
-      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /dev/auth/realms/master HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && head -n 1 <&3 | grep -q '200 OK'"]
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /auth/realms/master HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && head -n 1 <&3 | grep -q '200 OK'"]
       interval: 20s
       timeout: 10s
       retries: 10
@@ -32,12 +32,12 @@ services:
   keycloak-config:
     container_name: moto-dev-keycloak-config
     command: >
-      "/opt/keycloak/bin/kcadm.sh config credentials --server http://keycloak:8080/dev/auth --realm master --user admin --password admin &&
+      "/opt/keycloak/bin/kcadm.sh config credentials --server http://keycloak:8080/auth --realm master --user admin --password admin &&
       /opt/keycloak/bin/kcadm.sh update realms/moto-rental/users/profile -f /config/keycloak-user-profile.json &&
       CLIENT_ID=$$(/opt/keycloak/bin/kcadm.sh get clients -r moto-rental -q clientId=moto-rental-frontend --fields id --format csv --noquotes | tail -n 1) &&
-      /opt/keycloak/bin/kcadm.sh update clients/$$CLIENT_ID -r moto-rental -s standardFlowEnabled=true -s directAccessGrantsEnabled=false -s 'attributes.\"pkce.code.challenge.method\"=S256' -s 'redirectUris=[\"http://localhost:3001/*\",\"https://pleingazloc.fr/dev/*\"]' -s 'webOrigins=[\"http://localhost:3001\",\"https://pleingazloc.fr\"]' &&
+      /opt/keycloak/bin/kcadm.sh update clients/$$CLIENT_ID -r moto-rental -s standardFlowEnabled=true -s directAccessGrantsEnabled=false -s 'attributes.\"pkce.code.challenge.method\"=S256' -s 'redirectUris=[\"http://localhost:3001/*\",\"https://dev.pleingazloc.fr/*\"]' -s 'webOrigins=[\"http://localhost:3001\",\"https://dev.pleingazloc.fr\"]' &&
       ADMIN_CLIENT_ID=$$(/opt/keycloak/bin/kcadm.sh get clients -r moto-rental -q clientId=moto-rental-admin --fields id --format csv --noquotes | tail -n 1) &&
-      /opt/keycloak/bin/kcadm.sh update clients/$$ADMIN_CLIENT_ID -r moto-rental -s standardFlowEnabled=true -s directAccessGrantsEnabled=false -s 'attributes.\"pkce.code.challenge.method\"=S256' -s 'redirectUris=[\"http://localhost:5173/*\",\"http://localhost:5174/*\",\"http://localhost:4173/*\",\"http://localhost:3002/*\",\"http://pleingazloc.fr:13002/*\",\"https://admin.pleingazloc.fr/*\"]' -s 'webOrigins=[\"http://localhost:5173\",\"http://localhost:5174\",\"http://localhost:4173\",\"http://localhost:3002\",\"http://pleingazloc.fr:13002\",\"https://admin.pleingazloc.fr\"]' &&
+      /opt/keycloak/bin/kcadm.sh update clients/$$ADMIN_CLIENT_ID -r moto-rental -s standardFlowEnabled=true -s directAccessGrantsEnabled=false -s 'attributes.\"pkce.code.challenge.method\"=S256' -s 'redirectUris=[\"http://localhost:5173/*\",\"http://localhost:5174/*\",\"http://localhost:4173/*\",\"http://localhost:3002/*\",\"http://pleingazloc.fr:13002/*\",\"https://admin-dev.pleingazloc.fr/*\",\"https://admin.pleingazloc.fr/*\"]' -s 'webOrigins=[\"http://localhost:5173\",\"http://localhost:5174\",\"http://localhost:4173\",\"http://localhost:3002\",\"http://pleingazloc.fr:13002\",\"https://admin-dev.pleingazloc.fr\",\"https://admin.pleingazloc.fr\"]' &&
       BACKEND_CLIENT_ID=$$(/opt/keycloak/bin/kcadm.sh get clients -r moto-rental -q clientId=moto-rental-backend --fields id --format csv --noquotes | tail -n 1) &&
       /opt/keycloak/bin/kcadm.sh update clients/$$BACKEND_CLIENT_ID -r moto-rental -s fullScopeAllowed=true &&
       /opt/keycloak/bin/kcadm.sh add-roles -r moto-rental --uusername service-account-moto-rental-backend --cclientid realm-management --rolename manage-users || true &&
@@ -46,13 +46,18 @@ services:
   backend:
     container_name: moto-dev-backend
     environment:
-      KEYCLOAK_URL: http://keycloak:8080/dev/auth
+      KEYCLOAK_URL: http://keycloak:8080/auth
       KEYCLOAK_ISSUER_URL: ${DEV_KEYCLOAK_URL}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       FRONTEND_URL: ${DEV_FRONTEND_URL}
       CORS_ORIGIN: ${DEV_CORS_ORIGIN}
     ports:
       - "${DEV_BACKEND_PORT:-13000}:3000"
+
+  worker:
+    container_name: moto-dev-worker
+    environment:
+      PUBLIC_BASE_URL: https://dev.pleingazloc.fr
 
   frontend:
     container_name: moto-dev-frontend
