@@ -6,7 +6,7 @@ import { Moto } from '@domain/entities/Moto'
  * BREAKING CHANGE vs v1 : le champ `pricePerDay` (float, en euros) est remplacé
  * par `dailyPriceCents` (entier, en centimes). Manipuler un entier en centimes
  * évite les erreurs d'arrondi en virgule flottante côté client.
- * Voir backend/docs/BREAKING_CHANGES.md et l'ADR 0004.
+ * Voir backend/docs/BREAKING_CHANGES.md et l'ADR 004.
  */
 export interface MotoV2Dto {
   id: string

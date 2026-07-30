@@ -136,7 +136,7 @@ model Booking {
   totalAmount   Float    @default(0) @map("total_amount")
   depositAmount Float    @default(0) @map("deposit_amount")
   // État du traitement asynchrone de génération du contrat (worker RabbitMQ) :
-  // pending -> processing -> ready | failed. Voir ADR 0005.
+  // pending -> processing -> ready | failed. Voir ADR 007.
   contractStatus String  @default("pending") @map("contract_status") @db.VarChar(20)
   contractPdfUrl String? @map("contract_pdf_url")
   createdAt     DateTime @default(now()) @map("created_at")

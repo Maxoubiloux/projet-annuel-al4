@@ -1,4 +1,4 @@
-# ADR 0002: Utilisation de Prisma comme ORM
+# ADR 002: Utilisation de Prisma comme ORM
 
 **Date** : 2026-03-26
 **Statut** : Accepté
@@ -26,4 +26,4 @@ Raisons :
 
 **Négatif :**
 - Dépendance au client généré (répertoire `src/generated/prisma`)
-- Le client Prisma reste confiné à `src/infrastructure/` pour respecter l'isolation du domaine (ADR 0001)
+- Le client Prisma reste confiné à `src/infrastructure/` pour respecter l'isolation du domaine (ADR 001)
