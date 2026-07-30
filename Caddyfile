@@ -5,19 +5,6 @@
 {$APP_DOMAIN} {
 	encode zstd gzip
 
-	route /dev/api/* {
-		uri strip_prefix /dev
-		reverse_proxy host.docker.internal:13000
-	}
-
-	route /dev/auth* {
-		reverse_proxy host.docker.internal:18080
-	}
-
-	route /dev* {
-		reverse_proxy host.docker.internal:13001
-	}
-
 	route /api/* {
 		reverse_proxy backend:3000
 	}
@@ -25,6 +12,27 @@
 	route {
 		reverse_proxy frontend:3000
 	}
+}
+
+dev.pleingazloc.fr {
+	encode zstd gzip
+
+	route /api/* {
+		reverse_proxy host.docker.internal:13000
+	}
+
+	route /auth* {
+		reverse_proxy host.docker.internal:18080
+	}
+
+	route {
+		reverse_proxy host.docker.internal:13001
+	}
+}
+
+admin-dev.pleingazloc.fr {
+	encode zstd gzip
+	reverse_proxy host.docker.internal:13002
 }
 
 {$ADMIN_DOMAIN} {
