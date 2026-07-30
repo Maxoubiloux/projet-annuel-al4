@@ -16,12 +16,14 @@ case "$BRANCH" in
     COMPOSE_FILES=(-f docker-compose.prod.yml)
     ENV_FILE=".env.prod"
     PROJECT_ARGS=()
+    COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-$(basename "$APP_DIR")}"
     ;;
   develop)
     TARGET="dev"
     COMPOSE_FILES=(-f docker-compose.yml -f docker-compose.dev.yml)
     ENV_FILE=".env.dev"
-    PROJECT_ARGS=(--project-name "${DEV_COMPOSE_PROJECT_NAME:-moto-dev}")
+    COMPOSE_PROJECT_NAME="${DEV_COMPOSE_PROJECT_NAME:-moto-dev}"
+    PROJECT_ARGS=(--project-name "$COMPOSE_PROJECT_NAME")
     ;;
   *)
     echo "Unsupported branch '$BRANCH'. Expected 'main' or 'develop'." >&2
@@ -58,6 +60,21 @@ docker compose \
   --env-file "$ENV_FILE" \
   "${COMPOSE_FILES[@]}" \
   config --quiet
+
+remove_conflicting_container() {
+  local container_name="$1"
+  local current_project
+
+  current_project="$(docker inspect "$container_name" --format '{{ index .Config.Labels "com.docker.compose.project" }}' 2>/dev/null || true)"
+  if [[ -z "$current_project" || "$current_project" == "$COMPOSE_PROJECT_NAME" ]]; then
+    return
+  fi
+
+  echo "Removing orphan container $container_name from compose project '$current_project' before deploying $TARGET."
+  docker rm -f "$container_name" >/dev/null
+}
+
+remove_conflicting_container moto-worker
 
 docker compose \
   "${PROJECT_ARGS[@]}" \
