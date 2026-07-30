@@ -44,9 +44,8 @@ const motos = [
   },
 ] as const;
 
-const { getAllMock, getReservedTodayIdsMock, getFavoriteIdsMock, pushMock } = vi.hoisted(() => ({
+const { getAllMock, getFavoriteIdsMock, pushMock } = vi.hoisted(() => ({
   getAllMock: vi.fn(),
-  getReservedTodayIdsMock: vi.fn(),
   getFavoriteIdsMock: vi.fn(),
   pushMock: vi.fn(),
 }));
@@ -75,7 +74,6 @@ vi.mock("@/hooks/useAuth", () => ({
 vi.mock("@/services/motos.service", () => ({
   motosService: {
     getAll: getAllMock,
-    getReservedTodayIds: getReservedTodayIdsMock,
   },
 }));
 
@@ -91,7 +89,6 @@ describe("MotosPage", () => {
   beforeEach(() => {
     window.history.replaceState(null, "", "/motos");
     getAllMock.mockResolvedValue(motos);
-    getReservedTodayIdsMock.mockResolvedValue([]);
     getFavoriteIdsMock.mockResolvedValue([]);
     pushMock.mockClear();
   });

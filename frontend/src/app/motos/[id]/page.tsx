@@ -271,7 +271,7 @@ export default function MotoDetails() {
 
   const subtotal = moto ? days * moto.pricePerDay : 0;
   const unavailableRanges = availability?.unavailableRanges ?? [];
-  const isAvailableToday = availability?.isAvailableToday ?? true;
+  const isAvailable = moto?.status === 'available';
 
   async function toggleFavorite() {
     if (!moto) return;
@@ -478,8 +478,8 @@ export default function MotoDetails() {
                 <span className="font-serif font-semibold text-[38px]">{moto.pricePerDay}€</span>
                 <span className="text-[13px] text-[#9a8f74]"> /jour</span>
               </div>
-              <span className={`font-mono text-[11px] tracking-[0.08em] ${isAvailableToday ? 'text-[#5d9a6a]' : 'text-[#9a3b35]'}`}>
-                {isAvailableToday ? '✓ Disponible' : "Indisponible aujourd'hui"}
+              <span className={`font-mono text-[11px] tracking-[0.08em] ${isAvailable ? 'text-[#5d9a6a]' : 'text-[#9a3b35]'}`}>
+                {isAvailable ? '✓ Disponible' : 'Indisponible'}
               </span>
             </div>
 
